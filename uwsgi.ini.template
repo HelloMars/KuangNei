@@ -1,0 +1,22 @@
+# mysite_uwsgi.ini file
+[uwsgi]
+
+# Django-related settings
+# the base directory (full path)
+chdir           = /home/zhumeng/KuangNei
+# Django's wsgi file
+module          = kuangnei.wsgi
+# the virtualenv (full path)
+home            = /home/zhumeng/KuangNei
+
+# process-related settings
+# master
+master          = true
+# maximum number of worker processes
+processes       = 10
+# the socket (use the full path to be safe
+socket          = /home/zhumeng/KuangNei.sock
+# ... with appropriate permissions - may be needed
+# chmod-socket    = 664
+# clear environment on exit
+vacuum          = true
