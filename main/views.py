@@ -13,6 +13,8 @@ from django.utils import simplejson
 import time
 import datetime
 
+import demo
+
 def category(request):
     foos = {
         'size': 2,
@@ -79,6 +81,10 @@ def postlist(request):
     }
     data = simplejson.dumps(foos)
     return HttpResponse(data, mimetype='application/json')
+
+def pushMessageToApp(request):
+    demo.pushMessageToApp()
+    return HttpResponse({}, mimetype='application/json')
 
 if __name__ == '__main__':
     print "你好"
