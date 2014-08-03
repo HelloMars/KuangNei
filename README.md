@@ -20,3 +20,4 @@ KuangNei
 * get post list: `http://kuangnei.me/kuangnei/api/postlist/`
 * get category: `http://kuangnei.me/kuangnei/api/category/`
 * 推送所有用户消息: `http://kuangnei.me/kuangnei/api/pushMessageToApp/`
+* 
