@@ -1,0 +1,5 @@
+[client]
+database = test
+user = root
+password = KuangNeiDB 
+default-character-set = utf8
