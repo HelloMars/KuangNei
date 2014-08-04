@@ -15,12 +15,14 @@ import datetime
 
 import demo
 
-def category(request):
+def channellist(request):
     foos = {
+        'returnCode': 0,
+        'returnMessage': '',
         'size': 2,
         'list': [
-            {'title': '兴趣','subtitle': '不有趣可能会被踢得很惨哦'},
-            {'title': '缘分','subtitle': '约会、表白、同性异性不限'}
+            {'id': 0, 'title': '兴趣','subtitle': '不有趣可能会被踢得很惨哦'},
+            {'id': 1, 'title': '缘分','subtitle': '约会、表白、同性异性不限'}
         ]
     }
     data = simplejson.dumps(foos)
@@ -28,21 +30,19 @@ def category(request):
 
 def postlist(request):
     foos = {
+        'returnCode': 0,
+        'returnMessage': '',
         'size': 2,
         'list': [
             {
-                'state': 0,
                 'postId': 1234,
                 'title': '',
-                'shortContent': '紫金港擒鬼记',
+                'content': '紫金港擒鬼记',
                 'postTime': time.strftime('%Y-%m-%d, %H:%M:%S',time.localtime(time.time())),
                 'replyCount': 12,
                 'opposedCount': 2,
-                'smallPictures': [
-                    'http://182.92.100.49/media/kuangnei.jpg',
-                    'http://182.92.100.49/media/python.jpg',
-                ],
-                'bigPictures': [
+                'upCount': 5,
+                'pictures': [
                     'http://182.92.100.49/media/kuangnei.jpg',
                     'http://182.92.100.49/media/python.jpg',
                 ],
@@ -53,18 +53,14 @@ def postlist(request):
                 }
             },
             {
-                'state': 0,
                 'postId': 1234,
                 'title': '',
-                'shortContent': '大姨妈侧漏了。。。',
+                'content': '大姨妈侧漏了。。。',
                 'postTime': time.strftime('%Y-%m-%d, %H:%M:%S',time.localtime(time.time())),
                 'replyCount': 1000,
                 'opposedCount': 1,
-                'smallPictures': [
-                    'http://182.92.100.49/media/kuangnei.jpg',
-                    'http://182.92.100.49/media/python.jpg',
-                ],
-                'bigPictures': [
+                'upCount': 333,
+                'pictures': [
                     'http://182.92.100.49/media/kuangnei.jpg',
                     'http://182.92.100.49/media/python.jpg',
                 ],
@@ -74,9 +70,6 @@ def postlist(request):
                     'avatar': 'http://182.92.100.49/media/kuangnei.jpg',
                 }
             },
-            {
-                    'state': 1,
-            }
         ]
     }
     data = simplejson.dumps(foos)
