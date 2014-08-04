@@ -32,4 +32,4 @@ class Post_picture(models.Model):
     create_time = models.DateTimeField()
     picture_size = models.CharField(max_length=255)
     class Meta:
-        db_table = "post"
+        db_table = "post_picture"
