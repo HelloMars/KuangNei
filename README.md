@@ -17,7 +17,8 @@ KuangNei
 * `uwsgi --ini uwsgi.ini` 启动uwsgi
 
 ## API ##
+* post: `http://kuangnei.me/kuangnei/api/post/`
 * get post list: `http://kuangnei.me/kuangnei/api/postlist/`
-* get category: `http://kuangnei.me/kuangnei/api/category/`
+* get channel list: `http://kuangnei.me/kuangnei/api/channellist/`
 * 推送所有用户消息: `http://kuangnei.me/kuangnei/api/pushMessageToApp/`
 * 

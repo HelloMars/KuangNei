@@ -15,6 +15,15 @@ import datetime
 
 import demo
 
+def post(request):
+    foos = {
+        'returnCode': 0,
+        'returnMessage': '',
+        'postId': 2,
+    }
+    data = simplejson.dumps(foos)
+    return HttpResponse(data, mimetype='application/json')
+    
 def channellist(request):
     foos = {
         'returnCode': 0,
