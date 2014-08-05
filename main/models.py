@@ -23,9 +23,13 @@ class Post(models.Model):
     back_count = models.IntegerField()
     current_floor = models.IntegerField()
     rank = models.IntegerField()
+    class Meta:
+        db_table = "post"
     
 class Post_picture(models.Model):
     post_id = models.BigIntegerField()
     picture_url = models.URLField()
     create_time = models.DateTimeField()
     picture_size = models.CharField(max_length=255)
+    class Meta:
+        db_table = "post_picture"
