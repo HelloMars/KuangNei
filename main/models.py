@@ -24,7 +24,7 @@ class Post(models.Model):
     current_floor = models.IntegerField()
     rank = models.IntegerField()
     class Meta:
-         db_table = "post" 
+        db_table = "post"
     
 class Post_picture(models.Model):
     post_id = models.BigIntegerField()
