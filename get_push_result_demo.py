@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-#Êı¾İ½«ÔÚ30·ÖÖÓÖ®ºóÌá¹©²éÑ¯
-#×îºó¸üĞÂÊ±¼äÎª2013.10.22
+#ï¿½ï¿½İ½ï¿½ï¿½ï¿½30ï¿½ï¿½ï¿½ï¿½Ö®ï¿½ï¿½ï¿½á¹©ï¿½ï¿½Ñ¯
+#ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½Îª2013.10.22
 import hashlib
 import urllib, urllib2, json
 def getPushResult(url,appKey,masterSecret,taskId):
