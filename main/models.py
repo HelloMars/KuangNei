@@ -1,8 +1,8 @@
-from django.db import models
+from django.db import models, models
+import json
 
 # Create your models here.
 
-from django.db import models
 
 class Question(models.Model):
     question_text = models.CharField(max_length=200)
@@ -26,6 +26,9 @@ class Post(models.Model):
     edit_status = models.IntegerField()
     class Meta:
         db_table = "post"
+    def toJSON(self):
+       return json.dumps(dict([(attr, getattr(self, attr)) for attr in [f.name for f in self._meta.fields]]))
+ 
     
 class Post_picture(models.Model):
     post_id = models.BigIntegerField()
