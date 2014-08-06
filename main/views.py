@@ -46,7 +46,7 @@ def posttest(request):
                                         post_id = post.id)
             post_picture.save()
             print "babababababaababab"
-            pushMessageToApp(post)
+            #pushMessageToApp(post)
         backmessage = {
                        "returncode":0,
                        'returnMessage': '',
