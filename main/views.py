@@ -3,12 +3,9 @@
 
 from django.core import serializers
 from django.http import HttpResponse
-from django.shortcuts import render
 from django.utils import simplejson
-from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from main.models import Post, Post_picture
-import datetime
-import demo
+from test.test_xml_etree import serialize
 import post_push
 import time
 
@@ -27,7 +24,6 @@ def post(request):
     return HttpResponse(data, mimetype='application/json')
 
 def posttest(request):
-    print "lalalalalalalalalla"
     userId = request.GET.get("userid",0)
     channelId = request.GET.get("channelid",0)
     print userId
@@ -45,7 +41,6 @@ def posttest(request):
             post_picture = Post_picture(picture_url = each,create_time = time.strftime('%Y-%m-%d %H:%M:%S'),
                                         post_id = post.id)
             post_picture.save()
-            print "babababababaababab"
             #pushMessageToApp(post)
         backmessage = {
                        "returncode":0,
@@ -58,8 +53,30 @@ def posttest(request):
                        'returnMessage': '发帖失败',
                        'postId': 0,
                        }
-    postjson = serializers.serialize('json',["post",post])
-    return HttpResponse(postjson,mimetype='application/json')       
+     
+    return HttpResponse(simplejson.dumps(backmessage),mimetype='application/json')
+
+def postlisttest(request):
+    size = 5
+    userId = request.GET.get("userid",0)
+    channelId = request.GET.get("channelid",0)
+    page = request.GET.get("page",0)
+    if (userId != 0 and channelId != 0):
+        postlist = Post.objects.filter(channel = channelId).order_by("-create_time")[page:size]
+        foos = serializers.serialize('json',postlist)
+        print foos
+        backmessage = {'returnCode': 0,
+                  'returnMessage': '',
+                  'size': size,
+                  'list':foos,
+                 }
+    else:
+        backmessage = {'returnCode': 1,
+                  'returnMessage': '数据有误',
+                 }
+    data = simplejson.dumps(backmessage)
+    return HttpResponse(data, mimetype='application/json')
+       
         
     
 def channellist(request):

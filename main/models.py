@@ -26,7 +26,7 @@ class Post(models.Model):
     edit_status = models.IntegerField()
     class Meta:
         db_table = "post"
-    def toJSON(self):
+    def toJSON(self):          #把mode以json的方式输出
        return json.dumps(dict([(attr, getattr(self, attr)) for attr in [f.name for f in self._meta.fields]]))
  
     
