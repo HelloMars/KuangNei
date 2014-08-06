@@ -67,7 +67,7 @@ def postlisttest(request):
         backmessage = {'returnCode': 0,
                   'returnMessage': '',
                   'size': size,
-                  'list':foos,
+                  'list':simplejson.dumps(foos),
                  }
     else:
         backmessage = {'returnCode': 1,
