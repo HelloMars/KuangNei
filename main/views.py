@@ -25,6 +25,7 @@ def post(request):
     return HttpResponse(data, mimetype='application/json')
 
 def posttest(request):
+    print "lalalalalalalalalla"
     userId = request.META.get("userid",0)
     channelId = request.META.get("channelid",0)
     if (userId != 0 and channelId != 0):
