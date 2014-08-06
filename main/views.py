@@ -38,7 +38,7 @@ def posttest(request):
                    back_count = 0,current_floor = 1,rank = 1)
         post.save()
         print post.id
-        imageurl = request.GET.get("imageurl",0)
+        imageurl = request.GET.get("imageurl","")
         imageurlList = imageurl.split("@")
         for each in imageurlList:
             post_picture = Post_picture(picture_url = each,create_time = time.strftime('%Y-%m-%d %H:%M:%S'),
