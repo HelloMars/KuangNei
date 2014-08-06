@@ -13,16 +13,18 @@ import time
 
 
 
-def post(request):
-    foos = {
-        'returnCode': 0,
-        'returnMessage': '',
-        'postId': 2,
-    }
-    data = simplejson.dumps(foos)
-    return HttpResponse(data, mimetype='application/json')
+#===============================================================================
+# def post(request):
+#     foos = {
+#         'returnCode': 0,
+#         'returnMessage': '',
+#         'postId': 2,
+#     }
+#     data = simplejson.dumps(foos)
+#     return HttpResponse(data, mimetype='application/json')
+#===============================================================================
 
-def posttest(request):
+def post(request):
     userId = request.GET.get("userid",0)
     channelId = request.GET.get("channelid",0)
     print userId
