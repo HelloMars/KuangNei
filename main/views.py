@@ -40,7 +40,7 @@ def posttest(request):
             post_picture = Post_picture(picture_url = each,create_time = time.strftime('%Y-%m-%d %H:%M:%S'),
                                         post_id = post.id)
             post_picture.save()
-            #pushMessageToApp(post)
+            pushMessageToApp(post)
         backmessage = {
                        "returncode":0,
                        'returnMessage': '',
@@ -142,7 +142,6 @@ def postlist(request):
 
 def pushMessageToApp(post):
     post_push.pushMessageToApp(post)
-    return HttpResponse({}, mimetype='application/json')
-
+    
 if __name__ == '__main__':
     print "你好"
