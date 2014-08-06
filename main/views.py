@@ -26,8 +26,8 @@ def post(request):
 
 def posttest(request):
     print "lalalalalalalalalla"
-    userId = request.META.get("userid",0)
-    channelId = request.META.get("channelid",0)
+    userId = request.GET("userid",0)
+    channelId = request.GET("channelid",0)
     print userId
     print channelId
     if (userId != 0 and channelId != 0):
