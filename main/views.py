@@ -57,7 +57,7 @@ def posttest(request):
                        'postId': 0,
                        }
      
-    return HttpResponse(backmessage, content_type='application/json')       
+    return HttpResponse(simplejson.dumps(backmessage))       
         
     
 def channellist(request):
