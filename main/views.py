@@ -6,6 +6,7 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils import simplejson
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
+from main.models import Post, Post_picture
 import datetime
 import demo
 import time
@@ -26,8 +27,8 @@ def post(request):
 
 def posttest(request):
     print "lalalalalalalalalla"
-    userId = QueryDict.get("userid",0)
-    channelId = QueryDicts.get("channelid",0)
+    userId = request.get("userid",0)
+    channelId = request.get("channelid",0)
     print userId
     print channelId
     if (userId != 0 and channelId != 0):
