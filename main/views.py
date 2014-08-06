@@ -32,13 +32,13 @@ def posttest(request):
     print userId
     print channelId
     if (userId != 0 and channelId != 0):
-        con = request.META.get("content","")
+        con = request.GET.get("content","")
         post= Post(school_id = "1",content = con,chnnal = channelId,         #插入post表
                    unlike_count = 0,create_time = time.strftime('%Y-%m-%d %H:%M:%S'),
                    back_count = 0,current_floor = 1,rank = 1)
         post.save()
         print post.id
-        imageurl = request.META.get("imageurl",0)
+        imageurl = request.GET.get("imageurl",0)
         imageurlList = imageurl.split("@")
         for each in imageurlList:
             post_picture = Post_picture(picture_url = each,create_time = time.strftime('%Y-%m-%d %H:%M:%S'),
