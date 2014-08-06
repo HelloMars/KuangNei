@@ -29,7 +29,7 @@ def posttest(request):
     userId = request.META.get("userid",0)
     channelId = request.META.get("channelid",0)
     if (userId != 0 and channelId != 0):
-        con = request.META.get("content",0)
+        con = request.META.get("content","")
         post= Post(school_id = "1",content = con,chnnal = channelId,         #插入post表
                    unlike_count = 0,create_time = time.strftime('%Y-%m-%d %H:%M:%S'),
                    back_count = 0,current_floor = 1,rank = 1)
@@ -41,6 +41,7 @@ def posttest(request):
             post_picture = Post_picture(picture_url = each,create_time = time.strftime('%Y-%m-%d %H:%M:%S'),
                                         post_id = post.id)
             post_picture.save()
+            print "babababababaababab"
         backmessage = {
                        "returncode":0,
                        'returnMessage': '',
