@@ -35,7 +35,7 @@ def posttest(request):
         con = request.GET.get("content","")
         post= Post(user_id = userId,school_id = 1,content = con,channel = channelId,         #插入post表
                    unlike_count = 0,create_time = time.strftime('%Y-%m-%d %H:%M:%S'),
-                   back_count = 0,current_floor = 1,rank = 1,edit_stauts = 0)
+                   back_count = 0,current_floor = 1,rank = 1,edit_status = 0)
         post.save()
         print post.id
         imageurl = request.GET.get("imageurl","")
