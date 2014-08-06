@@ -5,7 +5,6 @@ from django.core import serializers
 from django.http import HttpResponse
 from django.utils import simplejson
 from main.models import Post, Post_picture
-from test.test_xml_etree import serialize
 import post_push
 import time
 
