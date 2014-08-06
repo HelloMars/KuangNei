@@ -1,19 +1,19 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
+from django.core import serializers
+from django.http import HttpResponse
 from django.shortcuts import render
+from django.utils import simplejson
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
+import datetime
+import demo
+import time
 
 # Create your views here.
 
-from django.views.decorators.csrf import csrf_exempt, csrf_protect
-from django.http import HttpResponse
-from django.core import serializers
-from django.utils import simplejson
 
-import time
-import datetime
 
-import demo
 
 def post(request):
     foos = {
@@ -26,8 +26,8 @@ def post(request):
 
 def posttest(request):
     print "lalalalalalalalalla"
-    userId = request.GET("userid",0)
-    channelId = request.GET("channelid",0)
+    userId = QueryDict.get("userid",0)
+    channelId = QueryDicts.get("channelid",0)
     print userId
     print channelId
     if (userId != 0 and channelId != 0):
