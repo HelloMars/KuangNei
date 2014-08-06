@@ -23,6 +23,7 @@ class Post(models.Model):
     back_count = models.IntegerField()
     current_floor = models.IntegerField()
     rank = models.IntegerField()
+    edit_status = models.IntegerField()
     class Meta:
         db_table = "post"
     
