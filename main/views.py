@@ -28,6 +28,8 @@ def posttest(request):
     print "lalalalalalalalalla"
     userId = request.META.get("userid",0)
     channelId = request.META.get("channelid",0)
+    print userId
+    print channelId
     if (userId != 0 and channelId != 0):
         con = request.META.get("content","")
         post= Post(school_id = "1",content = con,chnnal = channelId,         #插入post表
