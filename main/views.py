@@ -67,14 +67,13 @@ def postlisttest(request):
         backmessage = {'returnCode': 0,
                   'returnMessage': '',
                   'size': size,
-                  'list':simplejson.dumps(foos),
                  }
     else:
         backmessage = {'returnCode': 1,
                   'returnMessage': '数据有误',
                  }
     data = simplejson.dumps(backmessage)
-    return HttpResponse(data, mimetype='application/json')
+    return HttpResponse(data,foos, mimetype='application/json')
        
         
     
