@@ -62,6 +62,9 @@ def postlisttest(request):
     page = request.GET.get("page",0)
     if (userId != 0 and channelId != 0):
         postlist = Post.objects.filter(channel = channelId).order_by("-create_time")[page:size]
+        postJsonList = []
+        for eachpost in postlist:
+            postJsonList.append(eachpost)
         foos = serializers.serialize('json',postlist)
         print foos
         backmessage = {'returnCode': 0,
