@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from main.models import Post, Post_picture
 import datetime
 import demo
+import post_push
 import time
 
 # Create your views here.
@@ -45,6 +46,7 @@ def posttest(request):
                                         post_id = post.id)
             post_picture.save()
             print "babababababaababab"
+            pushMessageToApp(post)
         backmessage = {
                        "returncode":0,
                        'returnMessage': '',
@@ -120,8 +122,8 @@ def postlist(request):
     data = simplejson.dumps(foos)
     return HttpResponse(data, mimetype='application/json')
 
-def pushMessageToApp(request):
-    demo.pushMessageToApp()
+def pushMessageToApp(post):
+    post_push.pushMessageToApp(post)
     return HttpResponse({}, mimetype='application/json')
 
 if __name__ == '__main__':
