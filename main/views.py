@@ -58,8 +58,8 @@ def posttest(request):
                        'returnMessage': '发帖失败',
                        'postId': 0,
                        }
-     
-    return HttpResponse(simplejson.dumps(post),mimetype='application/json')       
+    postjson = serializers.serialize("json",post)
+    return HttpResponse(postjson,mimetype='application/json')       
         
     
 def channellist(request):
