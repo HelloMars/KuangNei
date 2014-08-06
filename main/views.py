@@ -33,7 +33,7 @@ def posttest(request):
     print channelId
     if (userId != 0 and channelId != 0):
         con = request.GET.get("content","")
-        post= Post(school_id = "1",content = con,channal = channelId,         #插入post表
+        post= Post(school_id = "1",content = con,channel = channelId,         #插入post表
                    unlike_count = 0,create_time = time.strftime('%Y-%m-%d %H:%M:%S'),
                    back_count = 0,current_floor = 1,rank = 1)
         post.save()
