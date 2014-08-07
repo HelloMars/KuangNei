@@ -30,7 +30,7 @@ def post(request):
     print userId
     print channelId
     if (userId != 0 and channelId != 0):
-        con = request.GET.get("content","")
+        con = request.GET.get("content","").encode("utf8")
         post= Post(user_id = userId,school_id = 1,content = con,channel = channelId,         #插入post表
                    unlike_count = 0,create_time = time.strftime('%Y-%m-%d %H:%M:%S'),
                    back_count = 0,current_floor = 1,rank = 1,edit_status = 0)
@@ -55,7 +55,7 @@ def post(request):
                        'postId': 0,
                        }
      
-    return HttpResponse(simplejson.dumps(backmessage),mimetype='application/json')
+    return HttpResponse(simplejson.dumps(backmessage))
 
 def postlisttest(request):
     size = 5
