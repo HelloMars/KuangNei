@@ -15,7 +15,7 @@ class Choice(models.Model):
     votes = models.IntegerField(default=0)
     
 class Post(models.Model):
-    user_id = models.BigIntegerField()
+    user_id = models.CharField(max_length=255)
     school_id = models.IntegerField()
     content = models.CharField(max_length=800)
     channel = models.IntegerField()
