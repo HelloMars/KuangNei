@@ -124,9 +124,9 @@ def NotificationTemplateDemo(post):
     template.appId = APPID
     template.appKey = APPKEY
     template.transmissionType = 1
-    template.transmissionContent = post.content
-    template.title = post.content
-    template.text = post.content
+    template.transmissionContent = post.content.decode("utf8")
+    template.title = post.content.decode("utf8")
+    template.text = post.content.decode("utf8")
     template.logo = "icon.png"
     template.logoURL = ""
     template.isRing = True
