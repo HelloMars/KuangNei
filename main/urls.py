@@ -7,6 +7,5 @@ urlpatterns = patterns('',
     url(r'^channellist/$', views.channellist, name='channellist'),
     url(r'^postlist/$', views.postlist, name='postlist'),
     url(r'^pushMessageToApp/$', views.pushMessageToApp, name='pushMessageToApp'),
-    url(r'^post/$', views.post, name='posttest'),
     url(r'^postlisttest/$', views.postlisttest, name='postlisttest')
 )
