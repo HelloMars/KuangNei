@@ -44,13 +44,13 @@ def post(request):
             post_picture.save()
             pushMessageToApp(post)
         backmessage = {
-                       "returncode":0,
+                       "returnCode":0,
                        'returnMessage': '',
                        'postId': post.id,
                        }
     else:
         backmessage = {
-                       "returncode":1,
+                       "returnCode":1,
                        'returnMessage': '发帖失败',
                        'postId': 0,
                        }
