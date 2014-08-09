@@ -82,12 +82,13 @@ def post(request):
         post.save()
         print post.id
         imageurl = request.POST.get("imageurl","")
-        imageurlList = imageurl.split("@")
-        for each in imageurlList:
-            post_picture = Post_picture(picture_url = each,create_time = time.strftime('%Y-%m-%d %H:%M:%S'),
+        if imageurl != "":
+            imageurlList = imageurl.split("@")
+            for each in imageurlList:
+                post_picture = Post_picture(picture_url = each,create_time = time.strftime('%Y-%m-%d %H:%M:%S'),
                                         post_id = post.id)
-            post_picture.save()
-            pushMessageToApp(post)
+                post_picture.save()
+        pushMessageToApp(post)
         backmessage = {
                        "returnCode":0,
                        'returnMessage': '',
