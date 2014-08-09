@@ -70,18 +70,18 @@ def getDnToken(request):
 #===============================================================================
 
 def post(request):
-    userId = request.GET.get("userid",0)
-    channelId = request.GET.get("channelid",0)
+    userId = request.POST.get("userid",0)
+    channelId = request.POST.get("channelid",0)
     print userId
     print channelId
     if (userId != 0 and channelId != 0):
-        con = request.GET.get("content","")
+        con = request.POST.get("content","")
         post= Post(user_id = userId,school_id = 1,content = con,channel = channelId,         #插入post表
                    unlike_count = 0,create_time = time.strftime('%Y-%m-%d %H:%M:%S'),
                    back_count = 0,current_floor = 1,rank = 1,edit_status = 0)
         post.save()
         print post.id
-        imageurl = request.GET.get("imageurl","")
+        imageurl = request.POST.get("imageurl","")
         imageurlList = imageurl.split("@")
         for each in imageurlList:
             post_picture = Post_picture(picture_url = each,create_time = time.strftime('%Y-%m-%d %H:%M:%S'),
