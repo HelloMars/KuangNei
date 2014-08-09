@@ -3,15 +3,60 @@
 
 from django.core import serializers
 from django.http import HttpResponse
-from django.utils import simplejson
 from main.models import Post, Post_picture
 import post_push
 import time
+import json
 
 # Create your views here.
 
+# test qiniu
+from qiniu import conf
+from qiniu import rs
 
+conf.ACCESS_KEY = "qZUvN3pdML7x0pa4LPoP2iLI5iif0DP1l5JLx1Ax"
+conf.SECRET_KEY = "oPFZOqG6dV2cuX1krZsLT1vkDBVeEzaUKYZYuQsc"
+DN_DOMAIN = "kuangnei.qiniudn.com"
 
+def getUpToken(request):
+    policy = rs.PutPolicy("kuangnei")
+    uptoken = policy.token()
+    print uptoken
+    if uptoken is None:
+        backmessage = {
+                       "returnCode": 1,
+                       'returnMessage': '上传图片失败',
+                       'uptoken': '',
+                       }
+    else:
+        backmessage = {
+                       "returnCode": 0,
+                       'returnMessage': '',
+                       'uptoken': uptoken,
+                       }
+    return HttpResponse(json.dumps(backmessage), mimetype='application/json')
+
+def getDnToken(request):
+    key = request.GET.get("key", 0)
+    print key
+    if key != 0:
+        base_url = rs.make_base_url(DN_DOMAIN, key)
+        policy = rs.GetPolicy()
+        private_url = policy.make_request(base_url)
+        if private_url is not None:
+            backmessage = {
+                           "returnCode": 0,
+                           'returnMessage': '',
+                           'private_url': private_url,
+                           }
+            return HttpResponse(json.dumps(backmessage), mimetype='application/json')
+    backmessage = {
+                   "returnCode": 1,
+                   'returnMessage': '下载授权失败',
+                   'private_url': '',
+                   }
+    return HttpResponse(json.dumps(backmessage), mimetype='application/json')     
+    
 
 #===============================================================================
 # def post(request):
@@ -20,7 +65,7 @@ import time
 #         'returnMessage': '',
 #         'postId': 2,
 #     }
-#     data = simplejson.dumps(foos)
+#     data = json.dumps(foos)
 #     return HttpResponse(data, mimetype='application/json')
 #===============================================================================
 
@@ -55,7 +100,7 @@ def post(request):
                        'postId': 0,
                        }
      
-    return HttpResponse(simplejson.dumps(backmessage))
+    return HttpResponse(json.dumps(backmessage))
 
 def postlisttest(request):
     size = 5
@@ -77,7 +122,7 @@ def postlisttest(request):
         backmessage = {'returnCode': 1,
                   'returnMessage': '数据有误',
                  }
-    data = simplejson.dumps(backmessage)
+    data = json.dumps(backmessage)
     return HttpResponse(data,foos, mimetype='application/json')
        
         
@@ -92,7 +137,7 @@ def channellist(request):
             {'id': 1, 'title': '缘分','subtitle': '约会、表白、同性异性不限'}
         ]
     }
-    data = simplejson.dumps(foos)
+    data = json.dumps(foos)
     return HttpResponse(data, mimetype='application/json')
 
 def postlist(request):
@@ -139,7 +184,7 @@ def postlist(request):
             },
         ]
     }
-    data = simplejson.dumps(foos)
+    data = json.dumps(foos)
     return HttpResponse(data, mimetype='application/json')
 
 def pushMessageToApp(post):
