@@ -39,7 +39,7 @@ class Post(models.Model):
             if(attr == "id"):
                 d['postId'] = getattr(self,attr)
             elif(attr == "userId"):
-                d['uer'] = user
+                d['user'] = user
             else:
                 d[attr] = getattr(self, attr)
         d['pictures'] = imageurl
