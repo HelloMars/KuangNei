@@ -21,6 +21,7 @@ class Post(models.Model):
     content = models.CharField(max_length=800)
     channel = models.IntegerField()
     opposedCount = models.IntegerField(db_column ="unlike_count")
+    upCount = models.IntegerField(db_column ="like_count")
     postTime = models.DateTimeField('date published',db_column ="create_time")  
     replyCount = models.IntegerField(db_column ="back_count")
     currentFloor = models.IntegerField(db_column ="current_floor")
@@ -28,14 +29,19 @@ class Post(models.Model):
     editStatus = models.IntegerField(db_column ="edit_status")
     class Meta:
         db_table = "post"
-    def toJSON(self,imageurl):
+    def toJSON(self,imageurl,user):
         dthandler = lambda obj: obj.isoformat() if isinstance(obj, datetime) else json.JSONEncoder().default(obj)
         fields = []
         for field in self._meta.fields:
             fields.append(field.name)
         d = {}
         for attr in fields:
-            d[attr] = getattr(self, attr)
+            if(attr == "id"):
+                d['postId'] = getattr(self,attr)
+            elif(attr == "userId"):
+                d['uer'] = user
+            else:
+                d[attr] = getattr(self, attr)
         d['pictures'] = imageurl
         return json.dumps(d, default=dthandler)
  

@@ -119,7 +119,7 @@ def postlist(request):
         backmessage = {'returnCode': 0,
                        'returnMessage': '',
                        'size': size,
-                       'list': [json.loads(e.toJSON(d[e.id])) for e in postlist],
+                       'list': [json.loads(e.toJSON(d[e.id],getUser(e.userId))) for e in postlist],
                        }
     else:
         backmessage = {'returnCode': 1,
@@ -192,6 +192,14 @@ def channellist(request):
 
 def pushMessageToApp(post):
     post_push.pushMessageToApp(post)
+
+def getUser(userId):
+    d = {"id":userId,
+         "avatar":"aaaaaaaaaaa",
+         "name":"啊啊啊",
+         }
+    return d
+    
     
 if __name__ == '__main__':
     print "你好"
