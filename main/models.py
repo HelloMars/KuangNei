@@ -16,16 +16,16 @@ class Choice(models.Model):
     votes = models.IntegerField(default=0)
     
 class Post(models.Model):
-    user_id = models.CharField(max_length=255)
-    school_id = models.IntegerField()
+    userId = models.CharField(max_length=255,db_column = "user_id")
+    schoolId = models.IntegerField(db_column ="school_id")
     content = models.CharField(max_length=800)
     channel = models.IntegerField()
-    unlike_count = models.IntegerField()
-    create_time = models.DateTimeField('date published')  
-    back_count = models.IntegerField()
-    current_floor = models.IntegerField()
+    opposedCount = models.IntegerField(db_column ="unlike_count")
+    postTime = models.DateTimeField('date published',db_column ="create_time")  
+    replyCount = models.IntegerField(db_column ="back_count")
+    currentFloor = models.IntegerField(db_column ="current_floor")
     rank = models.IntegerField()
-    edit_status = models.IntegerField()
+    editStatus = models.IntegerField(db_column ="edit_status")
     class Meta:
         db_table = "post"
     def toJSON(self,imageurl):
