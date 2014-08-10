@@ -10,11 +10,12 @@ KuangNei
 * `pip install Django` #虚拟环境下装Django
 * `pip install uwsgi`
 * `pip install mysql-python` #mysql drive
+* `pip install qiniu`
 * `cd KuangNei`
 * `python manage.py collectstatic`
 * `python manage.py syncdb` #输入admin账户密码
 * `cp uwsgi.ini.template uwsgi.ini` 并修改相应配置
-* `uwsgi --ini uwsgi.ini` 启动uwsgi
+* `uwsgi --py-auto-reload=3 --ini uwsgi.ini` 启动uwsgi，3s自动加载python文件
 
 ## API ##
 * post: `http://kuangnei.me/kuangnei/api/post/`
