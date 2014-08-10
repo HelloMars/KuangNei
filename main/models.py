@@ -28,7 +28,7 @@ class Post(models.Model):
     edit_status = models.IntegerField()
     class Meta:
         db_table = "post"
-    def toJSON(self):
+    def toJSON(self,imageurl):
         dthandler = lambda obj: obj.isoformat() if isinstance(obj, datetime) else json.JSONEncoder().default(obj)
         fields = []
         for field in self._meta.fields:
@@ -36,6 +36,7 @@ class Post(models.Model):
         d = {}
         for attr in fields:
             d[attr] = getattr(self, attr)
+        d['pictures'] = imageurl
         return json.dumps(d, default=dthandler)
  
     

@@ -103,17 +103,23 @@ def post(request):
      
     return HttpResponse(json.dumps(backmessage))
 
-def postlisttest(request):
+def postlist(request):
     size = 5
     userId = request.GET.get("userid",0)
     channelId = request.GET.get("channelid",0)
     page = int(request.GET.get("page",0))
     if (userId != 0 and channelId != 0):
-        postlist = Post.objects.filter(channel = channelId).order_by("-create_time")[page:page+size]
+        postlist = Post.objects.filter(channel = channelId).order_by("-postTime")[page:page+size]
+        d = {}
+        for eachPost in postlist:
+            pictures = Post_picture.objects.filter(post_id = eachPost.id).values_list("picture_url",flat = True)
+            d[eachPost.id] = list(pictures)
+            print json.dumps(list(pictures))
+            print json.dumps(d)
         backmessage = {'returnCode': 0,
                        'returnMessage': '',
                        'size': size,
-                       'list': [json.loads(e.toJSON()) for e in postlist],
+                       'list': [json.loads(e.toJSON(d[e.id])) for e in postlist],
                        }
     else:
         backmessage = {'returnCode': 1,
@@ -137,52 +143,52 @@ def channellist(request):
     data = json.dumps(foos)
     return HttpResponse(data, mimetype='application/json')
 
-def postlist(request):
-    foos = {
-        'returnCode': 0,
-        'returnMessage': '',
-        'size': 2,
-        'list': [
-            {
-                'postId': 1234,
-                'title': '',
-                'content': '紫金港擒鬼记',
-                'postTime': time.strftime('%Y-%m-%d, %H:%M:%S',time.localtime(time.time())),
-                'replyCount': 12,
-                'opposedCount': 2,
-                'upCount': 5,
-                'pictures': [
-                    'http://182.92.100.49/media/kuangnei.jpg',
-                    'http://182.92.100.49/media/python.jpg',
-                ],
-                'user': {
-                    'id': 4321,
-                    'name': 'van',
-                    'avatar': 'http://182.92.100.49/media/kuangnei.jpg',
-                }
-            },
-            {
-                'postId': 1234,
-                'title': '',
-                'content': '大姨妈侧漏了。。。',
-                'postTime': time.strftime('%Y-%m-%d, %H:%M:%S',time.localtime(time.time())),
-                'replyCount': 1000,
-                'opposedCount': 1,
-                'upCount': 333,
-                'pictures': [
-                    'http://182.92.100.49/media/kuangnei.jpg',
-                    'http://182.92.100.49/media/python.jpg',
-                ],
-                'user': {
-                    'id': 1111,
-                    'name': 'lucy',
-                    'avatar': 'http://182.92.100.49/media/kuangnei.jpg',
-                }
-            },
-        ]
-    }
-    data = json.dumps(foos)
-    return HttpResponse(data, mimetype='application/json')
+# def postlist(request):
+#     foos = {
+#         'returnCode': 0,
+#         'returnMessage': '',
+#         'size': 2,
+#         'list': [
+#             {
+#                 'postId': 1234,
+#                 'title': '',
+#                 'content': '紫金港擒鬼记',
+#                 'postTime': time.strftime('%Y-%m-%d, %H:%M:%S',time.localtime(time.time())),
+#                 'replyCount': 12,
+#                 'opposedCount': 2,
+#                 'upCount': 5,
+#                 'pictures': [
+#                     'http://182.92.100.49/media/kuangnei.jpg',
+#                     'http://182.92.100.49/media/python.jpg',
+#                 ],
+#                 'user': {
+#                     'id': 4321,
+#                     'name': 'van',
+#                     'avatar': 'http://182.92.100.49/media/kuangnei.jpg',
+#                 }
+#             },
+#             {
+#                 'postId': 1234,
+#                 'title': '',
+#                 'content': '大姨妈侧漏了。。。',
+#                 'postTime': time.strftime('%Y-%m-%d, %H:%M:%S',time.localtime(time.time())),
+#                 'replyCount': 1000,
+#                 'opposedCount': 1,
+#                 'upCount': 333,
+#                 'pictures': [
+#                     'http://182.92.100.49/media/kuangnei.jpg',
+#                     'http://182.92.100.49/media/python.jpg',
+#                 ],
+#                 'user': {
+#                     'id': 1111,
+#                     'name': 'lucy',
+#                     'avatar': 'http://182.92.100.49/media/kuangnei.jpg',
+#                 }
+#             },
+#         ]
+#     }
+#     data = json.dumps(foos)
+#     return HttpResponse(data, mimetype='application/json')
 
 def pushMessageToApp(post):
     post_push.pushMessageToApp(post)
