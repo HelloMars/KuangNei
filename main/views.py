@@ -76,9 +76,9 @@ def post(request):
     print channelId
     if (userId != 0 and channelId != 0):
         con = request.POST.get("content","")
-        post= Post(user_id = userId,school_id = 1,content = con,channel = channelId,         #插入post表
-                   unlike_count = 0,create_time = time.strftime('%Y-%m-%d %H:%M:%S'),
-                   back_count = 0,current_floor = 1,rank = 1,edit_status = 0)
+        post= Post(userId = userId,schoolId = 1,content = con,channelId = channelId,         #插入post表
+                   opposedCount = 0,postTime = time.strftime('%Y-%m-%d %H:%M:%S'),
+                   replyCount = 0,currentFloor = 1,rank = 1,editStatus = 0,upCount = 0)
         post.save()
         print post.id
         imageurl = request.POST.get("imageurl","")
@@ -109,7 +109,7 @@ def postlist(request):
     channelId = request.GET.get("channelid",0)
     page = int(request.GET.get("page",0))
     if (userId != 0 and channelId != 0):
-        postlist = Post.objects.filter(channel = channelId).order_by("-postTime")[page:page+size]
+        postlist = Post.objects.filter(channelId = channelId).order_by("-postTime")[page:page+size]
         d = {}
         for eachPost in postlist:
             pictures = Post_picture.objects.filter(post_id = eachPost.id).values_list("picture_url",flat = True)
