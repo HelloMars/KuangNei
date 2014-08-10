@@ -19,7 +19,7 @@ class Post(models.Model):
     userId = models.CharField(max_length=255,db_column = "user_id")
     schoolId = models.IntegerField(db_column ="school_id")
     content = models.CharField(max_length=800)
-    channel = models.IntegerField()
+    channelId = models.IntegerField(db_column ="channel")
     opposedCount = models.IntegerField(db_column ="unlike_count")
     upCount = models.IntegerField(db_column ="like_count")
     postTime = models.DateTimeField('date published',db_column ="create_time")  

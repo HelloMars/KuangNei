@@ -195,7 +195,7 @@ def pushMessageToApp(post):
 
 def getUser(userId):
     d = {"id":userId,
-         "avatar":"aaaaaaaaaaa",
+         "avatar":"http://kuangnei.qiniudn.com/FjMgIjdmHH9lkUm9Ra_K1VbKynxR",
          "name":"啊啊啊",
          }
     return d
