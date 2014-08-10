@@ -82,12 +82,13 @@ def post(request):
         post.save()
         print post.id
         imageurl = request.POST.get("imageurl","")
-        imageurlList = imageurl.split("@")
-        for each in imageurlList:
-            post_picture = Post_picture(picture_url = each,create_time = time.strftime('%Y-%m-%d %H:%M:%S'),
+        if imageurl != "":
+            imageurlList = imageurl.split("@")
+            for each in imageurlList:
+                post_picture = Post_picture(picture_url = each,create_time = time.strftime('%Y-%m-%d %H:%M:%S'),
                                         post_id = post.id)
-            post_picture.save()
-            pushMessageToApp(post)
+                post_picture.save()
+        pushMessageToApp(post)
         backmessage = {
                        "returnCode":0,
                        'returnMessage': '',
@@ -106,24 +107,20 @@ def postlisttest(request):
     size = 5
     userId = request.GET.get("userid",0)
     channelId = request.GET.get("channelid",0)
-    page = request.GET.get("page",0)
+    page = int(request.GET.get("page",0))
     if (userId != 0 and channelId != 0):
-        postlist = Post.objects.filter(channel = channelId).order_by("-create_time")[page:size]
-        postJsonList = []
-        for eachpost in postlist:
-            postJsonList.append(eachpost)
-        foos = serializers.serialize('json',postlist)
-        print foos
+        postlist = Post.objects.filter(channel = channelId).order_by("-create_time")[page:page+size]
         backmessage = {'returnCode': 0,
-                  'returnMessage': '',
-                  'size': size,
-                 }
+                       'returnMessage': '',
+                       'size': size,
+                       'list': [json.loads(e.toJSON()) for e in postlist],
+                       }
     else:
         backmessage = {'returnCode': 1,
-                  'returnMessage': '数据有误',
-                 }
+                       'returnMessage': '数据有误',
+                       }
     data = json.dumps(backmessage)
-    return HttpResponse(data,foos, mimetype='application/json')
+    return HttpResponse(data, mimetype='application/json')
        
         
     

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.db import models
+from datetime import datetime
 import json
 
 # Create your models here.
@@ -27,8 +28,15 @@ class Post(models.Model):
     edit_status = models.IntegerField()
     class Meta:
         db_table = "post"
-    def toJSON(self):          #把mode以json的方式输出
-       return json.dumps(dict([(attr, getattr(self, attr)) for attr in [f.name for f in self._meta.fields]]))
+    def toJSON(self):
+        dthandler = lambda obj: obj.isoformat() if isinstance(obj, datetime) else json.JSONEncoder().default(obj)
+        fields = []
+        for field in self._meta.fields:
+            fields.append(field.name)
+        d = {}
+        for attr in fields:
+            d[attr] = getattr(self, attr)
+        return json.dumps(d, default=dthandler)
  
     
 class Post_picture(models.Model):
