@@ -30,7 +30,7 @@ class Post(models.Model):
     class Meta:
         db_table = "post"
     def toJSON(self,imageurl,user):
-        dthandler = lambda obj: obj.isoformat() if isinstance(obj, datetime) else json.JSONEncoder().default(obj)
+        dthandler = lambda obj: obj.strftime('%Y-%m-%d %H:%M:%S') if isinstance(obj, datetime) else json.JSONEncoder().default(obj)
         fields = []
         for field in self._meta.fields:
             fields.append(field.name)
