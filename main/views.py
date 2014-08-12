@@ -101,7 +101,7 @@ def post(request):
                        'postId': 0,
                        }
      
-    return HttpResponse(json.dumps(backmessage))
+    return HttpResponse(json.dumps(backmessage,ensure_ascii = False))
 
 def postlist(request):
     size = 5
