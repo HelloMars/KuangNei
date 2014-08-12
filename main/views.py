@@ -70,11 +70,11 @@ def getDnToken(request):
 #===============================================================================
 
 def post(request):
-    userId = request.POST.get("userid",0)
+    userId = request.POST.get("userid","")
     channelId = request.POST.get("channelid",0)
     print userId
     print channelId
-    if (userId != 0 and channelId != 0):
+    if (userId != "" and channelId != 0):
         con = request.POST.get("content","")
         post= Post(userId = userId,schoolId = 1,content = con,channelId = channelId,         #插入post表
                    opposedCount = 0,postTime = time.strftime('%Y-%m-%d %H:%M:%S'),
