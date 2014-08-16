@@ -21,7 +21,7 @@ DN_DOMAIN = "kuangnei.qiniudn.com"
 def getUpToken(request):
     policy = rs.PutPolicy("kuangnei")
     uptoken = policy.token()
-    print uptoken
+    print uptoken + "^^^^^^^^^^^^^^^^^^^^^^"
     if uptoken is None:
         backmessage = {
                        "returnCode": 1,
