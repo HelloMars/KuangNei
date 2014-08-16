@@ -132,7 +132,7 @@ def postlist(request):
         backmessage = {'returnCode': 1,
                        'returnMessage': '数据有误',
                        }
-    data = json.dumps(backmessage,ensure_ascii = False)
+    data = json.dumps(backmessage)
     return HttpResponse(data, mimetype='application/json')
        
         
