@@ -108,8 +108,15 @@ def postlist(request):
     userId = request.GET.get("userid",0)
     channelId = request.GET.get("channelid",0)
     page = int(request.GET.get("page",0))
+    if (page == 0):
+        backmessage = {'returnCode': 1,
+                       'returnMessage': '页码错误',
+                       }
+        data = json.dumps(backmessage,ensure_ascii = False)
+        return HttpResponse(data, mimetype='application/json') 
+    truePage = (page -1)*size
     if (userId != 0 and channelId != 0):
-        postlist = Post.objects.filter(channelId = channelId).order_by("-postTime")[page:page+size]
+        postlist = Post.objects.filter(channelId = channelId).order_by("-postTime")[truePage:truePage+size]
         d = {}
         for eachPost in postlist:
             pictures = Post_picture.objects.filter(post_id = eachPost.id).values_list("picture_url",flat = True)
