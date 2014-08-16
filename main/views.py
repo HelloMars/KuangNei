@@ -101,7 +101,7 @@ def post(request):
                        'postId': 0,
                        }
      
-    return HttpResponse(json.dumps(backmessage,ensure_ascii = False))
+    return HttpResponse(json.dumps(backmessage),mimetype='application/json')
 
 def postlist(request):
     size = 5
@@ -112,7 +112,7 @@ def postlist(request):
         backmessage = {'returnCode': 1,
                        'returnMessage': '页码错误',
                        }
-        data = json.dumps(backmessage,ensure_ascii = False)
+        data = json.dumps(backmessage)
         return HttpResponse(data, mimetype='application/json') 
     truePage = (page -1)*size
     if (userId != 0 and channelId != 0):
