@@ -29,65 +29,65 @@ KuangNei
 * qiniu
     * `[GET] http://kuangnei.me/kuangnei/api/getUpToken/`, 获得图片上传token
         * 返回json示例
-```
-{
-    uptoken: "qZUvN3pdML7x0pa4LPoP2iLI5iif0DP1l5JLx1Ax:6J_cbPoJEV8pqoFXgZRBQ9SiFKk=:eyJzY29wZSI6Imt1YW5nbmVpIiwiZGVhZGxpbmUiOjE0MDgyOTExODV9",
-    returnMessage: "",
-    returnCode: 0
-}
-```
+        ```
+        {
+            uptoken: "qZUvN3pdML7x0pa4LPoP2iLI5iif0DP1l5JLx1Ax:6J_cbPoJEV8pqoFXgZRBQ9SiFKk=:eyJzY29wZSI6Imt1YW5nbmVpIiwiZGVhZGxpbmUiOjE0MDgyOTExODV9",
+            returnMessage: "",
+            returnCode: 0
+        }
+        ```
     * `[GET] http://kuangnei.me/kuangnei/api/getDnUrl/?key={image_name}`, 获得私有空间图片下载url
         * 返回json示例
-```
-{
-    dnurl: "http://kuangnei.qiniudn.com/image.jpg?e=1408291300&token=qZUvN3pdML7x0pa4LPoP2iLI5iif0DP1l5JLx1Ax:isuiw6VSBaeAQXh9D2R3kWRIBuA=",
-    returnMessage: "",
-    returnCode: 0
-}
-```
+        ```
+        {
+            dnurl: "http://kuangnei.qiniudn.com/image.jpg?e=1408291300&token=qZUvN3pdML7x0pa4LPoP2iLI5iif0DP1l5JLx1Ax:isuiw6VSBaeAQXh9D2R3kWRIBuA=",
+            returnMessage: "",
+            returnCode: 0
+        }
+        ```
 * `[POST] http://kuangnei.me/kuangnei/api/post/`, 发帖子
     * POST请求必要参数: `{'userid': 1, 'channelid': 1, 'content': 'test, 测试中文'}`, 可选参数: `{imageurl: 'url1@url2@url3'}`
     * 返回json:
-```
-{
-    "returnMessage": "",
-    "returnCode": 0,
-    "postId": 4
-}
-```
+    ```
+    {
+        "returnMessage": "",
+        "returnCode": 0,
+        "postId": 4
+    }
+    ```
 * `[GET] http://kuangnei.me/kuangnei/api/postlist/?userid=1&channelid=1&page=1`, 拉取帖子列表
     * page表明第几批数据（目前后端一批有五个帖子）
     * 返回json:
 * channel list: `[GET] http://kuangnei.me/kuangnei/api/channellist/`
     * 返回json:
-```
-{
-    "returnMessage": "",
-    "returnCode": 0,
-    "list": [
-        {
-            "editStatus": 0,
-            "postTime": "2014-08-17 23:03:10",
-            "currentFloor": 1,
-            "schoolId": 1,
-            "pictures": [],
-            "channelId": 1,
-            "postId": 4,
-            "replyCount": 0,
-            "content": "test",
-            "upCount": 0,
-            "user": {
-                "id": "1",
-                "name": "框内",
-                "avatar": "http://kuangnei.qiniudn.com/FjMgIjdmHH9lkUm9Ra_K1VbKynxR"
+    ```
+    {
+        "returnMessage": "",
+        "returnCode": 0,
+        "list": [
+            {
+                "editStatus": 0,
+                "postTime": "2014-08-17 23:03:10",
+                "currentFloor": 1,
+                "schoolId": 1,
+                "pictures": [],
+                "channelId": 1,
+                "postId": 4,
+                "replyCount": 0,
+                "content": "test",
+                "upCount": 0,
+                "user": {
+                    "id": "1",
+                    "name": "框内",
+                    "avatar": "http://kuangnei.qiniudn.com/FjMgIjdmHH9lkUm9Ra_K1VbKynxR"
+                },
+                "rank": 1,
+                "opposedCount": 0
             },
-            "rank": 1,
-            "opposedCount": 0
-        },
-    ],
-    "size": 1
-}
-```
+        ],
+        "size": 1
+    }
+    ```
 * 
 
 ## Log ##
