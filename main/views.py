@@ -48,7 +48,7 @@ def post(request):
                 post_picture = Post_picture(picture_url=url, post_id=post.id,
                                             create_time=time.strftime('%Y-%m-%d %H:%M:%S'))
                 post_picture.save()
-        #_push_message_to_app(post)
+        _push_message_to_app(post)
         ret = utils.wrap_message({'postId': post.id})
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
