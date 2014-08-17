@@ -36,7 +36,6 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'qiniu',
     'main',
 )
 
@@ -66,6 +65,9 @@ DATABASES = {
     }
 }
 
+# Caches
+
+
 # Internationalization
 # https://docs.djangoproject.com/en/1.6/topics/i18n/
 
@@ -86,4 +88,37 @@ USE_TZ = False
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 
-print ("%%%%%%%%%%%%%%%%%%%%%")
+# Logging
+from datetime import datetime
+LOG_LEVEL = 'DEBUG'
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
+        'normal': {
+            'format': '[%(asctime)s][%(levelname)s][%(module)s]: %(message)s',
+            'datefmt': '%m/%d/%Y %I:%M:%S',
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': LOG_LEVEL,
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, datetime.now().strftime('log/debug_%Y_%m_%d.log')),
+            'formatter': 'normal',
+        },
+    },
+    'loggers': {
+        'kuangnei': {
+            'handlers': ['file'],
+            'level': LOG_LEVEL,
+            'propagate': True,
+        },
+    },
+}

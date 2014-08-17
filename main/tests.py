@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: UTF-8 -*-
+
 """
 This file demonstrates writing tests using the unittest module. These will pass
 when you run "manage.py test".
@@ -5,12 +8,81 @@ when you run "manage.py test".
 Replace this with more appropriate tests for your application.
 """
 
+import json
 from django.test import TestCase
+from django.test.client import Client
+from django.test.client import RequestFactory
 
 
-class SimpleTest(TestCase):
-    def test_basic_addition(self):
-        """
-        Tests that 1 + 1 always equals 2.
-        """
-        self.assertEqual(1 + 1, 2)
+class ApiTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.factory = RequestFactory()
+
+    def _test_suc_message(self, response):
+        jsond = json.loads(response.content)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(jsond['returnCode'], 0)
+        self.assertEqual(jsond['returnMessage'], '')
+
+    def _test_failed_message(self, response):
+        jsond = json.loads(response.content)
+        self.assertEqual(response.status_code, 200)
+        self.assertLess(0, jsond['returnCode'])
+        self.assertIsNotNone(jsond['returnMessage'])
+        self.assertNotEqual(jsond['returnMessage'], '')
+
+    def test_get_uptoken(self):
+        response = self.client.get('/kuangnei/api/getUpToken/')
+        self._test_suc_message(response)
+
+    def test_get_dnurl(self):
+        response = self.client.get('/kuangnei/api/getDnUrl/')
+        self._test_failed_message(response)
+        response = self.client.get('/kuangnei/api/getDnUrl/?key=image.jpg')
+        self._test_suc_message(response)
+
+    def test_post_and_postlist(self):
+        # test post
+        response = self.client.get('/kuangnei/api/post/')
+        self._test_failed_message(response)
+        response = self.client.post('/kuangnei/api/post/',
+            {'userid': 1, 'channelid': 1, 'content': 'test, 测试中文'})
+        self._test_suc_message(response)
+        jsond = json.loads(response.content)
+        self.assertLess(0, jsond['postId'])
+
+        # test postlist
+        response = self.client.get('/kuangnei/api/postlist/')
+        self._test_failed_message(response)
+        response = self.client.get('/kuangnei/api/postlist/?userid=1&channelid=1&page=1')
+        self._test_suc_message(response)
+        jsond = json.loads(response.content)
+        self.assertEqual(1, jsond['size'])  # use test database
+        try:
+            post = jsond['list'][0]
+            self.assertEqual(post['postId'], 1)
+            self.assertEqual(post['channelId'], 1)
+            self.assertEqual(post['schoolId'], 1)
+
+            self.assertIsNotNone(post['postTime'])
+            self.assertIsNotNone(post['pictures'])
+            self.assertEqual(post['content'], u'test, 测试中文')
+
+            self.assertEqual(post['replyCount'], 0)
+            self.assertEqual(post['upCount'], 0)
+            self.assertEqual(post['opposedCount'], 0)
+
+            user = post['user']
+            self.assertEqual(user['id'], u'1')
+            self.assertIsNotNone(user['avatar'])
+            self.assertIsNotNone(user['name'])
+        except KeyError as e:
+            self.assertIsNone(e)
+
+    def test_channellist(self):
+        response = self.client.get('/kuangnei/api/channellist/')
+        self._test_suc_message(response)
+        jsond = json.loads(response.content)
+        self.assertLessEqual(0, jsond['size'])
+        self.assertIsNotNone(jsond['list'])
