@@ -1,10 +1,9 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
-from django.contrib.auth import authenticate, logout
+from django.contrib.auth import authenticate, logout, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.contrib.auth.views import login
 from django.http import HttpResponse
 from kuangnei import consts, utils
 from kuangnei.utils import logger
