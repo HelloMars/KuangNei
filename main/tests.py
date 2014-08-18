@@ -86,3 +86,22 @@ class ApiTest(TestCase):
         jsond = json.loads(response.content)
         self.assertLessEqual(0, jsond['size'])
         self.assertIsNotNone(jsond['list'])
+
+    def test_user_system(self):
+        # test register
+        response = self.client.get('/kuangnei/api/register/')
+        self._test_failed_message(response)
+        response = self.client.post('/kuangnei/api/register/',
+            {'username': 'kuangnei', 'password': '~!@#`123qwer'})
+        self._test_suc_message(response)
+        jsond = json.loads(response.content)
+        self.assertEqual(jsond['user'], 'kuangnei')
+
+        # test login_in
+        response = self.client.post('/kuangnei/api/signin/',
+            {'username': 'kuangnei', 'password': '~!@#`123qwer'})
+        self._test_suc_message(response)
+
+        # test login_out
+        response = self.client.get('/kuangnei/api/logout/')
+        self._test_suc_message(response)

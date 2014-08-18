@@ -32,26 +32,29 @@ def get_dnurl(request):
 
 
 def post(request):
-    userid = request.POST.get("userid")
-    channelid = request.POST.get("channelid")
-    content = request.POST.get("content")
-    if userid is None or channelid is None or content is None:
-        ret = utils.wrap_message(code=1)
+    if request.method != 'POST':
+        ret = utils.wrap_message(code=2)
     else:
-        post = Post(userId=userid, schoolId=1, content=content, channelId=channelid,
-                    opposedCount=0, postTime=time.strftime('%Y-%m-%d %H:%M:%S'),
-                    replyCount=0, currentFloor=1, rank=1, editStatus=0, upCount=0)
-        post.save()
-        logger.info("post " + str(post.id))
-        imageurl = request.POST.get("imageurl")
-        if imageurl is not None:
-            imageurls = imageurl.split("@")
-            for url in imageurls:
-                post_picture = Post_picture(picture_url=url, post_id=post.id,
-                                            create_time=time.strftime('%Y-%m-%d %H:%M:%S'))
-                post_picture.save()
-        _push_message_to_app(post)
-        ret = utils.wrap_message({'postId': post.id})
+        userid = request.POST.get("userid")
+        channelid = request.POST.get("channelid")
+        content = request.POST.get("content")
+        if userid is None or channelid is None or content is None:
+            ret = utils.wrap_message(code=1)
+        else:
+            post = Post(userId=userid, schoolId=1, content=content, channelId=channelid,
+                        opposedCount=0, postTime=time.strftime('%Y-%m-%d %H:%M:%S'),
+                        replyCount=0, currentFloor=1, rank=1, editStatus=0, upCount=0)
+            post.save()
+            logger.info("post " + str(post.id))
+            imageurl = request.POST.get("imageurl")
+            if imageurl is not None:
+                imageurls = imageurl.split("@")
+                for url in imageurls:
+                    post_picture = Post_picture(picture_url=url, post_id=post.id,
+                                                create_time=time.strftime('%Y-%m-%d %H:%M:%S'))
+                    post_picture.save()
+            _push_message_to_app(post)
+            ret = utils.wrap_message({'postId': post.id})
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
@@ -113,7 +116,7 @@ def register(request):
                        'returnMessage': '注册失败',
                       }
     return HttpResponse(json.dumps(backmessage,ensure_ascii = False))
-    
+
 
 #检查用户名是否已经存在
 def check_if_user_exist(request):
@@ -146,7 +149,7 @@ def login_in(request):
         return HttpResponse(json.dumps(backmessage))
     try:
         user = authenticate(username=username, password=password)
-        if user is not None:            
+        if user is not None:
             if user.is_active:
                 login(request, user)
                 request.session.set_expiry(300)
@@ -181,7 +184,8 @@ def logout_out(request):
 
 @login_required
 def test_view(request):
-    return HttpResponse('diu')
+    return HttpResponse('diu')
+
 
 def channellist(request):
     foos = {
