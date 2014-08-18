@@ -84,6 +84,7 @@ def register(request):
         password = request.POST.get('password','')
         if username != "" and password != "":
             oldUser = User.objects.filter(username = username)
+            print repr(oldUser)
             if oldUser is not None:
                 backmessage = {
                     'returnCode': 1,
