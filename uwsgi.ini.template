@@ -20,3 +20,6 @@ socket          = /home/zhumeng/KuangNei.sock
 # chmod-socket    = 664
 # clear environment on exit
 vacuum          = true
+
+py-auto-reload  = 3
+daemonize = /home/zhumeng/uwsgi.log

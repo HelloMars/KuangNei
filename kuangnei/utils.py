@@ -26,8 +26,11 @@ def wrap_message(data={}, code=0, msg=''):
     ret = {'returnCode': code, 'returnMessage': msg}
     if code == 0:
         ret.update(data)
-    elif code == 1 and msg == '':
-        ret['returnMessage'] = 'incorrect parameters'
+    elif msg == '':
+        ret['returnMessage'] = {
+            1: 'incorrect parameters',
+            2: 'incorrect request method [GET, POST]'
+        }.get(code, '')
     return ret
 
 

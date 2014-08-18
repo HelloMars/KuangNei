@@ -24,6 +24,7 @@ KuangNei
 * returnCode
     * 0: success
     * 1: incorrect parameters
+    * 2: incorrect request method [GET, POST]
 
 ### API List ###
 * qiniu
