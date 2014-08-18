@@ -83,26 +83,36 @@ def register(request):
         username = request.POST.get('username','')
         password = request.POST.get('password','')
         if username != "" and password != "":
-            newUser = User(username=username)
-            newUser.set_password(password)             #把密码加密
-            newUser.save()
-            #注册之后立即执行登录操作
-            user = authenticate(username=username, password=password)
-            login(request, user)
-            request.session.set_expiry(300)
-            backmessage = {'returnCode':0,
-                           'returnMessage':'',
-                           'user':newUser.username,
-                           }
+            oldUser = User.objects.filter(username = username)
+            if oldUser is not None:
+                backmessage = {
+                    'returnCode': 1,
+                    'returnMessage': '用户名已存在',
+                }
+                return HttpResponse(json.dumps(backmessage))
+            newUser = User.objects.create_user(username=username,password=password)    #把密码加密
+            if newUser is not None:
+                user = authenticate(username=username, password=password)
+                login(request, user)
+                request.session.set_expiry(300)
+                backmessage = {'returnCode': 0,
+                               'returnMessage': '',
+                               'user': newUser.username,
+                              }
+            else:
+                backmessage = {'returnCode': 1,
+                               'returnMessage': '注册失败',
+                               'user': newUser.username,
+                              }
         else:
             backmessage = {'returnCode':1,
                             'returnMessage':'注册失败',
                             }
     else:
-        backmessage = {'returnCode':1,
-                        'returnMessage':'注册失败',
-                           }
-    return HttpResponse(json.dumps(backmessage,ensure_ascii = False))
+        backmessage = {'returnCode': 1,
+                       'returnMessage': '注册失败',
+                      }
+    return HttpResponse(json.dumps(backmessage))
     
 
 #检查用户名是否已经存在
