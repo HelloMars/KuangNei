@@ -122,3 +122,6 @@ LOGGING = {
         },
     },
 }
+
+#Session
+SESSION_SAVE_EVERY_REQUEST = True

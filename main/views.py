@@ -1,15 +1,17 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
+from django.contrib.auth import authenticate, logout, login
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.http import HttpResponse
+from kuangnei import consts, utils
+from kuangnei.utils import logger
 from main.models import Post, Post_picture
+import json
 import post_push
 import time
-import json
 
-from kuangnei import consts
-from kuangnei import utils
-from kuangnei.utils import logger
 # Create your views here.
 
 
@@ -74,6 +76,112 @@ def postlist(request):
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler),
                         mimetype='application/json')
 
+
+def register(request):
+    if request.method == 'POST':
+        username = request.POST.get('username','')
+        password = request.POST.get('password','')
+        if username != "" and password != "":
+            oldUser = User.objects.filter(username = username).first()
+            print repr(oldUser)
+            if oldUser is not None:
+                backmessage = {
+                    'returnCode': 1,
+                    'returnMessage': '用户名已存在',
+                }
+                return HttpResponse(json.dumps(backmessage,ensure_ascii = False))
+            newUser = User.objects.create_user(username=username,password=password)    #把密码加密
+            if newUser is not None:
+                user = authenticate(username=username, password=password)
+                login(request, user)
+                request.session.set_expiry(300)
+                backmessage = {'returnCode': 0,
+                               'returnMessage': '',
+                               'user': newUser.username,
+                              }
+            else:
+                backmessage = {'returnCode': 1,
+                               'returnMessage': '注册失败',
+                               'user': newUser.username,
+                              }
+        else:
+            backmessage = {'returnCode':1,
+                            'returnMessage':'注册失败',
+                            }
+    else:
+        backmessage = {'returnCode': 1,
+                       'returnMessage': '注册失败',
+                      }
+    return HttpResponse(json.dumps(backmessage,ensure_ascii = False))
+    
+
+#检查用户名是否已经存在
+def check_if_user_exist(request):
+    if request.method == 'POST':
+        username = request.POST.get('username','')
+        user = User.objects.filter(username = username)
+        if user:
+            backmessage = {'returnCode':1,
+                           'returnMessage':'用户已经存在',
+                           }
+        else:
+            backmessage = {'returnCode':0,
+                           'returnMessage':'',
+                           }
+        return HttpResponse(json.dumps(backmessage,ensure_ascii = False))
+    else:
+        backmessage = {'returnCode':1,
+                        'returnMessage':'注册失败',
+                           }
+    return HttpResponse(json.dumps(backmessage,ensure_ascii = False))
+
+
+def login_in(request):
+    username = request.POST.get('username') #['username']
+    password = request.POST.get('password') #['password']
+    if (username is None) or (password is None):
+        backmessage = {'returnCode': 1,
+                      'returnMessage': '用户名密码不能为空',
+                      }
+        return HttpResponse(json.dumps(backmessage))
+    try:
+        user = authenticate(username=username, password=password)
+        if user is not None:            
+            if user.is_active:
+                login(request, user)
+                request.session.set_expiry(300)
+                backmessage = {'returnCode': 0,
+                               'returnMessage': '',
+                              }
+            else:
+                backmessage = {'returnCode': 1,
+                               'returnMessage': '用户认证已过期',
+                              }
+        else:
+            backmessage = {'returnCode': 1,
+                           'returnMessage': '用户名或密码错误',
+                          }
+    except Exception as e:
+        print repr(e)
+        backmessage = {'returnCode': 1,
+                       'returnMessage': '系统异常',
+                        }
+    return HttpResponse(json.dumps(backmessage))
+
+
+@login_required
+def logout_out(request):
+    logout(request)
+    backmessage = {
+       'returnCode': 0,
+       'returnMessage': '',
+    }
+    return HttpResponse(json.dumps(backmessage))
+
+
+@login_required
+def test_view(request):
+    return HttpResponse('diu')
 
 def channellist(request):
     foos = {
