@@ -47,7 +47,7 @@ class ApiTest(TestCase):
         response = self.client.get('/kuangnei/api/post/')
         self._test_failed_message(response)
         response = self.client.post('/kuangnei/api/post/',
-            {'userid': 1, 'channelid': 1, 'content': 'test, 测试中文'})
+            {'userid': 1, 'channelid': 1, 'content': 'unit test, 单元测试'})
         self._test_suc_message(response)
         jsond = json.loads(response.content)
         self.assertLess(0, jsond['postId'])
@@ -67,7 +67,7 @@ class ApiTest(TestCase):
 
             self.assertIsNotNone(post['postTime'])
             self.assertIsNotNone(post['pictures'])
-            self.assertEqual(post['content'], u'test, 测试中文')
+            self.assertEqual(post['content'], u'unit test, 单元测试')
 
             self.assertEqual(post['replyCount'], 0)
             self.assertEqual(post['upCount'], 0)
