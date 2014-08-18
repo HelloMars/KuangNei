@@ -1,15 +1,15 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
+from django.contrib.auth.models import User
 from django.http import HttpResponse
+from kuangnei import consts, utils
+from kuangnei.utils import logger
 from main.models import Post, Post_picture
+import json
 import post_push
 import time
-import json
 
-from kuangnei import consts
-from kuangnei import utils
-from kuangnei.utils import logger
 # Create your views here.
 
 
@@ -73,6 +73,49 @@ def postlist(request):
         ret['list'] = [e.tojson(d[e.id], mock_user(e.userId)) for e in postlist]
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler),
                         mimetype='application/json')
+
+
+def register(request):
+    if request.method == 'POST':
+        username = request.POST.get('username','')
+        password = request.POST.get('password','')
+        if username != "" and password != "":
+            newUser = User(username=username)
+            newUser.set_password(password)             #把密码加密
+            newUser.save()
+            backmessage = {'returnCode':0,
+                           'returnMessage':'',
+                           'user':newUser.username,
+                           }
+        else:
+            backmessage = {'returnCode':1,
+                            'returnMessage':'注册失败',
+                            }
+    else:
+        backmessage = {'returnCode':1,
+                        'returnMessage':'注册失败',
+                           }
+    return HttpResponse(json.dumps(backmessage,ensure_ascii = False))
+    
+
+def check_if_user_exist(request):
+    if request.method == 'POST':
+        username = request.POST.get('username','')
+        user = User.objects.filter(username = username)
+        if user:
+            backmessage = {'returnCode':1,
+                           'returnMessage':'用户已经存在',
+                           }
+        else:
+            backmessage = {'returnCode':0,
+                           'returnMessage':'',
+                           }
+        return HttpResponse(json.dumps(backmessage,ensure_ascii = False))
+    else:
+        backmessage = {'returnCode':1,
+                        'returnMessage':'注册失败',
+                           }
+    return HttpResponse(json.dumps(backmessage,ensure_ascii = False))
 
 
 def channellist(request):
