@@ -1,7 +1,10 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
+from django.contrib.auth import authenticate, logout
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.contrib.auth.views import login
 from django.http import HttpResponse
 from kuangnei import consts, utils
 from kuangnei.utils import logger
@@ -98,6 +101,7 @@ def register(request):
     return HttpResponse(json.dumps(backmessage,ensure_ascii = False))
     
 
+#检查用户名是否已经存在
 def check_if_user_exist(request):
     if request.method == 'POST':
         username = request.POST.get('username','')
@@ -117,6 +121,52 @@ def check_if_user_exist(request):
                            }
     return HttpResponse(json.dumps(backmessage,ensure_ascii = False))
 
+
+def login_in(request):
+    username = request.POST.get('username') #['username']
+    password = request.POST.get('password') #['password']
+    if (username is None) or (password is None):
+        backmessage = {'returnCode': 1,
+                      'returnMessage': '用户名密码不能为空',
+                      }
+        return HttpResponse(json.dumps(backmessage))
+    try:
+        user = authenticate(username=username, password=password)
+        if user is not None:            
+            if user.is_active:
+                login(request, user)
+                backmessage = {'returnCode': 0,
+                               'returnMessage': '',
+                              }
+            else:
+                backmessage = {'returnCode': 1,
+                           'returnMessage': '用户名或密码错误',
+                          }
+        else:
+            backmessage = {'returnCode': 1,
+                         'returnMessage': '用户已失效',
+                          }
+    except Exception as e:
+        print repr(e)
+        backmessage = {'returnCode': 1,
+                       'returnMessage': '系统异常',
+                        }
+    return HttpResponse(json.dumps(backmessage))
+
+
+@login_required
+def logout_out(request):
+    logout(request)
+    backmessage = {
+       'returnCode': 0,
+       'returnMessage': '',
+    }
+    return HttpResponse(json.dumps(backmessage))
+
+
+@login_required
+def test_view(request):
+    return HttpResponse('diu')
 
 def channellist(request):
     foos = {
