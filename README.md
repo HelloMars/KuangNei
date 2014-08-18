@@ -58,6 +58,24 @@ KuangNei
 * `[GET] http://kuangnei.me/kuangnei/api/postlist/?userid=1&channelid=1&page=1`, 拉取帖子列表
     * page表明第几批数据（目前后端一批有五个帖子）
     * 返回json:
+
+* `[POST] https://kuangnei.me/kuangnei/api/register/`, 注册
+    *POST请求必要参数: `{'username': abcde, 'password': 123456}`
+    * 返回json:
+       {
+        "returnMessage": "",
+        "returnCode": 0,
+        "user": abcde
+       }
+
+* `[POST] https://kuangnei.me/kuangnei/api/signin/`, 登录
+    *POST请求必要参数: `{'username': abcde, 'password': 123456}`
+    * 返回json:
+      {
+       "returnMessage": "",
+        "returnCode": 0,
+      }
+
 * channel list: `[GET] http://kuangnei.me/kuangnei/api/channellist/`
     * 返回json:
     ```
