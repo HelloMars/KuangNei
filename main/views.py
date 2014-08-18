@@ -89,6 +89,7 @@ def register(request):
             #注册之后立即执行登录操作
             user = authenticate(username=username, password=password)
             login(request, user)
+            request.session.set_expiry(300)
             backmessage = {'returnCode':0,
                            'returnMessage':'',
                            'user':newUser.username,
