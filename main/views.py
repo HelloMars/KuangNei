@@ -81,41 +81,30 @@ def postlist(request):
 
 
 def register(request):
-    if request.method == 'POST':
-        username = request.POST.get('username','')
-        password = request.POST.get('password','')
-        if username != "" and password != "":
-            oldUser = User.objects.filter(username = username).first()
-            print repr(oldUser)
-            if oldUser is not None:
-                backmessage = {
-                    'returnCode': 1,
-                    'returnMessage': '用户名已存在',
-                }
-                return HttpResponse(json.dumps(backmessage,ensure_ascii = False))
-            newUser = User.objects.create_user(username=username,password=password)    #把密码加密
-            if newUser is not None:
-                user = authenticate(username=username, password=password)
-                login(request, user)
-                request.session.set_expiry(300)
-                backmessage = {'returnCode': 0,
-                               'returnMessage': '',
-                               'user': newUser.username,
-                              }
-            else:
-                backmessage = {'returnCode': 1,
-                               'returnMessage': '注册失败',
-                               'user': newUser.username,
-                              }
-        else:
-            backmessage = {'returnCode':1,
-                            'returnMessage':'注册失败',
-                            }
+    if request.method != 'POST':
+        ret = utils.wrap_message(code=2)
     else:
-        backmessage = {'returnCode': 1,
-                       'returnMessage': '注册失败',
-                      }
-    return HttpResponse(json.dumps(backmessage,ensure_ascii = False))
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        if username is None or password is None:
+            ret = utils.wrap_message(code=1)
+        else:
+            olduser = User.objects.filter(username=username).first()
+            if olduser is None:
+                newuser = User.objects.create_user(username=username, password=password)
+                if newuser is None:
+                    ret = utils.wrap_message(code=10, msg='注册失败')
+                    logger.warn('注册失败')
+                else:
+                    user = authenticate(username=username, password=password)
+                    login(request, user)
+                    request.session.set_expiry(300)
+                    ret = utils.wrap_message({'user': newuser.username})
+                    logger.info('注册新用户(%s)成功', repr(newuser))
+            else:
+                ret = utils.wrap_message(code=10, msg='用户名已存在')
+                logger.info('用户名(%s)已存在', repr(olduser))
+    return HttpResponse(json.dumps(ret, ensure_ascii=False))
 
 
 #检查用户名是否已经存在
