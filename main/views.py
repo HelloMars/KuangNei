@@ -86,6 +86,9 @@ def register(request):
             newUser = User(username=username)
             newUser.set_password(password)             #把密码加密
             newUser.save()
+            #注册之后立即执行登录操作
+            user = authenticate(username=username, password=password)
+            login(request, user)
             backmessage = {'returnCode':0,
                            'returnMessage':'',
                            'user':newUser.username,
