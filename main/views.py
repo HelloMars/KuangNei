@@ -89,7 +89,7 @@ def register(request):
                     'returnCode': 1,
                     'returnMessage': '用户名已存在',
                 }
-                return HttpResponse(json.dumps(backmessage))
+                return HttpResponse(json.dumps(backmessage,ensure_ascii = False))
             newUser = User.objects.create_user(username=username,password=password)    #把密码加密
             if newUser is not None:
                 user = authenticate(username=username, password=password)
@@ -112,7 +112,7 @@ def register(request):
         backmessage = {'returnCode': 1,
                        'returnMessage': '注册失败',
                       }
-    return HttpResponse(json.dumps(backmessage))
+    return HttpResponse(json.dumps(backmessage,ensure_ascii = False))
     
 
 #检查用户名是否已经存在
