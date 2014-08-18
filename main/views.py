@@ -135,16 +135,17 @@ def login_in(request):
         if user is not None:            
             if user.is_active:
                 login(request, user)
+                request.session.set_expiry(300)
                 backmessage = {'returnCode': 0,
                                'returnMessage': '',
                               }
             else:
                 backmessage = {'returnCode': 1,
-                           'returnMessage': '用户名或密码错误',
-                          }
+                               'returnMessage': '用户认证已过期',
+                              }
         else:
             backmessage = {'returnCode': 1,
-                         'returnMessage': '用户已失效',
+                           'returnMessage': '用户名或密码错误',
                           }
     except Exception as e:
         print repr(e)
