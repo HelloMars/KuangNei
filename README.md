@@ -15,6 +15,7 @@ KuangNei
 * `python manage.py collectstatic`
 * `python manage.py syncdb` #输入admin账户密码
 * `cp uwsgi.ini.template uwsgi.ini` 并修改相应配置
+* `cp mysql.cnf.template mysql.cnf` 并修改对应数据库配置
 * `uwsgi --py-auto-reload=3 --ini uwsgi.ini` 启动uwsgi，3s自动加载python文件
 
 ## API ##
