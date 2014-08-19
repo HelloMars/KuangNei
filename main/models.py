@@ -57,10 +57,10 @@ class Post_picture(models.Model):
 
 class UserInfo(models.Model):
     userId = models.IntegerField(db_column="user_id")
-    token = models.CharField(max_length=255,db_column="user_token")
-    sex = models.IntegerField(db_column="sex",null=True)
-    sign = models.CharField(max_length=255,db_column="sign",null=True)
-    schoolId = models.IntegerField(db_column="school_id",null=True)
+    token = models.CharField(max_length=255, db_column="user_token")
+    sex = models.IntegerField(db_column="sex", null=True)
+    sign = models.CharField(max_length=255, db_column="sign", null=True)
+    schoolId = models.IntegerField(db_column="school_id", null=True)
 
     class Meta:
         db_table = "user_info"

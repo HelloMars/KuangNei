@@ -23,7 +23,6 @@ class ApiTest(TestCase):
         jsond = json.loads(response.content)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(jsond['returnCode'], 0)
-        self.assertEqual(jsond['returnMessage'], '')
 
     def _test_failed_message(self, response):
         jsond = json.loads(response.content)
@@ -92,12 +91,31 @@ class ApiTest(TestCase):
         response = self.client.get('/kuangnei/api/register/')
         self._test_failed_message(response)
         response = self.client.post('/kuangnei/api/register/',
-            {'username': 'kuangnei', 'password': '~!@#`123qwer'})
+            {'username': 'kuangnei', 'password': '~!@#`123qwer', 'token': ''})
         self._test_suc_message(response)
         jsond = json.loads(response.content)
         self.assertEqual(jsond['user'], 'kuangnei')
 
+        # test exist
+        response = self.client.post('/kuangnei/api/checkIfUserExist/',
+                                    {'username': 'kuangnei'})
+        self._test_suc_message(response)
+        jsond = json.loads(response.content)
+        self.assertTrue(jsond['exist'])
+        response = self.client.post('/kuangnei/api/checkIfUserExist/',
+                                    {'username': 'kuang'})
+        self._test_suc_message(response)
+        jsond = json.loads(response.content)
+        self.assertFalse(jsond['exist'])
+
         # test login_in
+        response = self.client.get('/kuangnei/api/signin/')
+        self._test_failed_message(response)
+        # password error
+        response = self.client.post('/kuangnei/api/signin/',
+            {'username': 'kuangnei', 'password': ''})
+        self._test_failed_message(response)
+        # successful
         response = self.client.post('/kuangnei/api/signin/',
             {'username': 'kuangnei', 'password': '~!@#`123qwer'})
         self._test_suc_message(response)

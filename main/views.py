@@ -84,11 +84,13 @@ def register(request):
     if request.method != 'POST':
         ret = utils.wrap_message(code=2)
     else:
-        username = request.POST.get('username','')
-        password = request.POST.get('password','')
-        token = request.POST.get('token','')
-        if username != "" and password != "" and token != "":
-            olduser = User.objects.filter(username = username).first()
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        token = request.POST.get('token')
+        if username is None or password is None or token is None:
+            ret = utils.wrap_message(code=1)
+        else:
+            olduser = User.objects.filter(username=username).first()
             if olduser is None:
                 newuser = User.objects.create_user(username=username, password=password)
                 if newuser is None:
@@ -108,66 +110,45 @@ def register(request):
 
 #检查用户名是否已经存在
 def check_if_user_exist(request):
-    if request.method == 'POST':
-        username = request.POST.get('username','')
-        user = User.objects.filter(username = username)
-        if user:
-            backmessage = {'returnCode':1,
-                           'returnMessage':'用户已经存在',
-                           }
-        else:
-            backmessage = {'returnCode':0,
-                           'returnMessage':'',
-                           }
-        return HttpResponse(json.dumps(backmessage,ensure_ascii = False))
+    if request.method != 'POST':
+        ret = utils.wrap_message(code=2)
     else:
-        backmessage = {'returnCode':1,
-                        'returnMessage':'注册失败',
-                           }
-    return HttpResponse(json.dumps(backmessage,ensure_ascii = False))
+        username = request.POST.get('username')
+        user = User.objects.filter(username=username)
+        if user:
+            ret = utils.wrap_message({'exist': True})
+        else:
+            ret = utils.wrap_message({'exist': False})
+    return HttpResponse(json.dumps(ret, ensure_ascii=False))
 
 
 def login_in(request):
-    username = request.POST.get('username') #['username']
-    password = request.POST.get('password') #['password']
-    if (username is None) or (password is None):
-        backmessage = {'returnCode': 1,
-                      'returnMessage': '用户名密码不能为空',
-                      }
-        return HttpResponse(json.dumps(backmessage))
-    try:
-        user = authenticate(username=username, password=password)
-        if user is not None:
-            if user.is_active:
-                login(request, user)
-                request.session.set_expiry(300)
-                backmessage = {'returnCode': 0,
-                               'returnMessage': '',
-                              }
-            else:
-                backmessage = {'returnCode': 1,
-                               'returnMessage': '用户认证已过期',
-                              }
+    if request.method != 'POST':
+        ret = utils.wrap_message(code=2)
+    else:
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        if username is None or password is None:
+            ret = utils.wrap_message(code=1)
         else:
-            backmessage = {'returnCode': 1,
-                           'returnMessage': '用户名或密码错误',
-                          }
-    except Exception as e:
-        print repr(e)
-        backmessage = {'returnCode': 1,
-                       'returnMessage': '系统异常',
-                        }
-    return HttpResponse(json.dumps(backmessage))
+            user = authenticate(username=username, password=password)
+            if user is None:
+                ret = utils.wrap_message(code=11, msg='用户名或密码错误')
+            else:
+                if user.is_active:
+                    login(request, user)
+                    request.session.set_expiry(300)
+                    ret = utils.wrap_message(code=0, msg='登陆成功')
+                else:
+                    ret = utils.wrap_message(code=12, msg='用户认证已过期')
+    return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
 @login_required
 def logout_out(request):
     logout(request)
-    backmessage = {
-       'returnCode': 0,
-       'returnMessage': '',
-    }
-    return HttpResponse(json.dumps(backmessage))
+    ret = utils.wrap_message(code=0, msg='退出成功')
+    return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
 @login_required
@@ -179,7 +160,7 @@ def test_view(request):
 def add_user_info(request):
     user_id = request.session[SESSION_KEY]
     return HttpResponse(user_id)
-   
+
 
 def channellist(request):
     foos = {
