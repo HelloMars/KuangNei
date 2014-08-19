@@ -1,13 +1,13 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
-from django.contrib.auth import authenticate, logout, login
+from django.contrib.auth import authenticate, logout, login, SESSION_KEY
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 from kuangnei import consts, utils
 from kuangnei.utils import logger
-from main.models import Post, Post_picture
+from main.models import Post, Post_picture, UserInfo
 import json
 import post_push
 import time
@@ -84,12 +84,11 @@ def register(request):
     if request.method != 'POST':
         ret = utils.wrap_message(code=2)
     else:
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        if username is None or password is None:
-            ret = utils.wrap_message(code=1)
-        else:
-            olduser = User.objects.filter(username=username).first()
+        username = request.POST.get('username','')
+        password = request.POST.get('password','')
+        token = request.POST.get('token','')
+        if username != "" and password != "" and token != "":
+            olduser = User.objects.filter(username = username).first()
             if olduser is None:
                 newuser = User.objects.create_user(username=username, password=password)
                 if newuser is None:
@@ -175,6 +174,12 @@ def logout_out(request):
 def test_view(request):
     return HttpResponse('diu')
 
+
+@login_required
+def add_user_info(request):
+    user_id = request.session[SESSION_KEY]
+    return HttpResponse(user_id)
+   
 
 def channellist(request):
     foos = {
