@@ -159,7 +159,20 @@ def test_view(request):
 @login_required
 def add_user_info(request):
     user_id = request.session[SESSION_KEY]
-    return HttpResponse(user_id)
+    sex = request.POST.get('sex')
+    schoolid = request.POST.get('schoolid')
+    sign = request.POST.get('sign')
+    user_info = UserInfo.objects.get(userId = user_id)
+    if sex is not None:
+        user_info.sex = sex
+    if schoolid is not None:
+        user_info.schoolId = schoolid
+    if sign is not None:
+        user_info.sign = sign
+    user_info.save()
+    logger.info('修改用户(%s)信息成功', repr(user_id))
+    ret = utils.wrap_message(code=0,msg='修改个人信息成功')
+    return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
 def channellist(request):
