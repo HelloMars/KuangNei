@@ -97,9 +97,10 @@ def register(request):
                     ret = utils.wrap_message(code=10, msg='注册失败')
                     logger.warn('注册失败')
                 else:
+                    UserInfo.objects.create(userId=newuser.id, token=token)  #在user_info表中设置token
                     user = authenticate(username=username, password=password)
                     login(request, user)
-                    request.session.set_expiry(300)
+                    request.session.set_expiry(300)     #session失效期5分钟
                     ret = utils.wrap_message({'user': newuser.username})
                     logger.info('注册新用户(%s)成功', repr(newuser))
             else:
