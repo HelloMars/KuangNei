@@ -4,11 +4,13 @@
 from django.contrib.auth import authenticate, logout, login, SESSION_KEY
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.db import transaction
+from django.db.models import F
 from django.http import HttpResponse
 import re
 from kuangnei import consts, utils
 from kuangnei.utils import logger
-from main.models import Post, Post_picture, UserInfo
+from main.models import Post, Post_picture, UserInfo, PostResponse
 import json
 import post_push
 import time
@@ -182,7 +184,7 @@ def add_user_info(request):
         user_info.sign = sign
     user_info.save()
     logger.info('修改用户(%s)信息成功', repr(user_id))
-    ret = utils.wrap_message(code=0,msg='修改个人信息成功')
+    ret = utils.wrap_message(code=0, msg='修改个人信息成功')
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
@@ -198,6 +200,24 @@ def channellist(request):
     }
     data = json.dumps(foos)
     return HttpResponse(data, mimetype='application/json')
+
+@login_required
+def response_post(request):
+    user_id = request.session[SESSION_KEY]
+    post_id = request.POST.get('postId')
+    content = request.POST.get('content')
+    if post_id is None or content is None or user_id is None:
+        ret = utils.wrap_message(code=1)
+    else:
+        responseTime=time.strftime('%Y-%m-%d %H:%M:%S')
+        with transaction.atomic():
+            Post.objects.get(postId=post_id).update(currentFloor=F('currentFloor')+1)
+            current_floor = Post.objects.get(postId=post_id).currentFloor
+            post_response = PostResponse.objects.create(postId=post_id, userId=user_id, content=content,
+                                                        floor=current_floor, createTime=responseTime,
+                                                        editStatus=0)
+            ret = utils.wrap_message(code=0, msg="发表回复成功")
+    HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
 def _push_message_to_app(post):
