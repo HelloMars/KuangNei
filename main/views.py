@@ -5,6 +5,7 @@ from django.contrib.auth import authenticate, logout, login, SESSION_KEY
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.http import HttpResponse
+import re
 from kuangnei import consts, utils
 from kuangnei.utils import logger
 from main.models import Post, Post_picture, UserInfo
@@ -164,6 +165,15 @@ def add_user_info(request):
     schoolid = request.POST.get('schoolid')
     sign = request.POST.get('sign')
     user_info = UserInfo.objects.get(userId = user_id)
+    telephone = request.POST.get('telephone')
+    if telephone is not None:
+        pattern = re.compile('^1[3|5|7|8|][0-9]{9}$')
+        match = pattern.match(telephone)
+        if match:
+            user_info.telephone = telephone
+        else:
+            ret = utils.wrap_message(code=13, msg='电话有误')
+            return HttpResponse(json.dumps(ret, ensure_ascii=False))
     if sex is not None:
         user_info.sex = sex
     if schoolid is not None:

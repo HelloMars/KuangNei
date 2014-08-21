@@ -61,6 +61,7 @@ class UserInfo(models.Model):
     sex = models.IntegerField(db_column="sex", null=True)
     sign = models.CharField(max_length=255, db_column="sign", null=True)
     schoolId = models.IntegerField(db_column="school_id", null=True)
+    telephone = models.CharField(max_length=50,db_column="telephone")
 
     class Meta:
         db_table = "user_info"
