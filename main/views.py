@@ -4,10 +4,13 @@
 from django.contrib.auth import authenticate, logout, login, SESSION_KEY
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.db import transaction
+from django.db.models import F
 from django.http import HttpResponse
+import re
 from kuangnei import consts, utils
 from kuangnei.utils import logger
-from main.models import Post, Post_picture, UserInfo
+from main.models import Post, Post_picture, UserInfo, PostResponse
 import json
 import post_push
 import time
@@ -90,6 +93,9 @@ def register(request):
         if username is None or password is None or token is None:
             ret = utils.wrap_message(code=1)
         else:
+            if not utils.is_avaliable_phone(username):
+                ret = utils.wrap_message(code=13,msg='电话有误')
+                return HttpResponse(json.dumps(ret, ensure_ascii=False))
             olduser = User.objects.filter(username=username).first()
             if olduser is None:
                 newuser = User.objects.create_user(username=username, password=password)
@@ -97,9 +103,10 @@ def register(request):
                     ret = utils.wrap_message(code=10, msg='注册失败')
                     logger.warn('注册失败')
                 else:
+                    UserInfo.objects.create(userId=newuser.id, token=token)  #在user_info表中设置token
                     user = authenticate(username=username, password=password)
                     login(request, user)
-                    request.session.set_expiry(300)
+                    request.session.set_expiry(300)     #session失效期5分钟
                     ret = utils.wrap_message({'user': newuser.username})
                     logger.info('注册新用户(%s)成功', repr(newuser))
             else:
@@ -159,7 +166,29 @@ def test_view(request):
 @login_required
 def add_user_info(request):
     user_id = request.session[SESSION_KEY]
-    return HttpResponse(user_id)
+    sex = request.POST.get('sex')
+    schoolid = request.POST.get('schoolid')
+    sign = request.POST.get('sign')
+    user_info = UserInfo.objects.get(userId = user_id)
+    telephone = request.POST.get('telephone')
+    if telephone is not None:
+        pattern = re.compile('^1[3|5|7|8|][0-9]{9}$')
+        match = pattern.match(telephone)
+        if match:
+            user_info.telephone = telephone
+        else:
+            ret = utils.wrap_message(code=13, msg='电话有误')
+            return HttpResponse(json.dumps(ret, ensure_ascii=False))
+    if sex is not None:
+        user_info.sex = sex
+    if schoolid is not None:
+        user_info.schoolId = schoolid
+    if sign is not None:
+        user_info.sign = sign
+    user_info.save()
+    logger.info('修改用户(%s)信息成功', repr(user_id))
+    ret = utils.wrap_message(code=0, msg='修改个人信息成功')
+    return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
 def channellist(request):
@@ -174,6 +203,24 @@ def channellist(request):
     }
     data = json.dumps(foos)
     return HttpResponse(data, mimetype='application/json')
+
+@login_required
+def response_post(request):
+    user_id = request.session[SESSION_KEY]
+    post_id = request.POST.get('postId')
+    content = request.POST.get('content')
+    if post_id is None or content is None or user_id is None:
+        ret = utils.wrap_message(code=1)
+    else:
+        responseTime=time.strftime('%Y-%m-%d %H:%M:%S')
+        with transaction.atomic():
+            Post.objects.get(postId=post_id).update(currentFloor=F('currentFloor')+1)
+            current_floor = Post.objects.get(postId=post_id).currentFloor
+            post_response = PostResponse.objects.create(postId=post_id, userId=user_id, content=content,
+                                                        floor=current_floor, createTime=responseTime,
+                                                        editStatus=0)
+            ret = utils.wrap_message(code=0, msg="发表回复成功")
+    HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
 def _push_message_to_app(post):
