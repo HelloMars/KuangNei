@@ -61,6 +61,19 @@ class UserInfo(models.Model):
     sex = models.IntegerField(db_column="sex", null=True)
     sign = models.CharField(max_length=255, db_column="sign", null=True)
     schoolId = models.IntegerField(db_column="school_id", null=True)
+    telephone = models.CharField(max_length=50,db_column="telephone")
 
     class Meta:
         db_table = "user_info"
+
+
+class PostResponse(models.Model):
+    postId = models.IntegerField(db_column="post_id",db_index=True)
+    userId = models.IntegerField(db_column="user_id")
+    content = models.CharField(db_column="content",max_length=500)
+    floor = models.IntegerField(db_column="floor")
+    createTime = models.DateTimeField(db_column="create_time")
+    editStatus = models.IntegerField(db_column="edit_status")
+
+    class Meta:
+        db_table = "post_response"
