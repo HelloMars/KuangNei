@@ -93,6 +93,9 @@ def register(request):
         if username is None or password is None or token is None:
             ret = utils.wrap_message(code=1)
         else:
+            if not utils.is_avaliable_phone(username):
+                ret = utils.wrap_message(code=13,msg='电话有误')
+                return HttpResponse(json.dumps(ret, ensure_ascii=False))
             olduser = User.objects.filter(username=username).first()
             if olduser is None:
                 newuser = User.objects.create_user(username=username, password=password)

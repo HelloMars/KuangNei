@@ -5,6 +5,8 @@
 import logging
 
 # Get an instance of a logger
+import re
+
 logger = logging.getLogger("kuangnei")
 
 from qiniu import conf
@@ -47,3 +49,11 @@ def get_dnurl(key):
     dnurl = policy.make_request(base_url)
     logger.info("Generate qiniu dnurl(%s) from key(%s)", dnurl, key)
     return dnurl
+
+def is_avaliable_phone(phonenumber):
+    pattern = re.compile('^1[3|5|7|8|][0-9]{9}$')
+    match = pattern.match(phonenumber)
+    if match:
+        return True
+    else:
+        return False
