@@ -66,6 +66,7 @@ class UserInfo(models.Model):
     )
     userId = models.IntegerField(db_column="user_id")
     token = models.CharField(max_length=255, db_column="user_token")
+    avatar = models.CharField(max_length=255, db_column="avatar", null=True)
     sex = models.IntegerField(db_column="sex", choices=SEX_CHOICES, default=NEUTRAL)
     sign = models.CharField(max_length=255, db_column="sign", null=True)
     schoolId = models.IntegerField(db_column="school_id", null=True)
