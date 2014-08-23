@@ -94,7 +94,7 @@ def register(request):
             ret = utils.wrap_message(code=1)
         else:
             if not utils.is_avaliable_phone(username):
-                ret = utils.wrap_message(code=13,msg='电话有误')
+                ret = utils.wrap_message(code=13, msg='电话有误')
                 return HttpResponse(json.dumps(ret, ensure_ascii=False))
             olduser = User.objects.filter(username=username).first()
             if olduser is None:
@@ -103,10 +103,10 @@ def register(request):
                     ret = utils.wrap_message(code=10, msg='注册失败')
                     logger.warn('注册失败')
                 else:
-                    UserInfo.objects.create(userId=newuser.id, token=token)  #在user_info表中设置token
+                    UserInfo.objects.create(userId=newuser.id, token=token)  # 在user_info表中设置token
                     user = authenticate(username=username, password=password)
                     login(request, user)
-                    request.session.set_expiry(300)     #session失效期5分钟
+                    request.session.set_expiry(300)  # session失效期5分钟
                     ret = utils.wrap_message({'user': newuser.username})
                     logger.info('注册新用户(%s)成功', repr(newuser))
             else:
@@ -169,14 +169,10 @@ def add_user_info(request):
     sex = request.POST.get('sex')
     schoolid = request.POST.get('schoolid')
     sign = request.POST.get('sign')
-    user_info = UserInfo.objects.get(userId = user_id)
+    user_info = UserInfo.objects.get(userId=user_id)
     telephone = request.POST.get('telephone')
     if telephone is not None:
-        pattern = re.compile('^1[3|5|7|8|][0-9]{9}$')
-        match = pattern.match(telephone)
-        if match:
-            user_info.telephone = telephone
-        else:
+        if not utils.is_avaliable_phone(telephone):
             ret = utils.wrap_message(code=13, msg='电话有误')
             return HttpResponse(json.dumps(ret, ensure_ascii=False))
     if sex is not None:
