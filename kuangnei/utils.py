@@ -18,10 +18,14 @@ conf.ACCESS_KEY = consts.QINIU_ACCESS_KEY
 conf.SECRET_KEY = consts.QINIU_SECRET_KEY
 
 from datetime import datetime
+from datetime import date
 import json
 
 datetimeHandler = lambda obj: obj.strftime('%Y-%m-%d %H:%M:%S')\
     if isinstance(obj, datetime) else json.JSONEncoder().default(obj)
+
+dateHandler = lambda obj: obj.strftime('%Y-%m-%d')\
+    if isinstance(obj, date) else json.JSONEncoder().default(obj)
 
 
 def wrap_message(data={}, code=0, msg=''):

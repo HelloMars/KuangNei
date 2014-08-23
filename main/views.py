@@ -7,7 +7,6 @@ from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import F
 from django.http import HttpResponse
-import re
 from kuangnei import consts, utils
 from kuangnei.utils import logger
 from main.models import Post, Post_picture, UserInfo, PostResponse
@@ -56,7 +55,7 @@ def post(request):
                     post_picture = Post_picture(picture_url=url, post_id=post.id,
                                                 create_time=time.strftime('%Y-%m-%d %H:%M:%S'))
                     post_picture.save()
-            _push_message_to_app(post)
+            #_push_message_to_app(post)
             ret = utils.wrap_message({'postId': post.id})
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
@@ -103,7 +102,11 @@ def register(request):
                     ret = utils.wrap_message(code=10, msg='注册失败')
                     logger.warn('注册失败')
                 else:
-                    UserInfo.objects.create(userId=newuser.id, token=token)  # 在user_info表中设置token
+                    # TODO: catch exception and delete user
+                    # 在user_info表中设置token, nickname, telephone
+                    UserInfo.objects.create(userId=newuser.id, token=token,
+                                            nickname='user'+str(newuser.id),
+                                            telephone=username)
                     user = authenticate(username=username, password=password)
                     login(request, user)
                     request.session.set_expiry(300)  # session失效期5分钟
@@ -169,28 +172,18 @@ def add_user_info(request):
         ret = utils.wrap_message(code=2)
     else:
         userid = request.session[SESSION_KEY]
-        avatar = request.POST.get('avatar')
-        sex = request.POST.get('sex')
-        schoolid = request.POST.get('schoolid')
-        sign = request.POST.get('sign')
         user_info = UserInfo.objects.get(userId=userid)
-        telephone = request.POST.get('telephone')
-        if telephone is not None:
-            if not utils.is_avaliable_phone(telephone):
-                ret = utils.wrap_message(code=13, msg='电话有误')
-                return HttpResponse(json.dumps(ret, ensure_ascii=False))
-        if avatar is not None:
-            user_info.avatar = avatar
-        if sex is not None:
-            user_info.sex = sex
-        if schoolid is not None:
-            user_info.schoolId = schoolid
-        if sign is not None:
-            user_info.sign = sign
-        user_info.save()
-        logger.info('修改用户(%s)信息成功', repr(userid))
-        ret = utils.wrap_message(code=0, msg='修改个人信息成功')
-    return HttpResponse(json.dumps(ret), mimetype='application/json')
+        modify = user_info.setattrs(request.POST)
+
+        if modify:
+            user_info.save()
+            ret = utils.wrap_message(data=user_info.tojson(), msg='修改个人信息成功')
+            logger.info('修改用户(%s)信息成功', repr(userid))
+        else:
+            ret = utils.wrap_message(data=user_info.tojson(), msg='获取个人信息成功')
+    # TODO: int return string bug
+    return HttpResponse(json.dumps(ret, default=utils.dateHandler),
+                        mimetype='application/json')
 
 
 def channellist(request):
@@ -231,14 +224,16 @@ def _push_message_to_app(post):
 
 
 def _fill_user_info(userid):
-    user = User.objects.get(id=userid)
     try:
+        user = User.objects.get(id=userid)
+        username = user.username
         user_info = UserInfo.objects.get(userId=userid)
         if user_info.avatar is not None:
             avatar = user_info.avatar
-    except UserInfo.DoesNotExist:
+    except User.DoesNotExist or UserInfo.DoesNotExist:
         avatar = 'http://kuangnei.qiniudn.com/FjMgIjdmHH9lkUm9Ra_K1VbKynxR'
+        username = 'KuangNeiDefault'
     jsond = {"id": userid,
              "avatar": avatar,
-             "name": user.username}
+             "name": username}
     return jsond

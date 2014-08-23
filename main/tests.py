@@ -130,12 +130,24 @@ class ApiTest(TestCase):
 
         # test add user info
         response = self.client.post('/kuangnei/api/addUserInfo/',
-                                    {'avatar': 'http://kuangnei.qiniudn.com/FjMgIjdmHH9lkUm9Ra_K1VbKynxR',
+                                    {'avatar': 'http://kuangnei.qiniudn.com/xxx',
+                                     'nickname': 'zavatar',
                                      'sex': UserInfo.MALE,
+                                     'birthday': '1989-01-27',
+                                     'sign': 'Just do it!',
                                      'schoolid': 1,
-                                     'sign': 'A',
                                      'telephone': '18910690027'})
         self._test_suc_message(response)
+        response = self.client.post('/kuangnei/api/addUserInfo/')
+        self._test_suc_message(response)
+        jsond = json.loads(response.content)
+        self.assertEqual(jsond['avatar'], 'http://kuangnei.qiniudn.com/xxx')
+        self.assertEqual(jsond['nickname'], 'zavatar')
+        self.assertEqual(jsond['sex'], UserInfo.MALE)
+        self.assertEqual(jsond['birthday'], '1989-01-27')
+        self.assertEqual(jsond['sign'], 'Just do it!')
+        self.assertEqual(jsond['schoolId'], 1)
+        self.assertEqual(jsond['telephone'], '18910690027')
 
         # test login_out
         response = self.client.get('/kuangnei/api/logout/')

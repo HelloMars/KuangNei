@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from django.db import models
 
+from kuangnei import utils
+
 # Create your models here.
 
 
@@ -63,17 +65,39 @@ class UserInfo(models.Model):
         (FEMALE, 'Female'),
         (MALE, 'Male'),
         (NEUTRAL, 'Neutral'),
+        (3, 'Null')
     )
     userId = models.IntegerField(db_column="user_id")
     token = models.CharField(max_length=255, db_column="user_token")
+    nickname = models.CharField(max_length=255, db_column='nickname')
+    telephone = models.CharField(max_length=50, db_column="telephone")
     avatar = models.CharField(max_length=255, db_column="avatar", null=True)
-    sex = models.IntegerField(db_column="sex", choices=SEX_CHOICES, default=NEUTRAL)
+    sex = models.IntegerField(db_column="sex", choices=SEX_CHOICES, default=3)
+    birthday = models.DateField(db_column="birthday", null=True)
     sign = models.CharField(max_length=255, db_column="sign", null=True)
     schoolId = models.IntegerField(db_column="school_id", null=True)
-    telephone = models.CharField(max_length=50, db_column="telephone")
 
     class Meta:
         db_table = "user_info"
+
+    def setattrs(self, data):
+        modify = False
+        for field in self._meta.fields:
+            attr = field.name
+            value = data.get(attr.lower())
+            if value is not None:
+                if attr == 'telephone' and not utils.is_avaliable_phone(value):
+                    continue
+                setattr(self, attr, value)
+                modify = True
+        return modify
+
+    def tojson(self):
+        ret = {}
+        for field in self._meta.fields:
+            attr = field.name
+            ret[attr] = getattr(self, attr)
+        return ret
 
 
 class PostResponse(models.Model):
