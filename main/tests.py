@@ -48,7 +48,9 @@ class ApiTest(TestCase):
         response = self.client.get('/kuangnei/api/post/')
         self._test_failed_message(response)
         response = self.client.post('/kuangnei/api/post/',
-            {'userid': 1, 'channelid': 1, 'content': 'unit test, 单元测试'})
+                                    {'userid': 1,
+                                     'channelid': 1,
+                                     'content': 'unit test, 单元测试'})
         self._test_suc_message(response)
         jsond = json.loads(response.content)
         self.assertLess(0, jsond['postId'])
@@ -128,7 +130,8 @@ class ApiTest(TestCase):
 
         # test add user info
         response = self.client.post('/kuangnei/api/addUserInfo/',
-                                    {'sex': UserInfo.MALE,
+                                    {'avatar': 'http://kuangnei.qiniudn.com/FjMgIjdmHH9lkUm9Ra_K1VbKynxR',
+                                     'sex': UserInfo.MALE,
                                      'schoolid': 1,
                                      'sign': 'A',
                                      'telephone': '18910690027'})

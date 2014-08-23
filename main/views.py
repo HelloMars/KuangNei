@@ -78,7 +78,7 @@ def postlist(request):
             pictures = Post_picture.objects.filter(post_id=e.id).values_list("picture_url", flat=True)
             d[e.id] = list(pictures)
         ret = utils.wrap_message({'size': len(postlist)})
-        ret['list'] = [e.tojson(d[e.id], mock_user(e.userId)) for e in postlist]
+        ret['list'] = [e.tojson(d[e.id], _fill_user_info(e.userId)) for e in postlist]
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler),
                         mimetype='application/json')
 
@@ -165,25 +165,31 @@ def test_view(request):
 
 @login_required
 def add_user_info(request):
-    user_id = request.session[SESSION_KEY]
-    sex = request.POST.get('sex')
-    schoolid = request.POST.get('schoolid')
-    sign = request.POST.get('sign')
-    user_info = UserInfo.objects.get(userId=user_id)
-    telephone = request.POST.get('telephone')
-    if telephone is not None:
-        if not utils.is_avaliable_phone(telephone):
-            ret = utils.wrap_message(code=13, msg='电话有误')
-            return HttpResponse(json.dumps(ret, ensure_ascii=False))
-    if sex is not None:
-        user_info.sex = sex
-    if schoolid is not None:
-        user_info.schoolId = schoolid
-    if sign is not None:
-        user_info.sign = sign
-    user_info.save()
-    logger.info('修改用户(%s)信息成功', repr(user_id))
-    ret = utils.wrap_message(code=0, msg='修改个人信息成功')
+    if request.method != 'POST':
+        ret = utils.wrap_message(code=2)
+    else:
+        userid = request.session[SESSION_KEY]
+        avatar = request.POST.get('avatar')
+        sex = request.POST.get('sex')
+        schoolid = request.POST.get('schoolid')
+        sign = request.POST.get('sign')
+        user_info = UserInfo.objects.get(userId=userid)
+        telephone = request.POST.get('telephone')
+        if telephone is not None:
+            if not utils.is_avaliable_phone(telephone):
+                ret = utils.wrap_message(code=13, msg='电话有误')
+                return HttpResponse(json.dumps(ret, ensure_ascii=False))
+        if avatar is not None:
+            user_info.avatar = avatar
+        if sex is not None:
+            user_info.sex = sex
+        if schoolid is not None:
+            user_info.schoolId = schoolid
+        if sign is not None:
+            user_info.sign = sign
+        user_info.save()
+        logger.info('修改用户(%s)信息成功', repr(userid))
+        ret = utils.wrap_message(code=0, msg='修改个人信息成功')
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
@@ -224,8 +230,15 @@ def _push_message_to_app(post):
     post_push.pushMessageToApp(post)
 
 
-def mock_user(userid):
+def _fill_user_info(userid):
+    user = User.objects.get(id=userid)
+    try:
+        user_info = UserInfo.objects.get(userId=userid)
+        if user_info.avatar is not None:
+            avatar = user_info.avatar
+    except UserInfo.DoesNotExist:
+        avatar = 'http://kuangnei.qiniudn.com/FjMgIjdmHH9lkUm9Ra_K1VbKynxR'
     jsond = {"id": userid,
-             "avatar": "http://kuangnei.qiniudn.com/FjMgIjdmHH9lkUm9Ra_K1VbKynxR",
-             "name": "框内"}
+             "avatar": avatar,
+             "name": user.username}
     return jsond
