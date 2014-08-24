@@ -51,7 +51,7 @@ KuangNei
         returnMessage: "",
         returnCode: 0
     }
-        ```
+    ```
 3. `[POST] http://kuangnei.me/kuangnei/api/post/`, 发帖子，【需要登陆】
     * POST请求必要参数: `{'channelid': 1, 'content': 'test, 测试中文'}`, 可选参数: `{imageurl: 'url1@url2@url3'}`
     * 返回json:
@@ -96,53 +96,53 @@ KuangNei
 5. `[POST] https://kuangnei.me/kuangnei/api/register/`, 注册
     * POST请求必要参数: 
     ```
-        {
+    {
          'username': '18910690027', # username必须为合法手机号
          'password': '123456',
          'token': 'xxx'
-        }
+    }
     ```
     * 返回json:
     ```
-       {
+    {
         "returnMessage": "",
         "returnCode": 0,
         "user": "18910690027"
-       }
+    }
     ```
 6. `[POST] https://kuangnei.me/kuangnei/api/signin/`, 登录
     * POST请求必要参数:
     ```
-        {
-         'username': '18910690027', # username必须为合法手机号
-         'password': '123456',
-        }
+    {
+        'username': '18910690027', # username必须为合法手机号
+        'password': '123456',
+    }
     ```
     * POST请求可选参数: `{'token': 'xxx'}` 用于更新个推clientID
     * 返回json:
     ```    
-      {
-       "returnMessage": "登陆成功",
+    {
+        "returnMessage": "登陆成功",
         "returnCode": 0,
-      }
+    }
     ```
 7. `[GET] https://kuangnei.me/kuangnei/api/logout/`, 退出
     * 返回json:
     ```    
-      {
-       "returnMessage": "退出成功",
+    {
+        "returnMessage": "退出成功",
         "returnCode": 0,
-      }
+    }
     ```
 8. `[POST] http://kuangnei.me/kuangnei/api/checkIfUserExist/` 查看用户是否存在
     * POST请求必要参数: `{'username': '18910690027'}`
     * 返回json:
     ```
-        {
+    {
         "returnMessage": "",
         "returnCode": 0,
         "exist": True
-       }
+    }
     ```
 9. `[POST] http://kuangnei.me/kuangnei/api/addUserInfo/` 添加/修改/查询用户信息，【需要登陆】
     * POST请求可选参数:
