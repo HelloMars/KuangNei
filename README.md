@@ -7,10 +7,12 @@ KuangNei
 * `git clone git@github.com:HelloMars/KuangNei.git` #从github克隆代码
 * `virtualenv KuangNei` #创建虚拟python环境
 * `source KuangNei/bin/activate` #启动虚拟环境
+* (pip freeze > requirements.txt 命令保存了所需包的版本)
 * `pip install Django` (1.6.5) #虚拟环境下装Django
 * `pip install uwsgi` (2.0.6)
 * `pip install mysql-python` (1.2.5) #mysql drive
 * `pip install qiniu` (6.1.8)
+* `pip install fabric` (可选，用于自动化部署)
 * `cd KuangNei`
 * `python manage.py collectstatic`
 * `python manage.py syncdb` #输入admin账户密码
@@ -18,6 +20,7 @@ KuangNei
 * `cp mysql.cnf.template mysql.cnf` 并修改对应数据库配置
 * `sh run.sh` 启动uwsgi，自动加载python文件，daemonize=log/uwsgi.log
 * `kill -INT {pid}` 停止uwsgi
+* `fab update` git pull, syncdb, unit test...
 
 ## API ##
 ### returned json ###
