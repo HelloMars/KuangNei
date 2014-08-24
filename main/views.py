@@ -1,18 +1,23 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
+import json
+import time
+
 from django.contrib.auth import authenticate, logout, login, SESSION_KEY
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import F
 from django.http import HttpResponse
+from django.http import Http404
+from django.shortcuts import redirect
+
 from kuangnei import consts, utils
 from kuangnei.utils import logger
 from main.models import Post, PostPicture, UserInfo, PostResponse
-import json
 import post_push
-import time
+
 
 # Create your views here.
 
@@ -136,31 +141,49 @@ def check_if_user_exist(request):
     return HttpResponse(json.dumps(ret, ensure_ascii=False))
 
 
+def _login(username, password, token, request):
+    if username is None or password is None:
+        ret = utils.wrap_message(code=1)
+    else:
+        user = authenticate(username=username, password=password)
+        if user is None:
+            ret = utils.wrap_message(code=10, msg='用户名或密码错误')
+        else:
+            if user.is_active:
+                login(request, user)
+                if token is not None:
+                    user_info = UserInfo.objects.get(userId=user.id)
+                    user_info.token = token
+                    user_info.save()
+                    logger.info('修改用户(%s)token成功', repr(user.id))
+                request.session.set_expiry(300)
+                ret = utils.wrap_message(code=0, msg='登陆成功')
+            else:
+                ret = utils.wrap_message(code=10, msg='用户无权限')
+    return ret
+
+
+# http://127.0.0.1:8000/accounts/login/?
+# next=/kuangnei/api/channellist/&username=18910690027&password=~%21%40%23%60123qwer
+def rlogin_in(request):
+    username = request.GET.get('username')
+    password = request.GET.get('password')
+    token = request.GET.get('token')
+    if username is None or password is None:
+        raise Http404
+    else:
+        _login(username, password, token, request)
+        return redirect(request.GET.get('next'))
+
+
 def login_in(request):
     if request.method != 'POST':
         ret = utils.wrap_message(code=2)
     else:
         username = request.POST.get('username')
         password = request.POST.get('password')
-        if username is None or password is None:
-            ret = utils.wrap_message(code=1)
-        else:
-            user = authenticate(username=username, password=password)
-            if user is None:
-                ret = utils.wrap_message(code=10, msg='用户名或密码错误')
-            else:
-                if user.is_active:
-                    login(request, user)
-                    token = request.POST.get('token')
-                    if token is not None:
-                        user_info = UserInfo.objects.get(userId=user.id)
-                        user_info.token = token
-                        user_info.save()
-                        logger.info('修改用户(%s)token成功', repr(user.id))
-                    request.session.set_expiry(300)
-                    ret = utils.wrap_message(code=0, msg='登陆成功')
-                else:
-                    ret = utils.wrap_message(code=10, msg='用户无权限')
+        token = request.POST.get('token')
+        ret = _login(username, password, token, request)
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
