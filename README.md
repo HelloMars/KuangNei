@@ -34,26 +34,25 @@ KuangNei
     * 11: incorrect format of parameters
 
 ### API List ###
-* qiniu
-    * `[GET] http://kuangnei.me/kuangnei/api/getUpToken/`, 获得图片上传token，【需要登陆】
-        * 返回json示例
+1. `[GET] http://kuangnei.me/kuangnei/api/getUpToken/`, 获得图片上传token，【需要登陆】
+    * 返回json示例
+    ```
+    {
+        uptoken: "qZUvN3pdML7x0pa4LPoP2iLI5iif0DP1l5JLx1Ax:6J_cbPoJEV8pqoFXgZRBQ9SiFKk=:eyJzY29wZSI6Imt1YW5nbmVpIiwiZGVhZGxpbmUiOjE0MDgyOTExODV9",
+        returnMessage: "",
+        returnCode: 0
+    }
+    ```
+2. `[GET] http://kuangnei.me/kuangnei/api/getDnUrl/?key={image_name}`, 获得私有空间图片下载url，【需要登陆】
+    * 返回json示例
+    ```
+    {
+        dnurl: "http://kuangnei.qiniudn.com/image.jpg?e=1408291300&token=qZUvN3pdML7x0pa4LPoP2iLI5iif0DP1l5JLx1Ax:isuiw6VSBaeAQXh9D2R3kWRIBuA=",
+        returnMessage: "",
+        returnCode: 0
+    }
         ```
-        {
-            uptoken: "qZUvN3pdML7x0pa4LPoP2iLI5iif0DP1l5JLx1Ax:6J_cbPoJEV8pqoFXgZRBQ9SiFKk=:eyJzY29wZSI6Imt1YW5nbmVpIiwiZGVhZGxpbmUiOjE0MDgyOTExODV9",
-            returnMessage: "",
-            returnCode: 0
-        }
-        ```
-    * `[GET] http://kuangnei.me/kuangnei/api/getDnUrl/?key={image_name}`, 获得私有空间图片下载url，【需要登陆】
-        * 返回json示例
-        ```
-        {
-            dnurl: "http://kuangnei.qiniudn.com/image.jpg?e=1408291300&token=qZUvN3pdML7x0pa4LPoP2iLI5iif0DP1l5JLx1Ax:isuiw6VSBaeAQXh9D2R3kWRIBuA=",
-            returnMessage: "",
-            returnCode: 0
-        }
-        ```
-* `[POST] http://kuangnei.me/kuangnei/api/post/`, 发帖子，【需要登陆】
+3. `[POST] http://kuangnei.me/kuangnei/api/post/`, 发帖子，【需要登陆】
     * POST请求必要参数: `{'channelid': 1, 'content': 'test, 测试中文'}`, 可选参数: `{imageurl: 'url1@url2@url3'}`
     * 返回json:
     ```
@@ -63,7 +62,7 @@ KuangNei
         "postId": 4
     }
     ```
-* `[GET] http://kuangnei.me/kuangnei/api/postlist/?channelid=1&page=1`, 拉取帖子列表，【需要登陆】
+4. `[GET] http://kuangnei.me/kuangnei/api/postlist/?channelid=1&page=1`, 拉取帖子列表，【需要登陆】
     * page表明第几批数据（目前后端一批有五个帖子）
     * 返回json:
     ```
@@ -94,7 +93,7 @@ KuangNei
         "size": 1
     }
     ```
-* `[POST] https://kuangnei.me/kuangnei/api/register/`, 注册
+5. `[POST] https://kuangnei.me/kuangnei/api/register/`, 注册
     * POST请求必要参数: 
     ```
         {
@@ -111,7 +110,7 @@ KuangNei
         "user": "18910690027"
        }
     ```
-* `[POST] https://kuangnei.me/kuangnei/api/signin/`, 登录
+6. `[POST] https://kuangnei.me/kuangnei/api/signin/`, 登录
     * POST请求必要参数:
     ```
         {
@@ -127,7 +126,7 @@ KuangNei
         "returnCode": 0,
       }
     ```
-* `[GET] https://kuangnei.me/kuangnei/api/logout/`, 退出
+7. `[GET] https://kuangnei.me/kuangnei/api/logout/`, 退出
     * 返回json:
     ```    
       {
@@ -135,7 +134,7 @@ KuangNei
         "returnCode": 0,
       }
     ```
-* `[POST] http://kuangnei.me/kuangnei/api/checkIfUserExist/` 查看用户是否存在
+8. `[POST] http://kuangnei.me/kuangnei/api/checkIfUserExist/` 查看用户是否存在
     * POST请求必要参数: `{'username': '18910690027'}`
     * 返回json:
     ```
@@ -145,7 +144,7 @@ KuangNei
         "exist": True
        }
     ```
-* `[POST] http://kuangnei.me/kuangnei/api/addUserInfo/` 添加/修改/查询用户信息，【需要登陆】
+9. `[POST] http://kuangnei.me/kuangnei/api/addUserInfo/` 添加/修改/查询用户信息，【需要登陆】
     * POST请求可选参数:
     ```
         个推token (可修改，非null，注册时写入)
@@ -175,7 +174,7 @@ KuangNei
             "schoolId": null,
         }
     ```
-* `[GET] http://kuangnei.me/kuangnei/api/channellist/`, 频道列表，【需要登陆】
+10. `[GET] http://kuangnei.me/kuangnei/api/channellist/`, 频道列表，【需要登陆】
     * 返回json:
     ```
     {
@@ -196,7 +195,53 @@ KuangNei
         size: 2
     }
     ```
-* 
+11. `[GET] http://kuangnei.me/kuangnei/api/postdetail/?postId=1&page=1`, 帖子详细，【需要登陆】
+    * 返回json:
+    ```
+    {
+    }
+    ```
+12. `[POST] http://kuangnei.me/kuangnei/api/replyFirstLevel/`, 一级回复，【需要登陆】
+    * POST请求必要参数: `{'postId': 1, 'content': '一级回复'}`
+    * 返回json:
+    ```
+    {
+    }
+    ```
+13. `[POST] http://kuangnei.me/kuangnei/api/replySecondLevel/`, 二级回复，【需要登陆】
+    * POST请求必要参数: `{'firstLevelId': 1, 'content': '一级回复'}`
+    * 返回json:
+    ```
+    {
+    }
+    ```
+14. `[GET] http://kuangnei.me/kuangnei/api/replydetail/?firstLevelId=1&page=1`, 一级回复详细，【需要登陆】
+    * 返回json:
+    ```
+    {
+    }
+    ```
+15. `[POST] http://kuangnei.me/kuangnei/api/uppost/`, 赞帖子，【需要登陆】
+    * POST请求必要参数: `{'postId': 1}`
+    * 返回json:
+    ```
+    {
+    }
+    ```
+16. `[POST] http://kuangnei.me/kuangnei/api/upreply/`, 赞一级回复，【需要登陆】
+    * POST请求必要参数: `{'firstLevelId': 1}`
+    * 返回json:
+    ```
+    {
+    }
+    ```
+17. `[POST] http://kuangnei.me/kuangnei/api/opposepost/`, 踩帖子，【需要登陆】
+    * POST请求必要参数: `{'postId': 1}`
+    * 返回json:
+    ```
+    {
+    }
+    ```
 
 ## Log ##
 后端log采用python自带的logging模块，以天为节点输出在`log/debug_YYYY_mm_dd.log`文件。在自己的python文件使用该模块示例：
