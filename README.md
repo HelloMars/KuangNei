@@ -27,10 +27,12 @@ KuangNei
     * 0: success
     * 1: incorrect parameters
     * 2: incorrect request method [GET, POST]
+    * 10: user system error
+    * 11: incorrect format of parameters
 
 ### API List ###
 * qiniu
-    * `[GET] http://kuangnei.me/kuangnei/api/getUpToken/`, 获得图片上传token
+    * `[GET] http://kuangnei.me/kuangnei/api/getUpToken/`, 获得图片上传token，【需要登陆】
         * 返回json示例
         ```
         {
@@ -39,7 +41,7 @@ KuangNei
             returnCode: 0
         }
         ```
-    * `[GET] http://kuangnei.me/kuangnei/api/getDnUrl/?key={image_name}`, 获得私有空间图片下载url
+    * `[GET] http://kuangnei.me/kuangnei/api/getDnUrl/?key={image_name}`, 获得私有空间图片下载url，【需要登陆】
         * 返回json示例
         ```
         {
@@ -48,8 +50,8 @@ KuangNei
             returnCode: 0
         }
         ```
-* `[POST] http://kuangnei.me/kuangnei/api/post/`, 发帖子
-    * POST请求必要参数: `{'userid': 1, 'channelid': 1, 'content': 'test, 测试中文'}`, 可选参数: `{imageurl: 'url1@url2@url3'}`
+* `[POST] http://kuangnei.me/kuangnei/api/post/`, 发帖子，【需要登陆】
+    * POST请求必要参数: `{'channelid': 1, 'content': 'test, 测试中文'}`, 可选参数: `{imageurl: 'url1@url2@url3'}`
     * 返回json:
     ```
     {
@@ -58,28 +60,8 @@ KuangNei
         "postId": 4
     }
     ```
-* `[GET] http://kuangnei.me/kuangnei/api/postlist/?userid=1&channelid=1&page=1`, 拉取帖子列表
+* `[GET] http://kuangnei.me/kuangnei/api/postlist/?channelid=1&page=1`, 拉取帖子列表，【需要登陆】
     * page表明第几批数据（目前后端一批有五个帖子）
-    * 返回json:
-
-* `[POST] https://kuangnei.me/kuangnei/api/register/`, 注册
-    *POST请求必要参数: `{'username': abcde, 'password': 123456}`
-    * 返回json:
-       {
-        "returnMessage": "",
-        "returnCode": 0,
-        "user": abcde
-       }
-
-* `[POST] https://kuangnei.me/kuangnei/api/signin/`, 登录
-    *POST请求必要参数: `{'username': abcde, 'password': 123456}`
-    * 返回json:
-      {
-       "returnMessage": "",
-        "returnCode": 0,
-      }
-
-* channel list: `[GET] http://kuangnei.me/kuangnei/api/channellist/`
     * 返回json:
     ```
     {
@@ -95,10 +77,10 @@ KuangNei
                 "channelId": 1,
                 "postId": 4,
                 "replyCount": 0,
-                "content": "test",
+                "content": "test, 测试中文",
                 "upCount": 0,
                 "user": {
-                    "id": "1",
+                    "id": 1,
                     "name": "框内",
                     "avatar": "http://kuangnei.qiniudn.com/FjMgIjdmHH9lkUm9Ra_K1VbKynxR"
                 },
@@ -107,6 +89,108 @@ KuangNei
             },
         ],
         "size": 1
+    }
+    ```
+* `[POST] https://kuangnei.me/kuangnei/api/register/`, 注册
+    * POST请求必要参数: 
+    ```
+        {
+         'username': '18910690027', # username必须为合法手机号
+         'password': '123456',
+         'token': 'xxx'
+        }
+    ```
+    * 返回json:
+    ```
+       {
+        "returnMessage": "",
+        "returnCode": 0,
+        "user": "18910690027"
+       }
+    ```
+* `[POST] https://kuangnei.me/kuangnei/api/signin/`, 登录
+    * POST请求必要参数:
+    ```
+        {
+         'username': '18910690027', # username必须为合法手机号
+         'password': '123456',
+        }
+    ```
+    * POST请求可选参数: `{'token': 'xxx'}` 用于更新个推clientID
+    * 返回json:
+    ```    
+      {
+       "returnMessage": "登陆成功",
+        "returnCode": 0,
+      }
+    ```
+* `[GET] https://kuangnei.me/kuangnei/api/logout/`, 退出
+    * 返回json:
+    ```    
+      {
+       "returnMessage": "退出成功",
+        "returnCode": 0,
+      }
+    ```
+* `[POST] http://kuangnei.me/kuangnei/api/checkIfUserExist/` 查看用户是否存在
+    * POST请求必要参数: `{'username': '18910690027'}`
+    * 返回json:
+    ```
+        {
+        "returnMessage": "",
+        "returnCode": 0,
+        "exist": True
+       }
+    ```
+* `[POST] http://kuangnei.me/kuangnei/api/addUserInfo/` 添加/修改/查询用户信息，【需要登陆】
+    * POST请求可选参数:
+    ```
+        个推token (可修改，非null，注册时写入)
+        昵称nickname, (可修改，非null，注册时默认'user'+userId)
+        电话telephone, (可修改，非null，注册时默认等于username)
+        头像avatar, (可修改，可null)
+        性别sex, (可修改，int，默认3 {0:female, 1:male, 2:neutral, 3:未设置}) 
+        生日birthday, (可修改，可null)
+        签名sign, (可修改，可null)
+        学校schoolId, (可修改，可null，int)
+    ```
+    * POST请求没有任何参数时返回查询用户信息结果
+    * 返回json:
+    ```
+        {
+            "returnMessage": "获取个人信息成功",
+            "returnCode": 0,
+            "id": 1
+            "userId": 1,
+            "token": "xxx",
+            "nickname": "user1",
+            "telephone": "18910690027",
+            "avatar": null,
+            "sex": 3,
+            "birthday": null,
+            "sign": null,
+            "schoolId": null,
+        }
+    ```
+* `[GET] http://kuangnei.me/kuangnei/api/channellist/`, 频道列表，【需要登陆】
+    * 返回json:
+    ```
+    {
+        returnMessage: "",
+        returnCode: 0,
+        list: [
+            {
+                subtitle: "不有趣可能会被踢得很惨哦",
+                id: 0,
+                title: "兴趣"
+            },
+            {
+                subtitle: "约会、表白、同性异性不限",
+                id: 1,
+                title: "缘分"
+            }
+        ],
+        size: 2
     }
     ```
 * 

@@ -29,14 +29,16 @@ dateHandler = lambda obj: obj.strftime('%Y-%m-%d')\
 
 
 def wrap_message(data={}, code=0, msg=''):
-    ret = {'returnCode': code, 'returnMessage': msg}
+    ret = {'returnCode': code}
     if code == 0:
         ret.update(data)
-    elif msg == '':
-        ret['returnMessage'] = {
-            1: 'incorrect parameters',
-            2: 'incorrect request method [GET, POST]'
-        }.get(code, '')
+    # 约定的 returnCode 与 returnMessage 映射表
+    ret['returnMessage'] = {
+        1: 'incorrect parameters. ',
+        2: 'incorrect request method [GET, POST]. ',
+        10: 'user system error. ',
+        11: 'incorrect format of parameters. ',
+    }.get(code, '') + msg
     return ret
 
 

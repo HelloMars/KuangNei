@@ -9,7 +9,7 @@ from django.db.models import F
 from django.http import HttpResponse
 from kuangnei import consts, utils
 from kuangnei.utils import logger
-from main.models import Post, Post_picture, UserInfo, PostResponse
+from main.models import Post, PostPicture, UserInfo, PostResponse
 import json
 import post_push
 import time
@@ -17,12 +17,14 @@ import time
 # Create your views here.
 
 
+@login_required
 def get_uptoken(request):
     uptoken = utils.get_uptoken(consts.QINIU_SCOP)
     ret = utils.wrap_message({'uptoken': uptoken})
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
+@login_required
 def get_dnurl(request):
     key = request.GET.get("key")
     if key is None:
@@ -33,14 +35,15 @@ def get_dnurl(request):
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
+@login_required
 def post(request):
     if request.method != 'POST':
         ret = utils.wrap_message(code=2)
     else:
-        userid = request.POST.get("userid")
+        userid = request.session[SESSION_KEY]
         channelid = request.POST.get("channelid")
         content = request.POST.get("content")
-        if userid is None or channelid is None or content is None:
+        if channelid is None or content is None:
             ret = utils.wrap_message(code=1)
         else:
             post = Post(userId=userid, schoolId=1, content=content, channelId=channelid,
@@ -52,19 +55,20 @@ def post(request):
             if imageurl is not None:
                 imageurls = imageurl.split("@")
                 for url in imageurls:
-                    post_picture = Post_picture(picture_url=url, post_id=post.id,
-                                                create_time=time.strftime('%Y-%m-%d %H:%M:%S'))
+                    post_picture = PostPicture(pictureUrl=url, postId=post.id)
                     post_picture.save()
-            #_push_message_to_app(post)
+                logger.info("save %d pictures", len(imageurls))
+            _push_message_to_app(post)
             ret = utils.wrap_message({'postId': post.id})
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
+@login_required
 def postlist(request):
-    userid = request.GET.get("userid")
+    #userid = request.session[SESSION_KEY]
     channelid = request.GET.get("channelid")
     page = request.GET.get("page")
-    if userid is None or channelid is None or page is None:
+    if channelid is None or page is None:
         ret = utils.wrap_message(code=1)
     else:
         page = int(page)
@@ -74,7 +78,7 @@ def postlist(request):
         logger.info("postlist [%d, %d]", start, end)
         d = {}
         for e in postlist:
-            pictures = Post_picture.objects.filter(post_id=e.id).values_list("picture_url", flat=True)
+            pictures = PostPicture.objects.filter(postId=e.id).values_list("pictureUrl", flat=True)
             d[e.id] = list(pictures)
         ret = utils.wrap_message({'size': len(postlist)})
         ret['list'] = [e.tojson(d[e.id], _fill_user_info(e.userId)) for e in postlist]
@@ -93,7 +97,7 @@ def register(request):
             ret = utils.wrap_message(code=1)
         else:
             if not utils.is_avaliable_phone(username):
-                ret = utils.wrap_message(code=13, msg='电话有误')
+                ret = utils.wrap_message(code=11, msg='电话有误')
                 return HttpResponse(json.dumps(ret, ensure_ascii=False))
             olduser = User.objects.filter(username=username).first()
             if olduser is None:
@@ -143,14 +147,20 @@ def login_in(request):
         else:
             user = authenticate(username=username, password=password)
             if user is None:
-                ret = utils.wrap_message(code=11, msg='用户名或密码错误')
+                ret = utils.wrap_message(code=10, msg='用户名或密码错误')
             else:
                 if user.is_active:
                     login(request, user)
+                    token = request.POST.get('token')
+                    if token is not None:
+                        user_info = UserInfo.objects.get(userId=user.id)
+                        user_info.token = token
+                        user_info.save()
+                        logger.info('修改用户(%s)token成功', repr(user.id))
                     request.session.set_expiry(300)
                     ret = utils.wrap_message(code=0, msg='登陆成功')
                 else:
-                    ret = utils.wrap_message(code=12, msg='用户认证已过期')
+                    ret = utils.wrap_message(code=10, msg='用户无权限')
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
@@ -159,11 +169,6 @@ def logout_out(request):
     logout(request)
     ret = utils.wrap_message(code=0, msg='退出成功')
     return HttpResponse(json.dumps(ret), mimetype='application/json')
-
-
-@login_required
-def test_view(request):
-    return HttpResponse('diu')
 
 
 @login_required
@@ -186,6 +191,7 @@ def add_user_info(request):
                         mimetype='application/json')
 
 
+@login_required
 def channellist(request):
     foos = {
         'returnCode': 0,
@@ -224,16 +230,16 @@ def _push_message_to_app(post):
 
 
 def _fill_user_info(userid):
+    nickname = None
+    avatar = None
     try:
-        user = User.objects.get(id=userid)
-        username = user.username
+        #user = User.objects.get(id=userid)
         user_info = UserInfo.objects.get(userId=userid)
-        if user_info.avatar is not None:
-            avatar = user_info.avatar
-    except User.DoesNotExist or UserInfo.DoesNotExist:
-        avatar = 'http://kuangnei.qiniudn.com/FjMgIjdmHH9lkUm9Ra_K1VbKynxR'
-        username = 'KuangNeiDefault'
+        nickname = user_info.nickname
+        avatar = user_info.avatar
+    except UserInfo.DoesNotExist:
+        logger.warn("User or Userinfo not found")
     jsond = {"id": userid,
              "avatar": avatar,
-             "name": username}
+             "name": nickname}
     return jsond
