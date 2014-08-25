@@ -56,21 +56,30 @@ class Post_picture(models.Model):
 
 
 class UserInfo(models.Model):
+    FEMALE = 0
+    MALE = 1
+    NEUTRAL = 2
+    SEX_CHOICES = (
+        (FEMALE, 'Female'),
+        (MALE, 'Male'),
+        (NEUTRAL, 'Neutral'),
+    )
     userId = models.IntegerField(db_column="user_id")
     token = models.CharField(max_length=255, db_column="user_token")
-    sex = models.IntegerField(db_column="sex", null=True)
+    sex = models.IntegerField(db_column="sex", choices=SEX_CHOICES, default=NEUTRAL)
     sign = models.CharField(max_length=255, db_column="sign", null=True)
     schoolId = models.IntegerField(db_column="school_id", null=True)
-    telephone = models.CharField(max_length=50,db_column="telephone")
+    telephone = models.CharField(max_length=50, db_column="telephone")
 
     class Meta:
         db_table = "user_info"
 
 
 class PostResponse(models.Model):
-    postId = models.IntegerField(db_column="post_id",db_index=True)
+    postId = models.IntegerField(db_column="post_id", db_index=True)
+    postResponseId = models.IntegerField(db_column="response_id", db_index=True)
     userId = models.IntegerField(db_column="user_id")
-    content = models.CharField(db_column="content",max_length=500)
+    content = models.CharField(db_column="content", max_length=500)
     floor = models.IntegerField(db_column="floor")
     createTime = models.DateTimeField(db_column="create_time")
     editStatus = models.IntegerField(db_column="edit_status")

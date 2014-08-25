@@ -94,7 +94,7 @@ def register(request):
             ret = utils.wrap_message(code=1)
         else:
             if not utils.is_avaliable_phone(username):
-                ret = utils.wrap_message(code=13,msg='电话有误')
+                ret = utils.wrap_message(code=13, msg='电话有误')
                 return HttpResponse(json.dumps(ret, ensure_ascii=False))
             olduser = User.objects.filter(username=username).first()
             if olduser is None:
@@ -103,10 +103,10 @@ def register(request):
                     ret = utils.wrap_message(code=10, msg='注册失败')
                     logger.warn('注册失败')
                 else:
-                    UserInfo.objects.create(userId=newuser.id, token=token)  #在user_info表中设置token
+                    UserInfo.objects.create(userId=newuser.id, token=token)  # 在user_info表中设置token
                     user = authenticate(username=username, password=password)
                     login(request, user)
-                    request.session.set_expiry(300)     #session失效期5分钟
+                    request.session.set_expiry(300)  # session失效期5分钟
                     ret = utils.wrap_message({'user': newuser.username})
                     logger.info('注册新用户(%s)成功', repr(newuser))
             else:
@@ -169,14 +169,10 @@ def add_user_info(request):
     sex = request.POST.get('sex')
     schoolid = request.POST.get('schoolid')
     sign = request.POST.get('sign')
-    user_info = UserInfo.objects.get(userId = user_id)
+    user_info = UserInfo.objects.get(userId=user_id)
     telephone = request.POST.get('telephone')
     if telephone is not None:
-        pattern = re.compile('^1[3|5|7|8|][0-9]{9}$')
-        match = pattern.match(telephone)
-        if match:
-            user_info.telephone = telephone
-        else:
+        if not utils.is_avaliable_phone(telephone):
             ret = utils.wrap_message(code=13, msg='电话有误')
             return HttpResponse(json.dumps(ret, ensure_ascii=False))
     if sex is not None:
@@ -204,21 +200,23 @@ def channellist(request):
     data = json.dumps(foos)
     return HttpResponse(data, mimetype='application/json')
 
+
 @login_required
 def response_post(request):
     user_id = request.session[SESSION_KEY]
     post_id = request.POST.get('postId')
     content = request.POST.get('content')
+    response_id = request.POST.get('responseId')           #如果是二级回复，那么responseid为None
     if post_id is None or content is None or user_id is None:
         ret = utils.wrap_message(code=1)
     else:
-        responseTime=time.strftime('%Y-%m-%d %H:%M:%S')
+        response_time=time.strftime('%Y-%m-%d %H:%M:%S')
         with transaction.atomic():
-            Post.objects.get(postId=post_id).update(currentFloor=F('currentFloor')+1)
+            Post.objects.get(postId=post_id).update(currentFloor=F('currentFloor')+1)             #post表里对应的currentFloor加1
             current_floor = Post.objects.get(postId=post_id).currentFloor
-            post_response = PostResponse.objects.create(postId=post_id, userId=user_id, content=content,
-                                                        floor=current_floor, createTime=responseTime,
-                                                        editStatus=0)
+            post_response = PostResponse.objects.create(postId=post_id, postResponseId=(0 if response_id is None else response_id),
+                                                        userId=user_id, content=content, floor=current_floor,
+                                                        createTime=response_time, editStatus=0)
             ret = utils.wrap_message(code=0, msg="发表回复成功")
     HttpResponse(json.dumps(ret), mimetype='application/json')
 

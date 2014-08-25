@@ -21,7 +21,7 @@ from datetime import datetime
 import json
 
 datetimeHandler = lambda obj: obj.strftime('%Y-%m-%d %H:%M:%S')\
-            if isinstance(obj, datetime) else json.JSONEncoder().default(obj)
+    if isinstance(obj, datetime) else json.JSONEncoder().default(obj)
 
 
 def wrap_message(data={}, code=0, msg=''):
