@@ -77,6 +77,7 @@ class UserInfo(models.Model):
 
 class PostResponse(models.Model):
     postId = models.IntegerField(db_column="post_id", db_index=True)
+    postResponseId = models.IntegerField(db_column="response_id", db_index=True)
     userId = models.IntegerField(db_column="user_id")
     content = models.CharField(db_column="content", max_length=500)
     floor = models.IntegerField(db_column="floor")
