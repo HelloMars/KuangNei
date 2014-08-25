@@ -13,6 +13,8 @@ from django.test import TestCase
 from django.test.client import Client
 from django.test.client import RequestFactory
 
+from models import UserInfo
+
 
 class ApiTest(TestCase):
     def setUp(self):
@@ -91,14 +93,16 @@ class ApiTest(TestCase):
         response = self.client.get('/kuangnei/api/register/')
         self._test_failed_message(response)
         response = self.client.post('/kuangnei/api/register/',
-            {'username': 'kuangnei', 'password': '~!@#`123qwer', 'token': ''})
+                                    {'username': '18910690027',
+                                     'password': '~!@#`123qwer',
+                                     'token': ''})
         self._test_suc_message(response)
         jsond = json.loads(response.content)
-        self.assertEqual(jsond['user'], 'kuangnei')
+        self.assertEqual(jsond['user'], '18910690027')
 
         # test exist
         response = self.client.post('/kuangnei/api/checkIfUserExist/',
-                                    {'username': 'kuangnei'})
+                                    {'username': '18910690027'})
         self._test_suc_message(response)
         jsond = json.loads(response.content)
         self.assertTrue(jsond['exist'])
@@ -113,11 +117,21 @@ class ApiTest(TestCase):
         self._test_failed_message(response)
         # password error
         response = self.client.post('/kuangnei/api/signin/',
-            {'username': 'kuangnei', 'password': ''})
+                                    {'username': '18910690027',
+                                     'password': ''})
         self._test_failed_message(response)
         # successful
         response = self.client.post('/kuangnei/api/signin/',
-            {'username': 'kuangnei', 'password': '~!@#`123qwer'})
+                                    {'username': '18910690027',
+                                     'password': '~!@#`123qwer'})
+        self._test_suc_message(response)
+
+        # test add user info
+        response = self.client.post('/kuangnei/api/addUserInfo/',
+                                    {'sex': UserInfo.MALE,
+                                     'schoolid': 1,
+                                     'sign': 'A',
+                                     'telephone': '18910690027'})
         self._test_suc_message(response)
 
         # test login_out

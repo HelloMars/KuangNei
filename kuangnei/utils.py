@@ -5,6 +5,8 @@
 import logging
 
 # Get an instance of a logger
+import re
+
 logger = logging.getLogger("kuangnei")
 
 from qiniu import conf
@@ -19,7 +21,7 @@ from datetime import datetime
 import json
 
 datetimeHandler = lambda obj: obj.strftime('%Y-%m-%d %H:%M:%S')\
-            if isinstance(obj, datetime) else json.JSONEncoder().default(obj)
+    if isinstance(obj, datetime) else json.JSONEncoder().default(obj)
 
 
 def wrap_message(data={}, code=0, msg=''):
@@ -47,3 +49,11 @@ def get_dnurl(key):
     dnurl = policy.make_request(base_url)
     logger.info("Generate qiniu dnurl(%s) from key(%s)", dnurl, key)
     return dnurl
+
+def is_avaliable_phone(phonenumber):
+    pattern = re.compile('^1[3|5|7|8|][0-9]{9}$')
+    match = pattern.match(phonenumber)
+    if match:
+        return True
+    else:
+        return False
