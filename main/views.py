@@ -204,21 +204,22 @@ def channellist(request):
 @login_required
 def response_post(request):
     user_id = request.session[SESSION_KEY]
-    post_id = request.POST.get('postId')
+    post_id = request.POST.get('postid')
     content = request.POST.get('content')
-    response_id = request.POST.get('responseId')           #如果是二级回复，那么responseid为None
+    response_id = request.POST.get('responseid')           #如果是二级回复，那么responseid为None
     if post_id is None or content is None or user_id is None:
+        logger.error("参数错误")
         ret = utils.wrap_message(code=1)
     else:
         response_time=time.strftime('%Y-%m-%d %H:%M:%S')
         with transaction.atomic():
-            Post.objects.get(postId=post_id).update(currentFloor=F('currentFloor')+1)             #post表里对应的currentFloor加1
-            current_floor = Post.objects.get(postId=post_id).currentFloor
+            Post.objects.filter(id=post_id).update(currentFloor=F('currentFloor')+1)             #post表里对应的currentFloor加1
+            current_floor = Post.objects.get(id=post_id).currentFloor
             post_response = PostResponse.objects.create(postId=post_id, postResponseId=(0 if response_id is None else response_id),
                                                         userId=user_id, content=content, floor=current_floor,
                                                         createTime=response_time, editStatus=0)
             ret = utils.wrap_message(code=0, msg="发表回复成功")
-    HttpResponse(json.dumps(ret), mimetype='application/json')
+    return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
 def _push_message_to_app(post):
