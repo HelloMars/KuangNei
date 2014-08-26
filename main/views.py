@@ -10,7 +10,7 @@ from django.http import HttpResponse
 import re
 from kuangnei import consts, utils
 from kuangnei.utils import logger
-from main.models import Post, Post_picture, UserInfo, PostResponse
+from main.models import Post, Post_picture, UserInfo, PostResponse, FirstLevelResponse
 import json
 import post_push
 import time
@@ -225,6 +225,52 @@ def response_post(request):
         ret = ret = utils.wrap_message(code=1)
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
+
+@login_required
+def reply_first_level(request):
+    user_id = request.session[SESSION_KEY]
+    post_id = request.POST.get('postid')
+    content = request.POST.get('content')
+    try:
+        if post_id is None or content is None or user_id is None:
+            logger.error("参数错误")
+            ret = utils.wrap_message(code=1)
+        else:
+            response_time=time.strftime('%Y-%m-%d %H:%M:%S')
+            with transaction.atomic():
+                Post.objects.filter(id=post_id).update(currentFloor=F('currentFloor')+1)             #post表里对应的currentFloor加1
+                current_floor = Post.objects.get(id=post_id).currentFloor
+                first_level_response = FirstLevelResponse.objects.create(postId=post_id, userId=user_id, content=content,
+                                                            floor=current_floor, createTime=response_time, editStatus=0)
+                ret = utils.wrap_message(code=0, msg="发表回复成功")
+    except Exception as e:
+        logger.error(e)
+        ret = ret = utils.wrap_message(code=1)
+    return HttpResponse(json.dumps(ret), mimetype='application/json')
+
+
+@login_required
+def reply_second_level(request):
+    user_id = request.session[SESSION_KEY]
+    post_id = request.POST.get('postid')
+    first_level_res_id = request.POST.get('firstLevelResponseId')
+    content = request.POST.get('content')
+    try:
+        if post_id is None or content is None or user_id is None or first_level_res_id is None:
+            logger.error("参数错误")
+            ret = utils.wrap_message(code=1)
+        else:
+            response_time = time.strftime('%Y-%m-%d %H:%M:%S')
+            with transaction.atomic():
+                Post.objects.filter(id=post_id).update(currentFloor=F('currentFloor')+1)             #post表里对应的currentFloor加1
+                current_floor = Post.objects.get(id=post_id).currentFloor
+                first_level_response = FirstLevelResponse.objects.create(postId=post_id, userId=user_id, content=content,
+                                                            floor=current_floor, createTime=response_time, editStatus=0)
+                ret = utils.wrap_message(code=0, msg="发表回复成功")
+    except Exception as e:
+        logger.error(e)
+        ret = ret = utils.wrap_message(code=1)
+    return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 def _push_message_to_app(post):
     logger.info("pushMessageToApp")
