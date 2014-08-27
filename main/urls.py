@@ -15,5 +15,8 @@ urlpatterns = patterns(
     url(r'^testLogin/$', views.test_view, name='testLogin'),
     url(r'^register/$', views.register, name='regist'),
     url(r'^addUserInfo/$', views.add_user_info, name='addUserInfo'),
-    url(r'^responsePost/$', views.response_post, name='responsePost')
+    url(r'^replyFirstLevel/$', views.reply_first_level, name='replyFirstLevel'),
+    url(r'^replySecondLevel/$', views.reply_second_level, name='replySecondLevel'),
+    url(r'^uppost/$', views.up_post, name='replyFirstLevel'),
+    url(r'^opposepost/$', views.oppose_post, name='replySecondLevel'),
 )
