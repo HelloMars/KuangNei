@@ -206,6 +206,9 @@ KuangNei
     * 返回json:
     ```
     {
+    "returnMessage": "发表回复成功",
+    "returnCode": 0,
+    "firstLevelReplyId": 3
     }
     ```
 13. `[POST] http://kuangnei.me/kuangnei/api/replySecondLevel/`, 二级回复，【需要登陆】
@@ -213,6 +216,9 @@ KuangNei
     * 返回json:
     ```
     {
+    "returnMessage": "发表回复成功",
+    "returnCode": 0,
+    "secondLevelReplyId": 8
     }
     ```
 14. `[GET] http://kuangnei.me/kuangnei/api/replydetail/?firstLevelId=1&page=1`, 一级回复详细，【需要登陆】
