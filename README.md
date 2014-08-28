@@ -248,7 +248,7 @@ KuangNei
     {
     }
     ```
-18. `[GET] http://kuangnei.me/kuangnei/api/firstlevelreplylist/?postid=1&page=1`, 一级回复列表，【需要登陆】
+18. `[GET] http://kuangnei.me/kuangnei/api/firstLevelReplyList/?postid=1&page=1`, 一级回复列表，【需要登陆】
     * 返回json:
     ```
     {
