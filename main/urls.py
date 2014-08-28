@@ -19,4 +19,6 @@ urlpatterns = patterns(
     url(r'^replySecondLevel/$', views.reply_second_level, name='replySecondLevel'),
     url(r'^uppost/$', views.up_post, name='replyFirstLevel'),
     url(r'^opposepost/$', views.oppose_post, name='replySecondLevel'),
+    url(r'^upreply/$', views.up_reply, name='replySecondLevel'),
+    url(r'^firstLevelReplyList/$', views.first_level_reply_list, name='replySecondLevel'),
 )

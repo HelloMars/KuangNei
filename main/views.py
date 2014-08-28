@@ -220,6 +220,24 @@ def up_post(request):
 
 
 @login_required
+def up_reply(request):
+    user_id = request.session[SESSION_KEY]
+    first_level_reply_id = request.POST.get('firstLevelReplyId')
+    if first_level_reply_id is None or user_id is None:
+        logger.error("参数错误")
+        ret = utils.wrap_message(code=1)
+    else:
+        try:
+            first_level_reply = FirstLevelResponse.objects.get(id=first_level_reply_id)         #验证post_id是有效字段
+            FirstLevelResponse.objects.filter(id=first_level_reply_id).update(upCount=F('upCount')+1)
+            ret = utils.wrap_message(code=0, msg="赞成功")
+        except Exception as e:
+            logger.error(e)
+            ret = utils.wrap_message(code=1)
+    return HttpResponse(json.dumps(ret), mimetype='application/json')
+
+
+@login_required
 def oppose_post(request):
     user_id = request.session[SESSION_KEY]
     post_id = request.POST.get('postid')
@@ -285,8 +303,25 @@ def reply_second_level(request):
                 ret = utils.wrap_message(data={"secondLevelReplyId": second_level_response.id}, code=0, msg="发表回复成功")
     except Exception as e:
         logger.error(e)
-        ret = ret = utils.wrap_message(code=1)
+        ret = utils.wrap_message(code=1)
     return HttpResponse(json.dumps(ret), mimetype='application/json')
+
+
+@login_required
+def first_level_reply_list(request):
+    post_id = request.GET.get("postid")
+    page = request.GET.get("page")
+    if post_id is None or page is None:
+        ret = utils.wrap_message(code=1)
+    else:
+        page = int(page)
+        start = (page - 1) * consts.FIRST_LEVEL_REPLY_LOAD_SIZE
+        end = start + consts.FIRST_LEVEL_REPLY_LOAD_SIZE
+        first_lev_rep_list = FirstLevelResponse.objects.filter(postId=post_id).order_by("floor")[start:end]
+        logger.info("first_level_reply_list [%d, %d]", start, end)
+        ret = utils.wrap_message({'size': len(first_lev_rep_list)})
+        ret['list'] = [e.to_json(get_user_info_to_json(e.userId)) for e in first_lev_rep_list]
+    return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
 
 
 def _push_message_to_app(post):
@@ -299,3 +334,20 @@ def mock_user(userid):
              "avatar": "http://kuangnei.qiniudn.com/FjMgIjdmHH9lkUm9Ra_K1VbKynxR",
              "name": "框内"}
     return jsond
+
+
+def get_user_info_to_json(userid):
+    u = {}
+    if userid is None:
+        return u
+    else:
+        try:
+            user = User.objects.get(id=userid)
+            user_info = UserInfo.objects.get(userId=userid)
+            u['id'] = user.id
+            u['avatar'] = user_info.avatar
+            u['name'] = user.username
+        except Exception as e:
+            logger.error(e)
+            u = {}
+        return u
