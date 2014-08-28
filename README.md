@@ -201,7 +201,7 @@ KuangNei
     {
     }
     ```
-12. `[POST] http://kuangnei.me/kuangnei/api/replyFirstLevel/`,需要登录 一级回复，【需要登陆】
+12. `[POST] http://kuangnei.me/kuangnei/api/replyFirstLevel/`, 一级回复，【需要登陆】
     * POST请求必要参数: `{'postId': 1, 'content': '一级回复'}`
     * 返回json:
     ```
@@ -211,7 +211,7 @@ KuangNei
     "firstLevelReplyId": 3
     }
     ```
-13. `[POST] http://kuangnei.me/kuangnei/api/replySecondLevel/`, 需要登录二级回复，【需要登陆】
+13. `[POST] http://kuangnei.me/kuangnei/api/replySecondLevel/`, 二级回复，【需要登陆】
     * POST请求必要参数: `{'firstLevelId': 1, 'content': '一级回复'}`
     * 返回json:
     ```
@@ -227,7 +227,7 @@ KuangNei
     {
     }
     ```
-15. `[POST] http://kuangnei.me/kuangnei/api/uppost/`, 需要登录赞帖子，【需要登陆】
+15. `[POST] http://kuangnei.me/kuangnei/api/uppost/`, 赞帖子，【需要登陆】
     * POST请求必要参数: `{'postId': 1}`
     * 返回json:
     ```
@@ -241,7 +241,7 @@ KuangNei
     {
     }
     ```
-17. `[POST] http://kuangnei.me/kuangnei/api/opposepost/`, 需要登录踩帖子，【需要登陆】
+17. `[POST] http://kuangnei.me/kuangnei/api/opposepost/`, 踩帖子，【需要登陆】
     * POST请求必要参数: `{'postId': 1}`
     * 返回json:
     ```
