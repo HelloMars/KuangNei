@@ -248,6 +248,34 @@ KuangNei
     {
     }
     ```
+18. `[POST] http://kuangnei.me/kuangnei/api/firstlevelreplylist/`, 一级回复列表，【需要登陆】
+    * POST请求必要参数: `{'postId': 1 , 'page':1 }`
+    * 返回json:
+    ```
+    {
+     "returnMessage": "",
+     "returnCode": 0,
+      "list": [
+               {
+                "editStatus": 0,
+                "createTime": "2014-08-17 23:03:10",
+                "floor": 1,
+                "schoolId": 1,
+                "channelId": 1,
+                "firstLevelReplyId": 4,
+                "replyCount": 0,
+                "content": "test, 测试中文",
+                "upCount": 0,
+                "user": {
+                    "id": 1,
+                    "name": "框内",
+                    "avatar": "http://kuangnei.qiniudn.com/FjMgIjdmHH9lkUm9Ra_K1VbKynxR"
+                  },
+                },
+               ],
+      "size": 1
+    }
+    ```   
 
 ## Log ##
 后端log采用python自带的logging模块，以天为节点输出在`log/debug_YYYY_mm_dd.log`文件。在自己的python文件使用该模块示例：
