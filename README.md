@@ -260,7 +260,6 @@ KuangNei
                 "editStatus": 0,
                 "createTime": "2014-08-17 23:03:10",
                 "floor": 1,
-                "schoolId": 1,
                 "channelId": 1,
                 "firstLevelReplyId": 4,
                 "replyCount": 0,
