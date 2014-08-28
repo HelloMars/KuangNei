@@ -77,6 +77,7 @@ class UserInfo(models.Model):
 
 class PostResponse(models.Model):
     postId = models.IntegerField(db_column="post_id", db_index=True)
+    postResponseId = models.IntegerField(db_column="response_id", db_index=True)
     userId = models.IntegerField(db_column="user_id")
     content = models.CharField(db_column="content", max_length=500)
     floor = models.IntegerField(db_column="floor")
@@ -85,3 +86,29 @@ class PostResponse(models.Model):
 
     class Meta:
         db_table = "post_response"
+
+
+class FirstLevelResponse(models.Model):
+    postId = models.IntegerField(db_column="post_id", db_index=True)
+    userId = models.IntegerField(db_column="user_id")
+    content = models.CharField(db_column="content", max_length=800)
+    upCount = models.IntegerField(db_column="up_count")
+    replyCount = models.IntegerField(db_column="reply_count")
+    floor = models.IntegerField(db_column="floor")
+    createTime = models.DateTimeField(db_column="create_time")
+    editStatus = models.IntegerField(db_column="edit_status")
+
+    class Meta:
+        db_table = "first_level_response"
+
+
+class SecondLevelResponse(models.Model):
+    postId = models.IntegerField(db_column="post_id", db_index=True)
+    firstLevResponseId = models.IntegerField(db_column="first_level_response_id", db_index=True)
+    userId = models.IntegerField(db_column="user_id")
+    content = models.CharField(db_column="content", max_length=140)
+    createTime = models.DateTimeField(db_column="create_time")
+    editStatus = models.IntegerField(db_column="edit_status")
+
+    class Meta:
+        db_table = "second_level_response"
