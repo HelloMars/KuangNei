@@ -125,3 +125,15 @@ class SecondLevelResponse(models.Model):
 
     class Meta:
         db_table = "second_level_response"
+
+    def to_json(self, user):
+        ret = {}
+        for field in self._meta.fields:
+            attr = field.name
+            if attr == 'id':
+                ret['secondLevelReplyId'] = getattr(self, attr)
+            elif attr == "userId":
+                ret['user'] = user
+            else:
+                ret[attr] = getattr(self, attr)
+        return ret

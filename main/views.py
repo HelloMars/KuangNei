@@ -324,6 +324,24 @@ def first_level_reply_list(request):
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
 
 
+@login_required
+def second_level_reply_list(request):
+    first_lev_rep_id = request.GET.get("firstLevelReplyId")
+    page = request.GET.get("page")
+    if first_lev_rep_id is None or page is None:
+        ret = utils.wrap_message(code=1)
+    else:
+        page = int(page)
+        start = (page - 1) * consts.SECOND_LEVEL_REPLY_LOAD_SIZE
+        end = start + consts.SECOND_LEVEL_REPLY_LOAD_SIZE
+        second_lev_rep_list = SecondLevelResponse.objects.filter(firstLevResponseId=first_lev_rep_id).\
+                                  order_by("createTime")[start:end]
+        logger.info("second_lev_rep_list [%d, %d]", start, end)
+        ret = utils.wrap_message({'size': len(second_lev_rep_list)})
+        ret['list'] = [e.to_json(get_user_info_to_json(e.userId)) for e in second_lev_rep_list]
+    return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
+
+
 def _push_message_to_app(post):
     logger.info("pushMessageToApp")
     post_push.pushMessageToApp(post)
