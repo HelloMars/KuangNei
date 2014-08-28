@@ -248,8 +248,7 @@ KuangNei
     {
     }
     ```
-18. `[POST] http://kuangnei.me/kuangnei/api/firstlevelreplylist/`, 一级回复列表，【需要登陆】
-    * POST请求必要参数: `{'postId': 1 , 'page':1 }`
+18. `[GET] http://kuangnei.me/kuangnei/api/firstlevelreplylist/?postid=1&page=1`, 一级回复列表，【需要登陆】
     * 返回json:
     ```
     {
