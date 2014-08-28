@@ -273,7 +273,30 @@ KuangNei
       "size": 1
     }
     ```   
-
+19. `[GET] http://kuangnei.me/kuangnei/api/firstLevelReplyList/?postid=1&page=1`, 二级回复列表，【需要登陆】
+    * 返回json:
+    ```
+    {
+     "returnMessage": "",
+     "returnCode": 0,
+      "list": [
+               { "editStatus": 0,
+                 "secondLevelReplyId": 1,
+                 "firstLevResponseId": 2,
+                 "content": "232",
+                 "user": {
+                    "id": 2,
+                    "name": "中国好声音2",
+                    "avatar": null
+               },
+                 "postId": 1,
+                 "createTime": "2014-08-27 11:12:21"
+                },
+               ],
+      "size": 1
+    }
+    ``` 
+    
 ## Log ##
 后端log采用python自带的logging模块，以天为节点输出在`log/debug_YYYY_mm_dd.log`文件。在自己的python文件使用该模块示例：
 ```
