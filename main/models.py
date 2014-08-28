@@ -70,6 +70,7 @@ class UserInfo(models.Model):
     sign = models.CharField(max_length=255, db_column="sign", null=True)
     schoolId = models.IntegerField(db_column="school_id", null=True)
     telephone = models.CharField(max_length=50, db_column="telephone")
+    avatar = models.CharField(max_length=1000,db_column="avatar", null=True)
 
     class Meta:
         db_table = "user_info"
@@ -101,6 +102,18 @@ class FirstLevelResponse(models.Model):
     class Meta:
         db_table = "first_level_response"
 
+    def to_json(self, user):
+        ret = {}
+        for field in self._meta.fields:
+            attr = field.name
+            if attr == 'id':
+                ret['firstLevelReplyId'] = getattr(self, attr)
+            elif attr == "userId":
+                ret['user'] = user
+            else:
+                ret[attr] = getattr(self, attr)
+        return ret
+
 
 class SecondLevelResponse(models.Model):
     postId = models.IntegerField(db_column="post_id", db_index=True)
@@ -112,3 +125,15 @@ class SecondLevelResponse(models.Model):
 
     class Meta:
         db_table = "second_level_response"
+
+    def to_json(self, user):
+        ret = {}
+        for field in self._meta.fields:
+            attr = field.name
+            if attr == 'id':
+                ret['secondLevelReplyId'] = getattr(self, attr)
+            elif attr == "userId":
+                ret['user'] = user
+            else:
+                ret[attr] = getattr(self, attr)
+        return ret

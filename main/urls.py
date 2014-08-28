@@ -18,5 +18,8 @@ urlpatterns = patterns(
     url(r'^replyFirstLevel/$', views.reply_first_level, name='replyFirstLevel'),
     url(r'^replySecondLevel/$', views.reply_second_level, name='replySecondLevel'),
     url(r'^uppost/$', views.up_post, name='replyFirstLevel'),
-    url(r'^opposepost/$', views.oppose_post, name='replySecondLevel'),
+    url(r'^opposepost/$', views.oppose_post, name='opposePost'),
+    url(r'^upreply/$', views.up_reply, name='upReply'),
+    url(r'^firstLevelReplyList/$', views.first_level_reply_list, name='firstLevelReplyList'),
+    url(r'^secondLevelReplyList/$', views.second_level_reply_list, name='firstLevelReplyList'),
 )
