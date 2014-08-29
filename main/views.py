@@ -10,7 +10,7 @@ from django.http import HttpResponse
 import re
 from kuangnei import consts, utils
 from kuangnei.utils import logger
-from main.models import Post, Post_picture, UserInfo, PostResponse
+from main.models import Post, Post_picture, UserInfo, PostResponse, FirstLevelResponse, SecondLevelResponse
 import json
 import post_push
 import time
@@ -206,23 +206,146 @@ def channellist(request):
     data = json.dumps(foos)
     return HttpResponse(data, mimetype='application/json')
 
+
 @login_required
-def response_post(request):
+def up_post(request):
     user_id = request.session[SESSION_KEY]
-    post_id = request.POST.get('postId')
-    content = request.POST.get('content')
-    if post_id is None or content is None or user_id is None:
+    post_id = request.POST.get('postid')
+    if post_id is None or user_id is None:
+        logger.error("参数错误")
         ret = utils.wrap_message(code=1)
     else:
-        responseTime=time.strftime('%Y-%m-%d %H:%M:%S')
-        with transaction.atomic():
-            Post.objects.get(postId=post_id).update(currentFloor=F('currentFloor')+1)
-            current_floor = Post.objects.get(postId=post_id).currentFloor
-            post_response = PostResponse.objects.create(postId=post_id, userId=user_id, content=content,
-                                                        floor=current_floor, createTime=responseTime,
-                                                        editStatus=0)
-            ret = utils.wrap_message(code=0, msg="发表回复成功")
-    HttpResponse(json.dumps(ret), mimetype='application/json')
+        try:
+            post = Post.objects.get(id=post_id)         #验证post_id是有效字段
+            Post.objects.filter(id=post_id).update(upCount=F('upCount')+1)
+            ret = utils.wrap_message(code=0, msg="赞成功")
+        except Exception as e:
+            logger.error(e)
+            ret = utils.wrap_message(code=1)
+    return HttpResponse(json.dumps(ret), mimetype='application/json')
+
+
+@login_required
+def up_reply(request):
+    user_id = request.session[SESSION_KEY]
+    first_level_reply_id = request.POST.get('firstLevelReplyId')
+    if first_level_reply_id is None or user_id is None:
+        logger.error("参数错误")
+        ret = utils.wrap_message(code=1)
+    else:
+        try:
+            first_level_reply = FirstLevelResponse.objects.get(id=first_level_reply_id)         #验证post_id是有效字段
+            FirstLevelResponse.objects.filter(id=first_level_reply_id).update(upCount=F('upCount')+1)
+            ret = utils.wrap_message(code=0, msg="赞成功")
+        except Exception as e:
+            logger.error(e)
+            ret = utils.wrap_message(code=1)
+    return HttpResponse(json.dumps(ret), mimetype='application/json')
+
+
+@login_required
+def oppose_post(request):
+    user_id = request.session[SESSION_KEY]
+    post_id = request.POST.get('postid')
+    if post_id is None or user_id is None:
+        logger.error("参数错误")
+        ret = utils.wrap_message(code=1)
+    else:
+        try:
+            post = Post.objects.get(id=post_id)         #验证post_id是有效字段
+            Post.objects.filter(id=post_id).update(opposedCount=F('opposedCount')+1)
+            ret = utils.wrap_message(code=0, msg="踩成功")
+        except Exception as e:
+            logger.error(e)
+            ret = utils.wrap_message(code=1)
+    return HttpResponse(json.dumps(ret), mimetype='application/json')
+
+
+@login_required
+def reply_first_level(request):
+    user_id = request.session[SESSION_KEY]
+    post_id = request.POST.get('postid')
+    content = request.POST.get('content')
+    try:
+        if post_id is None or content is None or user_id is None:
+            logger.error("参数错误")
+            ret = utils.wrap_message(code=1)
+        else:
+            response_time = time.strftime('%Y-%m-%d %H:%M:%S')
+            with transaction.atomic():
+                Post.objects.filter(id=post_id).update(currentFloor=F('currentFloor')+1)             #post表里对应的currentFloor加1
+                current_floor = Post.objects.get(id=post_id).currentFloor
+                first_level_response = FirstLevelResponse.objects.create(postId=post_id, userId=user_id, upCount=0,
+                                                                         content=content, floor=current_floor,
+                                                                         replyCount=0, createTime=response_time,
+                                                                         editStatus=0)
+                ret = utils.wrap_message(data={"firstLevelReplyId": first_level_response.id}, code=0, msg="发表回复成功")
+    except Exception as e:
+        logger.error(e)
+        ret = utils.wrap_message(code=1)
+    return HttpResponse(json.dumps(ret), mimetype='application/json')
+
+
+@login_required
+def reply_second_level(request):
+    user_id = request.session[SESSION_KEY]
+    post_id = request.POST.get('postid')
+    first_level_res_id = request.POST.get('firstLevelResponseId')
+    content = request.POST.get('content')
+    try:
+        if post_id is None or content is None or user_id is None or first_level_res_id is None:
+            logger.error("参数错误")
+            ret = utils.wrap_message(code=1)
+        else:
+            response_time = time.strftime('%Y-%m-%d %H:%M:%S')
+            with transaction.atomic():
+                post = Post.objects.get(id=post_id)            #验证post_id是否是有效值
+                first_level_res = FirstLevelResponse.objects.get(id=first_level_res_id)
+                FirstLevelResponse.objects.filter(id=first_level_res_id).update(replyCount=F('replyCount') + 1)   #一级回复数量加1
+                second_level_response = SecondLevelResponse.objects.create(firstLevResponseId=first_level_res_id,
+                                                                           postId=post_id, userId=user_id,
+                                                                           content=content, createTime=response_time,
+                                                                           editStatus=0)
+                ret = utils.wrap_message(data={"secondLevelReplyId": second_level_response.id}, code=0, msg="发表回复成功")
+    except Exception as e:
+        logger.error(e)
+        ret = utils.wrap_message(code=1)
+    return HttpResponse(json.dumps(ret), mimetype='application/json')
+
+
+@login_required
+def first_level_reply_list(request):
+    post_id = request.GET.get("postid")
+    page = request.GET.get("page")
+    if post_id is None or page is None:
+        ret = utils.wrap_message(code=1)
+    else:
+        page = int(page)
+        start = (page - 1) * consts.FIRST_LEVEL_REPLY_LOAD_SIZE
+        end = start + consts.FIRST_LEVEL_REPLY_LOAD_SIZE
+        first_lev_rep_list = FirstLevelResponse.objects.filter(postId=post_id).order_by("floor")[start:end]
+        logger.info("first_level_reply_list [%d, %d]", start, end)
+        ret = utils.wrap_message({'size': len(first_lev_rep_list)})
+        ret['list'] = [e.to_json(get_user_info_to_json(e.userId)) for e in first_lev_rep_list]
+    return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
+
+
+@login_required
+def second_level_reply_list(request):
+    first_lev_rep_id = request.GET.get("firstLevelReplyId")
+    page = request.GET.get("page")
+    if first_lev_rep_id is None or page is None:
+        ret = utils.wrap_message(code=1)
+    else:
+        page = int(page)
+        start = (page - 1) * consts.SECOND_LEVEL_REPLY_LOAD_SIZE
+        end = start + consts.SECOND_LEVEL_REPLY_LOAD_SIZE
+        second_lev_rep_list = SecondLevelResponse.objects.filter(firstLevResponseId=first_lev_rep_id).\
+                                  order_by("createTime")[start:end]
+        logger.info("second_lev_rep_list [%d, %d]", start, end)
+        ret = utils.wrap_message({'size': len(second_lev_rep_list)})
+        ret['list'] = [e.to_json(get_user_info_to_json(e.userId)) for e in second_lev_rep_list]
+    return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
 
 
 def _push_message_to_app(post):
@@ -242,3 +365,20 @@ def _fill_user_info(userid):
              "avatar": avatar,
              "name": user.username}
     return jsond
+
+
+def get_user_info_to_json(userid):
+    u = {}
+    if userid is None:
+        return u
+    else:
+        try:
+            user = User.objects.get(id=userid)
+            user_info = UserInfo.objects.get(userId=userid)
+            u['id'] = user.id
+            u['avatar'] = user_info.avatar
+            u['name'] = user.username
+        except Exception as e:
+            logger.error(e)
+            u = {}
+        return u

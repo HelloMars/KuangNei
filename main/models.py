@@ -71,6 +71,7 @@ class UserInfo(models.Model):
     sign = models.CharField(max_length=255, db_column="sign", null=True)
     schoolId = models.IntegerField(db_column="school_id", null=True)
     telephone = models.CharField(max_length=50, db_column="telephone")
+    avatar = models.CharField(max_length=1000,db_column="avatar", null=True)
 
     class Meta:
         db_table = "user_info"
@@ -78,6 +79,7 @@ class UserInfo(models.Model):
 
 class PostResponse(models.Model):
     postId = models.IntegerField(db_column="post_id", db_index=True)
+    postResponseId = models.IntegerField(db_column="response_id", db_index=True)
     userId = models.IntegerField(db_column="user_id")
     content = models.CharField(db_column="content", max_length=500)
     floor = models.IntegerField(db_column="floor")
@@ -86,3 +88,53 @@ class PostResponse(models.Model):
 
     class Meta:
         db_table = "post_response"
+
+
+class FirstLevelResponse(models.Model):
+    postId = models.IntegerField(db_column="post_id", db_index=True)
+    userId = models.IntegerField(db_column="user_id")
+    content = models.CharField(db_column="content", max_length=800)
+    upCount = models.IntegerField(db_column="up_count")
+    replyCount = models.IntegerField(db_column="reply_count")
+    floor = models.IntegerField(db_column="floor")
+    createTime = models.DateTimeField(db_column="create_time")
+    editStatus = models.IntegerField(db_column="edit_status")
+
+    class Meta:
+        db_table = "first_level_response"
+
+    def to_json(self, user):
+        ret = {}
+        for field in self._meta.fields:
+            attr = field.name
+            if attr == 'id':
+                ret['firstLevelReplyId'] = getattr(self, attr)
+            elif attr == "userId":
+                ret['user'] = user
+            else:
+                ret[attr] = getattr(self, attr)
+        return ret
+
+
+class SecondLevelResponse(models.Model):
+    postId = models.IntegerField(db_column="post_id", db_index=True)
+    firstLevResponseId = models.IntegerField(db_column="first_level_response_id", db_index=True)
+    userId = models.IntegerField(db_column="user_id")
+    content = models.CharField(db_column="content", max_length=140)
+    createTime = models.DateTimeField(db_column="create_time")
+    editStatus = models.IntegerField(db_column="edit_status")
+
+    class Meta:
+        db_table = "second_level_response"
+
+    def to_json(self, user):
+        ret = {}
+        for field in self._meta.fields:
+            attr = field.name
+            if attr == 'id':
+                ret['secondLevelReplyId'] = getattr(self, attr)
+            elif attr == "userId":
+                ret['user'] = user
+            else:
+                ret[attr] = getattr(self, attr)
+        return ret
