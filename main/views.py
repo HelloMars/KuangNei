@@ -97,8 +97,8 @@ def register(request):
     else:
         username = request.POST.get('username')
         password = request.POST.get('password')
-        token = request.POST.get('token')
-        if username is None or password is None or token is None:
+        deviceid = request.POST.get('deviceid')
+        if username is None or password is None or deviceid is None:
             ret = utils.wrap_message(code=1)
         else:
             if not utils.is_avaliable_phone(username):
@@ -113,8 +113,9 @@ def register(request):
                 else:
                     # TODO: catch exception and delete user
                     # 在user_info表中设置token, nickname, telephone
-                    UserInfo.objects.create(userId=newuser.id, token=token,
-                                            nickname='user'+str(newuser.id),
+                    token = request.POST.get('token')  # could be None
+                    UserInfo.objects.create(userId=newuser.id, deviceId=deviceid,
+                                            token=token, nickname='user'+str(newuser.id),
                                             telephone=username)
                     user = authenticate(username=username, password=password)
                     login(request, user)
@@ -141,8 +142,8 @@ def check_if_user_exist(request):
     return HttpResponse(json.dumps(ret, ensure_ascii=False))
 
 
-def _login(username, password, token, request):
-    if username is None or password is None:
+def _login(username, password, deviceid, token, request):
+    if username is None or password is None or deviceid is None:
         ret = utils.wrap_message(code=1)
     else:
         user = authenticate(username=username, password=password)
@@ -151,11 +152,12 @@ def _login(username, password, token, request):
         else:
             if user.is_active:
                 login(request, user)
+                user_info = UserInfo.objects.get(userId=user.id)
+                user_info.deviceId = deviceid
                 if token is not None:
-                    user_info = UserInfo.objects.get(userId=user.id)
                     user_info.token = token
-                    user_info.save()
                     logger.info('修改用户(%s)token成功', repr(user.id))
+                user_info.save()
                 request.session.set_expiry(300)
                 ret = utils.wrap_message(code=0, msg='登陆成功')
             else:
@@ -164,15 +166,16 @@ def _login(username, password, token, request):
 
 
 # http://127.0.0.1:8000/accounts/login/?
-# next=/kuangnei/api/channellist/&username=18910690027&password=~%21%40%23%60123qwer
+# next=/kuangnei/api/channellist/&username=18910690027&password=~%21%40%23%60123qwer&deviceid=xxx
 def rlogin_in(request):
     username = request.GET.get('username')
     password = request.GET.get('password')
+    deviceid = request.GET.get('deviceid')
     token = request.GET.get('token')
-    if username is None or password is None:
+    if username is None or password is None or deviceid is None:
         raise Http404
     else:
-        _login(username, password, token, request)
+        _login(username, password, deviceid, token, request)
         return redirect(request.GET.get('next'))
 
 
@@ -182,8 +185,9 @@ def login_in(request):
     else:
         username = request.POST.get('username')
         password = request.POST.get('password')
+        deviceid = request.POST.get('deviceid')
         token = request.POST.get('token')
-        ret = _login(username, password, token, request)
+        ret = _login(username, password, deviceid, token, request)
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 

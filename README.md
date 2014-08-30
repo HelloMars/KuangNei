@@ -99,9 +99,10 @@ KuangNei
     {
          'username': '18910690027', # username必须为合法手机号
          'password': '123456',
-         'token': 'xxx'
+         'deviceid': 'xxx'
     }
     ```
+    * POST请求可选参数: `{'token': 'xxx'}`
     * 返回json:
     ```
     {
@@ -116,6 +117,7 @@ KuangNei
     {
         'username': '18910690027', # username必须为合法手机号
         'password': '123456',
+        'deviceid': 'xxx'
     }
     ```
     * POST请求可选参数: `{'token': 'xxx'}` 用于更新个推clientID

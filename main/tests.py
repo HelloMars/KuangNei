@@ -22,6 +22,7 @@ TEST_TOKEN0 = 'd8ee807a6da4c9a3019f3f4ce168376f'
 TEST_TOKEN1 = 'af6ce77d4b57c2debef360c1bcf35190'
 TEST_AVATAR = 'http://kuangnei.qiniudn.com/xxx'
 TEST_NICKNAME = 'zavatar'
+TEST_DEVICEID = 'A100003B7D1E8E5'
 
 
 class ApiTest(TestCase):
@@ -32,10 +33,12 @@ class ApiTest(TestCase):
         self.client.post('/kuangnei/api/register/',
                          {'username': TEST_USER0,
                          'password': TEST_PASSWORD,
+                         'deviceid': TEST_DEVICEID,
                          'token': TEST_TOKEN0})
         self.client.post('/kuangnei/api/signin/',
                          {'username': TEST_USER0,
-                         'password': TEST_PASSWORD})
+                         'password': TEST_PASSWORD,
+                         'deviceid': TEST_DEVICEID})
         self.client.post('/kuangnei/api/addUserInfo/',
                          {'avatar': TEST_AVATAR,
                          'nickname': TEST_NICKNAME})
@@ -116,6 +119,7 @@ class ApiTest(TestCase):
         response = self.client.post('/kuangnei/api/register/',
                                     {'username': TEST_USER1,
                                      'password': TEST_PASSWORD,
+                                     'deviceid': TEST_DEVICEID,
                                      'token': TEST_TOKEN0})
         self._test_suc_message(response)
         jsond = json.loads(response.content)
@@ -139,12 +143,14 @@ class ApiTest(TestCase):
         # password error
         response = self.client.post('/kuangnei/api/signin/',
                                     {'username': TEST_USER1,
-                                     'password': 'wrongPassword'})
+                                     'password': 'wrongPassword',
+                                     'deviceid': TEST_DEVICEID})
         self._test_failed_message(response)
         # successful
         response = self.client.post('/kuangnei/api/signin/',
                                     {'username': TEST_USER1,
                                      'password': TEST_PASSWORD,
+                                     'deviceid': TEST_DEVICEID,
                                      'token': TEST_TOKEN1})
         self._test_suc_message(response)
         # get user info
