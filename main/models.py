@@ -21,12 +21,11 @@ class Post(models.Model):
     userId = models.IntegerField(db_column="user_id")
     schoolId = models.IntegerField(db_column="school_id")
     content = models.CharField(max_length=800)
-    channelId = models.IntegerField(db_column="channel")
-    opposedCount = models.IntegerField(db_column="unlike_count")
-    upCount = models.IntegerField(db_column="like_count")
+    channelId = models.IntegerField(db_column="channel_id")
+    opposedCount = models.IntegerField(db_column="opposed_count")
+    upCount = models.IntegerField(db_column="up_count")
     postTime = models.DateTimeField('date published', db_column="create_time")
-    replyCount = models.IntegerField(db_column="back_count")
-    currentFloor = models.IntegerField(db_column="current_floor")
+    replyCount = models.IntegerField(db_column="reply_count")
     rank = models.IntegerField()
     editStatus = models.IntegerField(db_column="edit_status")
 
@@ -100,18 +99,18 @@ class UserInfo(models.Model):
         return ret
 
 
-class FirstLevelResponse(models.Model):
+class FirstLevelReply(models.Model):
     postId = models.IntegerField(db_column="post_id", db_index=True)
     userId = models.IntegerField(db_column="user_id")
     content = models.CharField(db_column="content", max_length=800)
     upCount = models.IntegerField(db_column="up_count")
     replyCount = models.IntegerField(db_column="reply_count")
     floor = models.IntegerField(db_column="floor")
-    createTime = models.DateTimeField(db_column="create_time")
+    replyTime = models.DateTimeField(db_column="create_time")
     editStatus = models.IntegerField(db_column="edit_status")
 
     class Meta:
-        db_table = "first_level_response"
+        db_table = "first_level_reply"
 
     def to_json(self, user):
         ret = {}
@@ -126,16 +125,16 @@ class FirstLevelResponse(models.Model):
         return ret
 
 
-class SecondLevelResponse(models.Model):
+class SecondLevelReply(models.Model):
     postId = models.IntegerField(db_column="post_id", db_index=True)
-    firstLevResponseId = models.IntegerField(db_column="first_level_response_id", db_index=True)
+    firstLevelReplyId = models.IntegerField(db_column="first_level_reply_id", db_index=True)
     userId = models.IntegerField(db_column="user_id")
     content = models.CharField(db_column="content", max_length=140)
-    createTime = models.DateTimeField(db_column="create_time")
+    replyTime = models.DateTimeField(db_column="create_time")
     editStatus = models.IntegerField(db_column="edit_status")
 
     class Meta:
-        db_table = "second_level_response"
+        db_table = "second_level_reply"
 
     def to_json(self, user):
         ret = {}

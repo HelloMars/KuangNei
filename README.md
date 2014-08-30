@@ -214,7 +214,7 @@ KuangNei
     }
     ```
 13. `[POST] http://kuangnei.me/kuangnei/api/replySecondLevel/`, 二级回复，【需要登陆】
-    * POST请求必要参数: `{'firstLevelId': 1, 'content': '一级回复'}`
+    * POST请求必要参数: `{'postId': 1, 'firstLevelReplyId': 1, 'content': '一级回复'}`
     * 返回json:
     ```
     {
@@ -223,7 +223,7 @@ KuangNei
     "secondLevelReplyId": 8
     }
     ```
-14. `[GET] http://kuangnei.me/kuangnei/api/replydetail/?firstLevelId=1&page=1`, 一级回复详细，【需要登陆】
+14. `[GET] http://kuangnei.me/kuangnei/api/replydetail/?firstLevelReplyId=1&page=1`, 一级回复详细，【需要登陆】
     * 返回json:
     ```
     {
@@ -234,13 +234,17 @@ KuangNei
     * 返回json:
     ```
     {
+    "returnMessage": "赞成功",
+    "returnCode": 0
     }
     ```
 16. `[POST] http://kuangnei.me/kuangnei/api/upreply/`, 赞一级回复，【需要登陆】
-    * POST请求必要参数: `{'firstLevelId': 1}`
+    * POST请求必要参数: `{'firstLevelReplyId': 1}`
     * 返回json:
     ```
     {
+    "returnMessage": "赞成功",
+    "returnCode": 0
     }
     ```
 17. `[POST] http://kuangnei.me/kuangnei/api/opposepost/`, 踩帖子，【需要登陆】
@@ -248,22 +252,25 @@ KuangNei
     * 返回json:
     ```
     {
+    "returnMessage": "踩成功",
+    "returnCode": 0
     }
     ```
-18. `[GET] http://kuangnei.me/kuangnei/api/firstLevelReplyList/?postid=1&page=1`, 一级回复列表，【需要登陆】
+18. `[GET] http://kuangnei.me/kuangnei/api/firstLevelReplyList/?postId=1&page=1`, 一级回复列表，【需要登陆】
     * 返回json:
     ```
     {
      "returnMessage": "",
      "returnCode": 0,
-      "list": [
+     "list": [
                {
                 "editStatus": 0,
-                "createTime": "2014-08-17 23:03:10",
+                "replyTime": "2014-08-17 23:03:10",
                 "floor": 1,
+                "postId" 1,
                 "firstLevelReplyId": 4,
                 "replyCount": 0,
-                "content": "test, 测试中文",
+                "content": "一级回复",
                 "upCount": 0,
                 "user": {
                     "id": 1,
@@ -272,10 +279,10 @@ KuangNei
                   },
                 },
                ],
-      "size": 1
+     "size": 1
     }
     ```   
-19. `[GET] http://kuangnei.me/kuangnei/api/firstLevelReplyList/?postid=1&page=1`, 二级回复列表，【需要登陆】
+19. `[GET] http://kuangnei.me/kuangnei/api/secondLevelReplyList/?firstLevelReplyId=1&page=1`, 二级回复列表，【需要登陆】
     * 返回json:
     ```
     {
@@ -283,16 +290,16 @@ KuangNei
      "returnCode": 0,
       "list": [
                { "editStatus": 0,
-                 "secondLevelReplyId": 1,
-                 "firstLevResponseId": 2,
-                 "content": "232",
+                 "replyTime": "2014-08-27 11:12:21",
+                 "postId": 1,
+                 "firstLevelReplyId": 1,
+                 "secondLevelReplyId": 2,
+                 "content": "二级回复",
                  "user": {
                     "id": 2,
                     "name": "中国好声音2",
                     "avatar": null
-               },
-                 "postId": 1,
-                 "createTime": "2014-08-27 11:12:21"
+                 },
                 },
                ],
       "size": 1
