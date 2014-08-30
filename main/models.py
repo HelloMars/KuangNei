@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from django.db import models
 
+from kuangnei import utils
+
 # Create your models here.
 
 
@@ -16,7 +18,7 @@ class Choice(models.Model):
 
 
 class Post(models.Model):
-    userId = models.CharField(max_length=255, db_column="user_id")
+    userId = models.IntegerField(db_column="user_id")
     schoolId = models.IntegerField(db_column="school_id")
     content = models.CharField(max_length=800)
     channelId = models.IntegerField(db_column="channel")
@@ -45,11 +47,9 @@ class Post(models.Model):
         return ret
 
 
-class Post_picture(models.Model):
-    post_id = models.BigIntegerField()
-    picture_url = models.URLField()
-    create_time = models.DateTimeField()
-    picture_size = models.CharField(max_length=255)
+class PostPicture(models.Model):
+    postId = models.BigIntegerField(db_column="post_id")
+    pictureUrl = models.URLField(db_column="picture_url")
 
     class Meta:
         db_table = "post_picture"
@@ -59,22 +59,44 @@ class UserInfo(models.Model):
     FEMALE = 0
     MALE = 1
     NEUTRAL = 2
+    DEFAULT = 3
     SEX_CHOICES = (
         (FEMALE, 'Female'),
         (MALE, 'Male'),
         (NEUTRAL, 'Neutral'),
+        (DEFAULT, 'Null')
     )
     userId = models.IntegerField(db_column="user_id")
     token = models.CharField(max_length=255, db_column="user_token")
+    nickname = models.CharField(max_length=255, db_column='nickname')
+    telephone = models.CharField(max_length=50, db_column="telephone")
     avatar = models.CharField(max_length=255, db_column="avatar", null=True)
-    sex = models.IntegerField(db_column="sex", choices=SEX_CHOICES, default=NEUTRAL)
+    sex = models.IntegerField(db_column="sex", choices=SEX_CHOICES, default=DEFAULT)
+    birthday = models.DateField(db_column="birthday", null=True)
     sign = models.CharField(max_length=255, db_column="sign", null=True)
     schoolId = models.IntegerField(db_column="school_id", null=True)
-    telephone = models.CharField(max_length=50, db_column="telephone")
-    avatar = models.CharField(max_length=1000,db_column="avatar", null=True)
 
     class Meta:
         db_table = "user_info"
+
+    def setattrs(self, data):
+        modify = False
+        for field in self._meta.fields:
+            attr = field.name
+            value = data.get(attr.lower())
+            if value is not None:
+                if attr == 'telephone' and not utils.is_avaliable_phone(value):
+                    continue
+                setattr(self, attr, value)
+                modify = True
+        return modify
+
+    def tojson(self):
+        ret = {}
+        for field in self._meta.fields:
+            attr = field.name
+            ret[attr] = getattr(self, attr)
+        return ret
 
 
 class PostResponse(models.Model):
@@ -138,3 +160,4 @@ class SecondLevelResponse(models.Model):
             else:
                 ret[attr] = getattr(self, attr)
         return ret
+

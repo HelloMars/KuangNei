@@ -12,7 +12,6 @@ urlpatterns = patterns(
     url(r'^checkIfUserExist/$', views.check_if_user_exist, name='checkIfExist'),
     url(r'^signin/$', views.login_in, name='login'),
     url(r'^logout/$', views.logout_out, name='logout'),
-    url(r'^testLogin/$', views.test_view, name='testLogin'),
     url(r'^register/$', views.register, name='regist'),
     url(r'^addUserInfo/$', views.add_user_info, name='addUserInfo'),
     url(r'^replyFirstLevel/$', views.reply_first_level, name='replyFirstLevel'),
