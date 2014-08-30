@@ -28,9 +28,9 @@ dateHandler = lambda obj: obj.strftime('%Y-%m-%d')\
     if isinstance(obj, date) else json.JSONEncoder().default(obj)
 
 
-def wrap_message(data={}, code=0, msg=''):
+def wrap_message(data=None, code=0, msg=''):
     ret = {'returnCode': code}
-    if code == 0:
+    if code == 0 and data is not None:
         ret.update(data)
     # 约定的 returnCode 与 returnMessage 映射表
     ret['returnMessage'] = {
@@ -55,6 +55,7 @@ def get_dnurl(key):
     dnurl = policy.make_request(base_url)
     logger.info("Generate qiniu dnurl(%s) from key(%s)", dnurl, key)
     return dnurl
+
 
 def is_avaliable_phone(phonenumber):
     pattern = re.compile('^1[3|5|7|8|][0-9]{9}$')

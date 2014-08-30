@@ -99,19 +99,6 @@ class UserInfo(models.Model):
         return ret
 
 
-class PostResponse(models.Model):
-    postId = models.IntegerField(db_column="post_id", db_index=True)
-    postResponseId = models.IntegerField(db_column="response_id", db_index=True)
-    userId = models.IntegerField(db_column="user_id")
-    content = models.CharField(db_column="content", max_length=500)
-    floor = models.IntegerField(db_column="floor")
-    createTime = models.DateTimeField(db_column="create_time")
-    editStatus = models.IntegerField(db_column="edit_status")
-
-    class Meta:
-        db_table = "post_response"
-
-
 class FirstLevelResponse(models.Model):
     postId = models.IntegerField(db_column="post_id", db_index=True)
     userId = models.IntegerField(db_column="user_id")
@@ -160,4 +147,3 @@ class SecondLevelResponse(models.Model):
             else:
                 ret[attr] = getattr(self, attr)
         return ret
-

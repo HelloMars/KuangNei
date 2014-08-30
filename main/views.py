@@ -16,9 +16,8 @@ from django.shortcuts import redirect
 from kuangnei import consts, utils
 from kuangnei.utils import logger
 from main.models import Post, PostPicture, UserInfo, FirstLevelResponse, SecondLevelResponse
-import json
 import post_push
-import time
+
 
 # Create your views here.
 
@@ -229,6 +228,7 @@ def channellist(request):
     data = json.dumps(foos)
     return HttpResponse(data, mimetype='application/json')
 
+
 @login_required
 def up_post(request):
     user_id = request.session[SESSION_KEY]
@@ -238,7 +238,7 @@ def up_post(request):
         ret = utils.wrap_message(code=1)
     else:
         try:
-            post = Post.objects.get(id=post_id)         #验证post_id是有效字段
+            Post.objects.get(id=post_id)  # 验证post_id是有效字段
             Post.objects.filter(id=post_id).update(upCount=F('upCount')+1)
             ret = utils.wrap_message(code=0, msg="赞成功")
         except Exception as e:
@@ -256,7 +256,7 @@ def up_reply(request):
         ret = utils.wrap_message(code=1)
     else:
         try:
-            first_level_reply = FirstLevelResponse.objects.get(id=first_level_reply_id)         #验证post_id是有效字段
+            FirstLevelResponse.objects.get(id=first_level_reply_id)  # 验证post_id是有效字段
             FirstLevelResponse.objects.filter(id=first_level_reply_id).update(upCount=F('upCount')+1)
             ret = utils.wrap_message(code=0, msg="赞成功")
         except Exception as e:
@@ -274,7 +274,7 @@ def oppose_post(request):
         ret = utils.wrap_message(code=1)
     else:
         try:
-            post = Post.objects.get(id=post_id)         #验证post_id是有效字段
+            Post.objects.get(id=post_id)  # 验证post_id是有效字段
             Post.objects.filter(id=post_id).update(opposedCount=F('opposedCount')+1)
             ret = utils.wrap_message(code=0, msg="踩成功")
         except Exception as e:
@@ -295,13 +295,15 @@ def reply_first_level(request):
         else:
             response_time = time.strftime('%Y-%m-%d %H:%M:%S')
             with transaction.atomic():
-                Post.objects.filter(id=post_id).update(currentFloor=F('currentFloor')+1)             #post表里对应的currentFloor加1
+                Post.objects.filter(id=post_id).update(currentFloor=F('currentFloor')+1)  # post表里对应的currentFloor加1
                 current_floor = Post.objects.get(id=post_id).currentFloor
-                first_level_response = FirstLevelResponse.objects.create(postId=post_id, userId=user_id, upCount=0,
-                                                                         content=content, floor=current_floor,
-                                                                         replyCount=0, createTime=response_time,
-                                                                         editStatus=0)
-                ret = utils.wrap_message(data={"firstLevelReplyId": first_level_response.id}, code=0, msg="发表回复成功")
+                first_level_response = FirstLevelResponse.objects.create(
+                    postId=post_id, userId=user_id, upCount=0,
+                    content=content, floor=current_floor,
+                    replyCount=0, createTime=response_time,
+                    editStatus=0)
+                ret = utils.wrap_message(data={"firstLevelReplyId": first_level_response.id},
+                                         code=0, msg="发表回复成功")
     except Exception as e:
         logger.error(e)
         ret = utils.wrap_message(code=1)
@@ -321,13 +323,14 @@ def reply_second_level(request):
         else:
             response_time = time.strftime('%Y-%m-%d %H:%M:%S')
             with transaction.atomic():
-                post = Post.objects.get(id=post_id)            #验证post_id是否是有效值
-                first_level_res = FirstLevelResponse.objects.get(id=first_level_res_id)
-                FirstLevelResponse.objects.filter(id=first_level_res_id).update(replyCount=F('replyCount') + 1)   #一级回复数量加1
-                second_level_response = SecondLevelResponse.objects.create(firstLevResponseId=first_level_res_id,
-                                                                           postId=post_id, userId=user_id,
-                                                                           content=content, createTime=response_time,
-                                                                           editStatus=0)
+                Post.objects.get(id=post_id)  # 验证post_id是否是有效值
+                FirstLevelResponse.objects.get(id=first_level_res_id)
+                FirstLevelResponse.objects.filter(id=first_level_res_id).update(replyCount=F('replyCount')+1)
+                second_level_response = SecondLevelResponse.objects.create(
+                    firstLevResponseId=first_level_res_id,
+                    postId=post_id, userId=user_id,
+                    content=content, createTime=response_time,
+                    editStatus=0)
                 ret = utils.wrap_message(data={"secondLevelReplyId": second_level_response.id}, code=0, msg="发表回复成功")
     except Exception as e:
         logger.error(e)
@@ -348,7 +351,7 @@ def first_level_reply_list(request):
         first_lev_rep_list = FirstLevelResponse.objects.filter(postId=post_id).order_by("floor")[start:end]
         logger.info("first_level_reply_list [%d, %d]", start, end)
         ret = utils.wrap_message({'size': len(first_lev_rep_list)})
-        ret['list'] = [e.to_json(get_user_info_to_json(e.userId)) for e in first_lev_rep_list]
+        ret['list'] = [e.to_json(_fill_user_info(e.userId)) for e in first_lev_rep_list]
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
 
 
@@ -362,13 +365,13 @@ def second_level_reply_list(request):
         page = int(page)
         start = (page - 1) * consts.SECOND_LEVEL_REPLY_LOAD_SIZE
         end = start + consts.SECOND_LEVEL_REPLY_LOAD_SIZE
-        second_lev_rep_list = SecondLevelResponse.objects.filter(firstLevResponseId=first_lev_rep_id).\
-                                  order_by("createTime")[start:end]
+        second_lev_rep_list = SecondLevelResponse.objects.filter(
+            firstLevResponseId=first_lev_rep_id).\
+            order_by("createTime")[start:end]
         logger.info("second_lev_rep_list [%d, %d]", start, end)
         ret = utils.wrap_message({'size': len(second_lev_rep_list)})
-        ret['list'] = [e.to_json(get_user_info_to_json(e.userId)) for e in second_lev_rep_list]
+        ret['list'] = [e.to_json(_fill_user_info(e.userId)) for e in second_lev_rep_list]
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
-
 
 
 def _push_message_to_app(post):
@@ -390,20 +393,3 @@ def _fill_user_info(userid):
              "avatar": avatar,
              "name": nickname}
     return jsond
-
-
-def get_user_info_to_json(userid):
-    u = {}
-    if userid is None:
-        return u
-    else:
-        try:
-            user = User.objects.get(id=userid)
-            user_info = UserInfo.objects.get(userId=userid)
-            u['id'] = user.id
-            u['avatar'] = user_info.avatar
-            u['name'] = user.username
-        except Exception as e:
-            logger.error(e)
-            u = {}
-        return u
