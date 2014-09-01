@@ -10,7 +10,8 @@ KuangNei
 * (pip freeze > requirements.txt 命令保存了所需包的版本)
 * `pip install Django` (1.6.5) #虚拟环境下装Django
 * `pip install uwsgi` (2.0.6)
-* `pip install mysql-python` (1.2.5) #mysql drive
+* `pip install mysql-python` (1.2.5) #mysql drive (need mysql:3306)
+* `pip install django-redis` (3.7.1) #redis cache (need redis:6379)
 * `pip install qiniu` (6.1.8)
 * `pip install fabric` (可选，用于自动化部署)
 * `cd KuangNei`

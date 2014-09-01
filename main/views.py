@@ -12,6 +12,7 @@ from django.db.models import F
 from django.http import HttpResponse
 from django.http import Http404
 from django.shortcuts import redirect
+from django.core.cache import cache
 
 from kuangnei import consts, utils
 from kuangnei.utils import logger
@@ -167,8 +168,8 @@ def _login(username, password, deviceid, token, request):
     return ret
 
 
-# http://127.0.0.1:8000/accounts/login/?
-# next=/kuangnei/api/channellist/&username=18910690027&password=~%21%40%23%60123qwer&deviceid=xxx
+# http://kuangnei.me/zhumeng/accounts/login/?
+# next=/zhumeng/kuangnei/api/channellist/&username=18910690027&password=~%21%40%23%60123qwer&deviceid=xxx
 def rlogin_in(request):
     username = request.GET.get('username')
     password = request.GET.get('password')
@@ -247,7 +248,6 @@ def up_post(request):
         ret = utils.wrap_message(code=1)
     else:
         try:
-            # TODO: must be thread safe
             Post.objects.get(id=postid)  # 验证post_id是有效字段
             Post.objects.filter(id=postid).update(upCount=F('upCount')+1)
             upcount = Post.objects.get(id=postid).upCount
@@ -266,7 +266,6 @@ def up_reply(request):
         ret = utils.wrap_message(code=1)
     else:
         try:
-            # TODO: must be thread safe
             FirstLevelReply.objects.get(id=first_level_reply_id)  # 验证post_id是有效字段
             FirstLevelReply.objects.filter(id=first_level_reply_id).update(upCount=F('upCount')+1)
             upcount = FirstLevelReply.objects.get(id=first_level_reply_id).upCount
@@ -285,7 +284,6 @@ def oppose_post(request):
         ret = utils.wrap_message(code=1)
     else:
         try:
-            # TODO: must be thread safe
             Post.objects.get(id=postid)  # 验证post_id是有效字段
             Post.objects.filter(id=postid).update(opposedCount=F('opposedCount')+1)
             opposedcount = Post.objects.get(id=postid).opposedCount
@@ -406,3 +404,10 @@ def _fill_user_info(userid):
              "avatar": avatar,
              "name": nickname}
     return jsond
+
+
+def redis(request):
+    cache.set('foo', 'value', timeout=25)
+    logger.info("redis: " + cache.get('foo') + ", " + str(cache.ttl('foo')))
+    ret = utils.wrap_message(code=0)
+    return HttpResponse(json.dumps(ret), mimetype='application/json')
