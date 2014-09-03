@@ -57,3 +57,5 @@ def is_avaliable_phone(phonenumber):
         return True
     else:
         return False
+
+from django.core.cache import cache
