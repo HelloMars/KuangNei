@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from django.db import models
 
+from kuangnei import utils
+
 # Create your models here.
 
 
@@ -16,15 +18,14 @@ class Choice(models.Model):
 
 
 class Post(models.Model):
-    userId = models.CharField(max_length=255, db_column="user_id")
+    userId = models.IntegerField(db_column="user_id")
     schoolId = models.IntegerField(db_column="school_id")
     content = models.CharField(max_length=800)
-    channelId = models.IntegerField(db_column="channel")
-    opposedCount = models.IntegerField(db_column="unlike_count")
-    upCount = models.IntegerField(db_column="like_count")
+    channelId = models.IntegerField(db_column="channel_id")
+    opposedCount = models.IntegerField(db_column="opposed_count")
+    upCount = models.IntegerField(db_column="up_count")
     postTime = models.DateTimeField('date published', db_column="create_time")
-    replyCount = models.IntegerField(db_column="back_count")
-    currentFloor = models.IntegerField(db_column="current_floor")
+    replyCount = models.IntegerField(db_column="reply_count")
     rank = models.IntegerField()
     editStatus = models.IntegerField(db_column="edit_status")
 
@@ -45,11 +46,9 @@ class Post(models.Model):
         return ret
 
 
-class Post_picture(models.Model):
-    post_id = models.BigIntegerField()
-    picture_url = models.URLField()
-    create_time = models.DateTimeField()
-    picture_size = models.CharField(max_length=255)
+class PostPicture(models.Model):
+    postId = models.BigIntegerField(db_column="post_id")
+    pictureUrl = models.URLField(db_column="picture_url")
 
     class Meta:
         db_table = "post_picture"
@@ -59,48 +58,59 @@ class UserInfo(models.Model):
     FEMALE = 0
     MALE = 1
     NEUTRAL = 2
+    DEFAULT = 3
     SEX_CHOICES = (
         (FEMALE, 'Female'),
         (MALE, 'Male'),
         (NEUTRAL, 'Neutral'),
+        (DEFAULT, 'Null')
     )
     userId = models.IntegerField(db_column="user_id")
-    token = models.CharField(max_length=255, db_column="user_token")
-    sex = models.IntegerField(db_column="sex", choices=SEX_CHOICES, default=NEUTRAL)
+    deviceId = models.CharField(max_length=255, db_column="device_id")
+    token = models.CharField(max_length=255, db_column="user_token", null=True)
+    nickname = models.CharField(max_length=255, db_column='nickname')
+    telephone = models.CharField(max_length=50, db_column="telephone")
+    avatar = models.CharField(max_length=255, db_column="avatar", null=True)
+    sex = models.IntegerField(db_column="sex", choices=SEX_CHOICES, default=DEFAULT)
+    birthday = models.DateField(db_column="birthday", null=True)
     sign = models.CharField(max_length=255, db_column="sign", null=True)
     schoolId = models.IntegerField(db_column="school_id", null=True)
-    telephone = models.CharField(max_length=50, db_column="telephone")
-    avatar = models.CharField(max_length=1000,db_column="avatar", null=True)
 
     class Meta:
         db_table = "user_info"
 
+    def setattrs(self, data):
+        modify = False
+        for field in self._meta.fields:
+            attr = field.name
+            value = data.get(attr.lower())
+            if value is not None:
+                if attr == 'telephone' and not utils.is_avaliable_phone(value):
+                    continue
+                setattr(self, attr, value)
+                modify = True
+        return modify
 
-class PostResponse(models.Model):
-    postId = models.IntegerField(db_column="post_id", db_index=True)
-    postResponseId = models.IntegerField(db_column="response_id", db_index=True)
-    userId = models.IntegerField(db_column="user_id")
-    content = models.CharField(db_column="content", max_length=500)
-    floor = models.IntegerField(db_column="floor")
-    createTime = models.DateTimeField(db_column="create_time")
-    editStatus = models.IntegerField(db_column="edit_status")
-
-    class Meta:
-        db_table = "post_response"
+    def tojson(self):
+        ret = {}
+        for field in self._meta.fields:
+            attr = field.name
+            ret[attr] = getattr(self, attr)
+        return ret
 
 
-class FirstLevelResponse(models.Model):
+class FirstLevelReply(models.Model):
     postId = models.IntegerField(db_column="post_id", db_index=True)
     userId = models.IntegerField(db_column="user_id")
     content = models.CharField(db_column="content", max_length=800)
     upCount = models.IntegerField(db_column="up_count")
     replyCount = models.IntegerField(db_column="reply_count")
     floor = models.IntegerField(db_column="floor")
-    createTime = models.DateTimeField(db_column="create_time")
+    replyTime = models.DateTimeField(db_column="create_time")
     editStatus = models.IntegerField(db_column="edit_status")
 
     class Meta:
-        db_table = "first_level_response"
+        db_table = "first_level_reply"
 
     def to_json(self, user):
         ret = {}
@@ -115,16 +125,16 @@ class FirstLevelResponse(models.Model):
         return ret
 
 
-class SecondLevelResponse(models.Model):
+class SecondLevelReply(models.Model):
     postId = models.IntegerField(db_column="post_id", db_index=True)
-    firstLevResponseId = models.IntegerField(db_column="first_level_response_id", db_index=True)
+    firstLevelReplyId = models.IntegerField(db_column="first_level_reply_id", db_index=True)
     userId = models.IntegerField(db_column="user_id")
     content = models.CharField(db_column="content", max_length=140)
-    createTime = models.DateTimeField(db_column="create_time")
+    replyTime = models.DateTimeField(db_column="create_time")
     editStatus = models.IntegerField(db_column="edit_status")
 
     class Meta:
-        db_table = "second_level_response"
+        db_table = "second_level_reply"
 
     def to_json(self, user):
         ret = {}

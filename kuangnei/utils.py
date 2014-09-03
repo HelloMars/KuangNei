@@ -18,21 +18,27 @@ conf.ACCESS_KEY = consts.QINIU_ACCESS_KEY
 conf.SECRET_KEY = consts.QINIU_SECRET_KEY
 
 from datetime import datetime
+from datetime import date
 import json
 
 datetimeHandler = lambda obj: obj.strftime('%Y-%m-%d %H:%M:%S')\
     if isinstance(obj, datetime) else json.JSONEncoder().default(obj)
 
+dateHandler = lambda obj: obj.strftime('%Y-%m-%d')\
+    if isinstance(obj, date) else json.JSONEncoder().default(obj)
 
-def wrap_message(data={}, code=0, msg=''):
-    ret = {'returnCode': code, 'returnMessage': msg}
-    if code == 0:
+
+def wrap_message(data=None, code=0, msg=''):
+    ret = {'returnCode': code}
+    if code == 0 and data is not None:
         ret.update(data)
-    elif msg == '':
-        ret['returnMessage'] = {
-            1: 'incorrect parameters',
-            2: 'incorrect request method [GET, POST]'
-        }.get(code, '')
+    # 约定的 returnCode 与 returnMessage 映射表
+    ret['returnMessage'] = {
+        1: 'incorrect parameters. ',
+        2: 'incorrect request method [GET, POST]. ',
+        10: 'user system error. ',
+        11: 'incorrect format of parameters. ',
+    }.get(code, '') + msg
     return ret
 
 
@@ -49,6 +55,7 @@ def get_dnurl(key):
     dnurl = policy.make_request(base_url)
     logger.info("Generate qiniu dnurl(%s) from key(%s)", dnurl, key)
     return dnurl
+
 
 def is_avaliable_phone(phonenumber):
     pattern = re.compile('^1[3|5|7|8|][0-9]{9}$')
