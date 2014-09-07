@@ -14,9 +14,9 @@ from django.http import Http404
 from django.shortcuts import redirect
 from django.core.cache import cache
 
-from kuangnei import consts, utils
+from kuangnei import consts
 from kuangnei.utils import logger
-from main.models import Post, PostPicture, UserInfo, FirstLevelReply, SecondLevelReply
+from main.models import *
 import post_push
 
 
@@ -54,7 +54,7 @@ def post(request):
         else:
             post = Post(userId=userid, schoolId=1, content=content, channelId=channelid,
                         opposedCount=0, postTime=time.strftime('%Y-%m-%d %H:%M:%S'),
-                        replyCount=0, rank=1, editStatus=0, upCount=0)
+                        replyCount=0, replyUserCount=0, rank=1, editStatus=0, upCount=0)
             post.save()
             logger.info("post " + str(post.id))
             imageurl = request.POST.get("imageurl")
@@ -120,7 +120,7 @@ def register(request):
                                             telephone=username)
                     user = authenticate(username=username, password=password)
                     login(request, user)
-                    request.session.set_expiry(300)  # session失效期5分钟
+                    request.session.set_expiry(30000)  # session失效期5分钟
                     ret = utils.wrap_message({'user': newuser.username})
                     logger.info('注册新用户(%s)成功', repr(newuser))
             else:
@@ -143,7 +143,9 @@ def check_if_user_exist(request):
     return HttpResponse(json.dumps(ret, ensure_ascii=False))
 
 
-def _login(username, password, deviceid, token, request):
+def _login(data, request):
+    username = data.get('username')
+    password = data.get('password')
     if username is None or password is None:
         ret = utils.wrap_message(code=1)
     else:
@@ -155,12 +157,11 @@ def _login(username, password, deviceid, token, request):
             if user.is_active:
                 login(request, user)
                 user_info = UserInfo.objects.get(userId=user.id)
-                user_info.deviceId = deviceid
-                if token is not None:
-                    user_info.token = token
-                    logger.info('修改用户(%s)token成功', repr(user.id))
-                user_info.save()
-                request.session.set_expiry(300)
+                modify = user_info.setattrs(data)
+                if modify:
+                    user_info.save()
+                    logger.info('修改用户(%s)信息成功', repr(user.id))
+                request.session.set_expiry(30000)
                 ret = utils.wrap_message(code=0, msg='登陆成功')
             else:
                 ret = utils.wrap_message(code=10, msg='用户无权限')
@@ -173,12 +174,10 @@ def _login(username, password, deviceid, token, request):
 def rlogin_in(request):
     username = request.GET.get('username')
     password = request.GET.get('password')
-    deviceid = request.GET.get('deviceid')
-    token = request.GET.get('token')
     if username is None or password is None:
         raise Http404
     else:
-        _login(username, password, deviceid, token, request)
+        _login(request.GET, request)
         return redirect(request.GET.get('next'))
 
 
@@ -186,11 +185,7 @@ def login_in(request):
     if request.method != 'POST':
         ret = utils.wrap_message(code=2)
     else:
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        deviceid = request.POST.get('deviceid')
-        token = request.POST.get('token')
-        ret = _login(username, password, deviceid, token, request)
+        ret = _login(request.POST, request)
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
@@ -243,54 +238,50 @@ def channellist(request):
 @login_required
 def up_post(request):
     postid = request.POST.get('postId')
-    if postid is None:
-        logger.error("参数错误")
+    post = utils.get(Post, id=postid)  # 验证postid有效性
+    if postid is None or post is None:
         ret = utils.wrap_message(code=1)
     else:
-        try:
-            Post.objects.get(id=postid)  # 验证post_id是有效字段
+        if utils.get(UpPost, postId=postid) is None:  # 用户未赞过
             Post.objects.filter(id=postid).update(upCount=F('upCount')+1)
-            upcount = Post.objects.get(id=postid).upCount
-            ret = utils.wrap_message(code=0, data={'upCount': upcount}, msg="赞成功")
-        except Exception as e:
-            logger.error(e)
-            ret = utils.wrap_message(code=1)
-    return HttpResponse(json.dumps(ret), mimetype='application/json')
-
-
-@login_required
-def up_reply(request):
-    first_level_reply_id = request.POST.get('firstLevelReplyId')
-    if first_level_reply_id is None:
-        logger.error("参数错误")
-        ret = utils.wrap_message(code=1)
-    else:
-        try:
-            FirstLevelReply.objects.get(id=first_level_reply_id)  # 验证post_id是有效字段
-            FirstLevelReply.objects.filter(id=first_level_reply_id).update(upCount=F('upCount')+1)
-            upcount = FirstLevelReply.objects.get(id=first_level_reply_id).upCount
-            ret = utils.wrap_message(code=0, data={'upCount': upcount}, msg="赞成功")
-        except Exception as e:
-            logger.error(e)
-            ret = utils.wrap_message(code=1)
+            UpPost.objects.create(postId=postid, userId=request.session[SESSION_KEY])
+            ret = utils.wrap_message(code=0, data={'upCount': post.upCount+1}, msg="赞成功")
+        else:  # 用户已经赞过
+            ret = utils.wrap_message(code=0, data={'upCount': post.upCount}, msg="已经赞过")
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
 @login_required
 def oppose_post(request):
     postid = request.POST.get('postId')
-    if postid is None:
-        logger.error("参数错误")
+    post = utils.get(Post, id=postid)  # 验证postid有效性
+    if postid is None or post is None:
         ret = utils.wrap_message(code=1)
     else:
-        try:
-            Post.objects.get(id=postid)  # 验证post_id是有效字段
+        if utils.get(OpposePost, postId=postid) is None:  # 用户未踩过
             Post.objects.filter(id=postid).update(opposedCount=F('opposedCount')+1)
-            opposedcount = Post.objects.get(id=postid).opposedCount
-            ret = utils.wrap_message(code=0, data={'opposedCount': opposedcount}, msg="踩成功")
-        except Exception as e:
-            logger.error(e)
-            ret = utils.wrap_message(code=1)
+            OpposePost.objects.create(postId=postid, userId=request.session[SESSION_KEY])
+            ret = utils.wrap_message(code=0, data={'opposedCount': post.opposedCount+1}, msg="踩成功")
+        else:  # 用户已经踩过
+            ret = utils.wrap_message(code=0, data={'opposedCount': post.opposedCount}, msg="已经踩过")
+    return HttpResponse(json.dumps(ret), mimetype='application/json')
+
+
+@login_required
+def up_reply(request):
+    first_level_reply_id = request.POST.get('firstLevelReplyId')
+    first_level_reply = utils.get(FirstLevelReply, id=first_level_reply_id)  # 验证first_level_reply_id有效性
+    if first_level_reply_id is None or first_level_reply is None:
+        ret = utils.wrap_message(code=1)
+    else:
+        if utils.get(UpReply, firstLevelReplyId=first_level_reply_id) is None:  # 用户未赞过
+            FirstLevelReply.objects.filter(id=first_level_reply_id).update(upCount=F('upCount')+1)
+            UpReply.objects.create(postId=first_level_reply.postId,
+                                   firstLevelReplyId=first_level_reply_id,
+                                   userId=request.session[SESSION_KEY])
+            ret = utils.wrap_message(code=0, data={'upCount': first_level_reply.upCount+1}, msg="赞成功")
+        else:  # 用户已经赞过
+            ret = utils.wrap_message(code=0, data={'upCount': first_level_reply.upcount}, msg="已经赞过")
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
@@ -299,25 +290,23 @@ def reply_first_level(request):
     userid = request.session[SESSION_KEY]
     postid = request.POST.get('postId')
     content = request.POST.get('content')
-    try:
-        if postid is None or content is None or userid is None:
-            logger.error("参数错误")
-            ret = utils.wrap_message(code=1)
-        else:
-            reply_time = time.strftime('%Y-%m-%d %H:%M:%S')
-            with transaction.atomic():
-                Post.objects.filter(id=postid).update(replyCount=F('replyCount')+1)  # post表里对应的replyCount加1
-                current_floor = Post.objects.get(id=postid).replyCount
-                first_level_reply = FirstLevelReply.objects.create(
-                    postId=postid, userId=userid, upCount=0,
-                    content=content, floor=current_floor,
-                    replyCount=0, replyTime=reply_time,
-                    editStatus=0)
-                ret = utils.wrap_message(data={"firstLevelReplyId": first_level_reply.id},
-                                         code=0, msg="发表回复成功")
-    except Exception as e:
-        logger.error(e)
+    post = utils.get(Post, id=postid)  # 验证postid有效性
+    if postid is None or content is None or userid is None or post is None:
         ret = utils.wrap_message(code=1)
+    else:
+        reply_time = time.strftime('%Y-%m-%d %H:%M:%S')
+        with transaction.atomic():
+            Post.objects.filter(id=postid).update(replyCount=F('replyCount')+1)  # 总回复数+1
+            first_level_reply = FirstLevelReply.objects.create(
+                postId=postid, userId=userid, upCount=0,
+                content=content, floor=Post.objects.get(id=postid).replyCount,  # 确保原子操作
+                replyCount=0, replyUserCount=0, replyTime=reply_time,
+                editStatus=0)
+            if utils.get(ReplyPost, postId=postid) is not None:  # 未回复过
+                ReplyPost.objects.create(postId=postid, userId=userid)
+                Post.objects.filter(id=postid).update(replyUserCount=F('replyUserCount')+1)  # 独立回复数+1
+            ret = utils.wrap_message(data={"firstLevelReplyId": first_level_reply.id},
+                                     code=0, msg="发表回复成功")
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
@@ -327,26 +316,23 @@ def reply_second_level(request):
     postid = request.POST.get('postId')
     first_level_reply_id = request.POST.get('firstLevelReplyId')
     content = request.POST.get('content')
-    try:
-        if postid is None or content is None or userid is None or first_level_reply_id is None:
-            logger.error("参数错误")
-            ret = utils.wrap_message(code=1)
-        else:
-            reply_time = time.strftime('%Y-%m-%d %H:%M:%S')
-            with transaction.atomic():
-                Post.objects.get(id=postid)  # 验证post_id是否是有效值
-                FirstLevelReply.objects.get(id=first_level_reply_id)
-                FirstLevelReply.objects.filter(id=first_level_reply_id).update(replyCount=F('replyCount')+1)
-                second_level_reply = SecondLevelReply.objects.create(
-                    firstLevelReplyId=first_level_reply_id,
-                    postId=postid, userId=userid,
-                    content=content, replyTime=reply_time,
-                    editStatus=0)
-                ret = utils.wrap_message(data={"secondLevelReplyId": second_level_reply.id},
-                                         code=0, msg="发表回复成功")
-    except Exception as e:
-        logger.error(e)
+    first_level_reply = utils.get(FirstLevelReply, id=first_level_reply_id)  # 验证first_level_reply_id有效性
+    if postid is None or content is None or userid is None or first_level_reply_id is None or first_level_reply is None:
         ret = utils.wrap_message(code=1)
+    else:
+        reply_time = time.strftime('%Y-%m-%d %H:%M:%S')
+        with transaction.atomic():
+            FirstLevelReply.objects.filter(id=first_level_reply_id).update(replyCount=F('replyCount')+1)  # 总回复数+1
+            second_level_reply = SecondLevelReply.objects.create(
+                firstLevelReplyId=first_level_reply_id,
+                postId=postid, userId=userid,
+                content=content, replyTime=reply_time,
+                editStatus=0)
+            if utils.get(ReplyReply, firstLevelReplyId=first_level_reply_id) is not None:  # 未回复过
+                ReplyReply.objects.create(postId=postid, firstLevelReplyId=first_level_reply_id, userId=userid)
+                FirstLevelReply.objects.filter(id=first_level_reply_id).update(replyUserCount=F('replyUserCount')+1)  # 独立回复数+1
+            ret = utils.wrap_message(data={"secondLevelReplyId": second_level_reply.id},
+                                     code=0, msg="发表回复成功")
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 

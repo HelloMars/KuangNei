@@ -26,6 +26,7 @@ class Post(models.Model):
     upCount = models.IntegerField(db_column="up_count")
     postTime = models.DateTimeField('date published', db_column="create_time")
     replyCount = models.IntegerField(db_column="reply_count")
+    replyUserCount = models.IntegerField(db_column="reply_user_count")
     rank = models.IntegerField()
     editStatus = models.IntegerField(db_column="edit_status")
 
@@ -65,7 +66,7 @@ class UserInfo(models.Model):
         (NEUTRAL, 'Neutral'),
         (DEFAULT, 'Null')
     )
-    userId = models.IntegerField(db_column="user_id")
+    userId = models.IntegerField(db_column="user_id", primary_key=True)
     deviceId = models.CharField(max_length=255, db_column="device_id", null=True)
     token = models.CharField(max_length=255, db_column="user_token", null=True)
     nickname = models.CharField(max_length=255, db_column='nickname')
@@ -84,7 +85,8 @@ class UserInfo(models.Model):
         for field in self._meta.fields:
             attr = field.name
             value = data.get(attr.lower())
-            if value is not None:
+            # 非空并不等才更新
+            if value is not None and value != getattr(self, attr):
                 if attr == 'telephone' and not utils.is_avaliable_phone(value):
                     continue
                 setattr(self, attr, value)
@@ -105,6 +107,7 @@ class FirstLevelReply(models.Model):
     content = models.CharField(db_column="content", max_length=800)
     upCount = models.IntegerField(db_column="up_count")
     replyCount = models.IntegerField(db_column="reply_count")
+    replyUserCount = models.IntegerField(db_column="reply_user_count")
     floor = models.IntegerField(db_column="floor")
     replyTime = models.DateTimeField(db_column="create_time")
     editStatus = models.IntegerField(db_column="edit_status")
@@ -147,3 +150,45 @@ class SecondLevelReply(models.Model):
             else:
                 ret[attr] = getattr(self, attr)
         return ret
+
+
+class UpPost(models.Model):
+    postId = models.IntegerField(db_column="post_id", primary_key=True)
+    userId = models.IntegerField(db_column="user_id")
+
+    class Meta:
+        db_table = "up_post"
+
+
+class ReplyPost(models.Model):
+    postId = models.IntegerField(db_column="post_id", primary_key=True)
+    userId = models.IntegerField(db_column="user_id")
+
+    class Meta:
+        db_table = "reply_post"
+
+
+class OpposePost(models.Model):
+    postId = models.IntegerField(db_column="post_id", primary_key=True)
+    userId = models.IntegerField(db_column="user_id")
+
+    class Meta:
+        db_table = "oppose_post"
+
+
+class UpReply(models.Model):
+    postId = models.IntegerField(db_column="post_id", primary_key=True)
+    firstLevelReplyId = models.IntegerField(db_column="first_level_reply_id", db_index=True)
+    userId = models.IntegerField(db_column="user_id")
+
+    class Meta:
+        db_table = "up_reply"
+
+
+class ReplyReply(models.Model):
+    postId = models.IntegerField(db_column="post_id", primary_key=True)
+    firstLevelReplyId = models.IntegerField(db_column="first_level_reply_id", db_index=True)
+    userId = models.IntegerField(db_column="user_id")
+
+    class Meta:
+        db_table = "reply_reply"

@@ -65,3 +65,11 @@ def is_avaliable_phone(phonenumber):
         return True
     else:
         return False
+
+
+def get(model, **kwargs):
+    try:
+        return model.objects.get(**kwargs)
+    except model.DoesNotExist:
+        return None
+
