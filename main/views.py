@@ -281,7 +281,7 @@ def up_reply(request):
                                    userId=request.session[SESSION_KEY])
             ret = utils.wrap_message(code=0, data={'upCount': first_level_reply.upCount+1}, msg="赞成功")
         else:  # 用户已经赞过
-            ret = utils.wrap_message(code=0, data={'upCount': first_level_reply.upcount}, msg="已经赞过")
+            ret = utils.wrap_message(code=0, data={'upCount': first_level_reply.upCount}, msg="已经赞过")
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 

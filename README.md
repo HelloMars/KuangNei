@@ -245,7 +245,7 @@ KuangNei
     * 返回json:
     ```
     {
-    "returnMessage": "赞成功",
+    "returnMessage": "赞成功", # 如果用户已经赞过: "已经赞过"
     "returnCode": 0
     }
     ```
@@ -254,7 +254,7 @@ KuangNei
     * 返回json:
     ```
     {
-    "returnMessage": "赞成功",
+    "returnMessage": "赞成功", # 如果用户已经赞过: "已经赞过"
     "returnCode": 0
     }
     ```
@@ -263,7 +263,7 @@ KuangNei
     * 返回json:
     ```
     {
-    "returnMessage": "踩成功",
+    "returnMessage": "踩成功", # 如果用户已经踩过: "已经踩过"
     "returnCode": 0
     }
     ```

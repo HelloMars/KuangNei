@@ -40,8 +40,7 @@ class ApiTest(TestCase):
                          'token': TEST_TOKEN0})
         self.client.post('/kuangnei/api/signin/',
                          {'username': TEST_USER0,
-                         'password': TEST_PASSWORD,
-                         'deviceid': TEST_DEVICEID})
+                         'password': TEST_PASSWORD})
         self.client.post('/kuangnei/api/addUserInfo/',
                          {'avatar': TEST_AVATAR,
                          'nickname': TEST_NICKNAME})
@@ -85,9 +84,17 @@ class ApiTest(TestCase):
         response = self.client.post('/kuangnei/api/uppost/',
                                     {'postId': 1})
         self._test_suc_message(response)
+        # test unique up
+        response = self.client.post('/kuangnei/api/uppost/',
+                                    {'postId': 1})
+        self._test_suc_message(response)
         jsond = json.loads(response.content)
         self.assertEqual(1, jsond['upCount'])
 
+        response = self.client.post('/kuangnei/api/opposepost/',
+                                    {'postId': 1})
+        self._test_suc_message(response)
+        # test unique oppose
         response = self.client.post('/kuangnei/api/opposepost/',
                                     {'postId': 1})
         self._test_suc_message(response)
@@ -102,6 +109,10 @@ class ApiTest(TestCase):
         jsond = json.loads(response.content)
         self.assertEqual(1, jsond['firstLevelReplyId'])
 
+        response = self.client.post('/kuangnei/api/upreply/',
+                                    {'firstLevelReplyId': 1})
+        self._test_suc_message(response)
+        # test unique upreply
         response = self.client.post('/kuangnei/api/upreply/',
                                     {'firstLevelReplyId': 1})
         self._test_suc_message(response)
@@ -228,8 +239,7 @@ class ApiTest(TestCase):
         # password error
         response = self.client.post('/kuangnei/api/signin/',
                                     {'username': TEST_USER1,
-                                     'password': 'wrongPassword',
-                                     'deviceid': TEST_DEVICEID})
+                                     'password': 'wrongPassword'})
         self._test_failed_message(response)
         # successful
         response = self.client.post('/kuangnei/api/signin/',
