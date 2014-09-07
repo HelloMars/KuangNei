@@ -38,6 +38,7 @@ def wrap_message(data=None, code=0, msg=''):
         2: 'incorrect request method [GET, POST]. ',
         10: 'user system error. ',
         11: 'incorrect format of parameters. ',
+        20: 'illegal operation. ',
     }.get(code, '') + msg
     logger.info("Return Message: " + str(ret))
     return ret
@@ -72,4 +73,3 @@ def get(model, **kwargs):
         return model.objects.get(**kwargs)
     except model.DoesNotExist:
         return None
-

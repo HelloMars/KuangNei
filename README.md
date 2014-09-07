@@ -33,6 +33,7 @@ KuangNei
     * 2: incorrect request method [GET, POST]
     * 10: user system error
     * 11: incorrect format of parameters
+    * 20: illegal operation
 
 ### API List ###
 1. `[GET] http://kuangnei.me/kuangnei/api/getUpToken/`, 获得图片上传token，【需要登陆】
@@ -219,17 +220,17 @@ KuangNei
     * 返回json:
     ```
     {
-    "returnMessage": "发表回复成功",
+    "returnMessage": "发表一级回复成功",
     "returnCode": 0,
     "firstLevelReplyId": 3
     }
     ```
 13. `[POST] http://kuangnei.me/kuangnei/api/replySecondLevel/`, 二级回复，【需要登陆】
-    * POST请求必要参数: `{'postId': 1, 'firstLevelReplyId': 1, 'content': '一级回复'}`
+    * POST请求必要参数: `{'postId': 1, 'firstLevelReplyId': 1, 'content': '二级回复'}`
     * 返回json:
     ```
     {
-    "returnMessage": "发表回复成功",
+    "returnMessage": "发表二级回复成功",
     "returnCode": 0,
     "secondLevelReplyId": 8
     }
@@ -245,28 +246,34 @@ KuangNei
     * 返回json:
     ```
     {
-    "returnMessage": "赞成功", # 如果用户已经赞过: "已经赞过"
-    "returnCode": 0
+    "returnMessage": "赞（踩）成功", # 如果用户已经赞过: "取消赞（踩）成功"
+    "returnCode": 0,
+    "upCount": 1
     }
     ```
+    * 错误代码：20, "自己赞（踩）无效"
 16. `[POST] http://kuangnei.me/kuangnei/api/upreply/`, 赞一级回复，【需要登陆】
     * POST请求必要参数: `{'firstLevelReplyId': 1}`
     * 返回json:
     ```
     {
-    "returnMessage": "赞成功", # 如果用户已经赞过: "已经赞过"
-    "returnCode": 0
+    "returnMessage": "赞成功", # 如果用户已经赞过: "取消赞成功"
+    "returnCode": 0,
+    "upCount": 1
     }
     ```
+    * 错误代码：20, "自己赞无效"
 17. `[POST] http://kuangnei.me/kuangnei/api/opposepost/`, 踩帖子，【需要登陆】
     * POST请求必要参数: `{'postId': 1}`
     * 返回json:
     ```
     {
-    "returnMessage": "踩成功", # 如果用户已经踩过: "已经踩过"
-    "returnCode": 0
+    "returnMessage": "赞（踩）成功", # 如果用户已经踩过: "取消赞（踩）成功"
+    "returnCode": 0,
+    "opposedCount": 1
     }
     ```
+    * 错误代码：20, "自己赞（踩）无效"
 18. `[GET] http://kuangnei.me/kuangnei/api/firstLevelReplyList/?postId=1&page=1`, 一级回复列表，【需要登陆】
     * 返回json:
     ```

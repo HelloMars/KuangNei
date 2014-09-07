@@ -27,7 +27,7 @@ class Post(models.Model):
     postTime = models.DateTimeField('date published', db_column="create_time")
     replyCount = models.IntegerField(db_column="reply_count")
     replyUserCount = models.IntegerField(db_column="reply_user_count")
-    rank = models.IntegerField()
+    score = models.IntegerField(db_column="score")
     editStatus = models.IntegerField(db_column="edit_status")
 
     class Meta:
@@ -110,6 +110,7 @@ class FirstLevelReply(models.Model):
     replyUserCount = models.IntegerField(db_column="reply_user_count")
     floor = models.IntegerField(db_column="floor")
     replyTime = models.DateTimeField(db_column="create_time")
+    score = models.IntegerField(db_column="score")
     editStatus = models.IntegerField(db_column="edit_status")
 
     class Meta:

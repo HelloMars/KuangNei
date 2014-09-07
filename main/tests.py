@@ -20,6 +20,7 @@ from models import UserInfo
 
 TEST_USER0 = '15658076066'
 TEST_USER1 = '18910690027'
+TEST_USER2 = '15877444771'
 TEST_PASSWORD = '~!@#`123qwer'
 TEST_TOKEN0 = 'd8ee807a6da4c9a3019f3f4ce168376f'
 TEST_TOKEN1 = 'af6ce77d4b57c2debef360c1bcf35190'
@@ -38,6 +39,11 @@ class ApiTest(TestCase):
                          'password': TEST_PASSWORD,
                          'deviceid': TEST_DEVICEID,
                          'token': TEST_TOKEN0})
+        # register test user 2
+        self.client.post('/kuangnei/api/register/',
+                         {'username': TEST_USER2,
+                         'password': TEST_PASSWORD})
+        # signin test user 0
         self.client.post('/kuangnei/api/signin/',
                          {'username': TEST_USER0,
                          'password': TEST_PASSWORD})
@@ -81,52 +87,89 @@ class ApiTest(TestCase):
 
         # test up_post and oppose_post
         # TODO: concurrent up
+        # self up/oppose failed
         response = self.client.post('/kuangnei/api/uppost/',
                                     {'postId': 1})
-        self._test_suc_message(response)
-        # test unique up
+        self._test_failed_message(response)
+
+        response = self.client.post('/kuangnei/api/opposepost/',
+                                    {'postId': 1})
+        self._test_failed_message(response)
+
+        # signin user 2
+        self.client.post('/kuangnei/api/signin/',
+                         {'username': TEST_USER2,
+                         'password': TEST_PASSWORD})
+
         response = self.client.post('/kuangnei/api/uppost/',
                                     {'postId': 1})
         self._test_suc_message(response)
         jsond = json.loads(response.content)
         self.assertEqual(1, jsond['upCount'])
-
-        response = self.client.post('/kuangnei/api/opposepost/',
+        # test cancel up
+        response = self.client.post('/kuangnei/api/uppost/',
                                     {'postId': 1})
         self._test_suc_message(response)
-        # test unique oppose
+        jsond = json.loads(response.content)
+        self.assertEqual(0, jsond['upCount'])
+        self.client.post('/kuangnei/api/uppost/', {'postId': 1})
+
         response = self.client.post('/kuangnei/api/opposepost/',
                                     {'postId': 1})
         self._test_suc_message(response)
         jsond = json.loads(response.content)
         self.assertEqual(1, jsond['opposedCount'])
+        # test cancel oppose
+        response = self.client.post('/kuangnei/api/opposepost/',
+                                    {'postId': 1})
+        self._test_suc_message(response)
+        jsond = json.loads(response.content)
+        self.assertEqual(0, jsond['opposedCount'])
+        self.client.post('/kuangnei/api/opposepost/', {'postId': 1})
 
         # reply post and up_reply
         response = self.client.post('/kuangnei/api/replyFirstLevel/',
                                     {'postId': 1,
-                                     'content': '一级回复'})
+                                     'content': '一级回复0'})
         self._test_suc_message(response)
         jsond = json.loads(response.content)
         self.assertEqual(1, jsond['firstLevelReplyId'])
+        self.client.post('/kuangnei/api/replyFirstLevel/', {'postId': 1, 'content': '一级回复1'})
 
         response = self.client.post('/kuangnei/api/upreply/',
                                     {'firstLevelReplyId': 1})
-        self._test_suc_message(response)
-        # test unique upreply
+        self._test_failed_message(response)
+
+        # signin user 0
+        self.client.post('/kuangnei/api/signin/',
+                         {'username': TEST_USER0,
+                         'password': TEST_PASSWORD})
+
         response = self.client.post('/kuangnei/api/upreply/',
                                     {'firstLevelReplyId': 1})
         self._test_suc_message(response)
         jsond = json.loads(response.content)
         self.assertEqual(1, jsond['upCount'])
+        # test cancel upreply
+        response = self.client.post('/kuangnei/api/upreply/',
+                                    {'firstLevelReplyId': 1})
+        self._test_suc_message(response)
+        jsond = json.loads(response.content)
+        self.assertEqual(0, jsond['upCount'])
+        self.client.post('/kuangnei/api/upreply/', {'firstLevelReplyId': 1})
 
         # reply comments
         response = self.client.post('/kuangnei/api/replySecondLevel/',
                                     {'postId': 1,
                                      'firstLevelReplyId': 1,
-                                     'content': '二级回复'})
+                                     'content': '二级回复0'})
         self._test_suc_message(response)
         jsond = json.loads(response.content)
         self.assertEqual(1, jsond['secondLevelReplyId'])
+        self.client.post('/kuangnei/api/replySecondLevel/',
+                         {'postId': 1,
+                          'firstLevelReplyId': 1,
+                          'content': '二级回复1'})
 
         # test postlist
         response = self.client.get('/kuangnei/api/postlist/')
@@ -145,9 +188,11 @@ class ApiTest(TestCase):
             self.assertIsNotNone(post['pictures'])
             self.assertEqual(post['content'], u'unit test, 单元测试')
 
-            self.assertEqual(post['replyCount'], 1)
+            self.assertEqual(post['replyCount'], 2)
+            self.assertEqual(post['replyUserCount'], 1)
             self.assertEqual(post['upCount'], 1)
             self.assertEqual(post['opposedCount'], 1)
+            self.assertEqual(post['score'], 0)
 
             user = post['user']
             self.assertLess(0, user['id'])
@@ -160,7 +205,7 @@ class ApiTest(TestCase):
         response = self.client.get('/kuangnei/api/firstLevelReplyList/?postId=1&page=1')
         self._test_suc_message(response)
         jsond = json.loads(response.content)
-        self.assertEqual(1, jsond['size'])
+        self.assertEqual(2, jsond['size'])
         try:
             post = jsond['list'][0]
             self.assertEqual(post['postId'], 1)
@@ -168,15 +213,17 @@ class ApiTest(TestCase):
             self.assertEqual(post['floor'], 1)
 
             self.assertIsNotNone(post['replyTime'])
-            self.assertEqual(post['content'], u'一级回复')
+            self.assertEqual(post['content'], u'一级回复0')
 
-            self.assertEqual(post['replyCount'], 1)
+            self.assertEqual(post['replyCount'], 2)
+            self.assertEqual(post['replyUserCount'], 1)
             self.assertEqual(post['upCount'], 1)
+            self.assertEqual(post['score'], 2)
 
             user = post['user']
             self.assertLess(0, user['id'])
-            self.assertEqual(user['avatar'], TEST_AVATAR)
-            self.assertEqual(user['name'], TEST_NICKNAME)
+            self.assertIsNone(user['avatar'])  # user 2
+            self.assertIsNotNone(user['name'])  # user 2
         except KeyError as e:
             self.assertIsNone(e)
 
@@ -184,7 +231,7 @@ class ApiTest(TestCase):
         response = self.client.get('/kuangnei/api/secondLevelReplyList/?firstLevelReplyId=1&page=1')
         self._test_suc_message(response)
         jsond = json.loads(response.content)
-        self.assertEqual(1, jsond['size'])
+        self.assertEqual(2, jsond['size'])
         try:
             post = jsond['list'][0]
             self.assertEqual(post['postId'], 1)
@@ -192,7 +239,7 @@ class ApiTest(TestCase):
             self.assertEqual(post['secondLevelReplyId'], 1)
 
             self.assertIsNotNone(post['replyTime'])
-            self.assertEqual(post['content'], u'二级回复')
+            self.assertEqual(post['content'], u'二级回复0')
 
             user = post['user']
             self.assertLess(0, user['id'])

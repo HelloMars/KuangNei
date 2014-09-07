@@ -52,13 +52,15 @@ def post(request):
         if channelid is None or content is None:
             ret = utils.wrap_message(code=1)
         else:
+            # TODO: score
             post = Post(userId=userid, schoolId=1, content=content, channelId=channelid,
                         opposedCount=0, postTime=time.strftime('%Y-%m-%d %H:%M:%S'),
-                        replyCount=0, replyUserCount=0, rank=1, editStatus=0, upCount=0)
+                        replyCount=0, replyUserCount=0, score=0, editStatus=0, upCount=0)
             post.save()
             logger.info("post " + str(post.id))
             imageurl = request.POST.get("imageurl")
             if imageurl is not None:
+                # TODO: 为什么不直接把imageurl存到数据库，取得时候再反序列化
                 imageurls = imageurl.split("@")
                 for url in imageurls:
                     post_picture = PostPicture(pictureUrl=url, postId=post.id)
@@ -235,36 +237,39 @@ def channellist(request):
     return HttpResponse(data, mimetype='application/json')
 
 
-@login_required
-def up_post(request):
+def _up_oppose_post(request, model, key):
     postid = request.POST.get('postId')
     post = utils.get(Post, id=postid)  # 验证postid有效性
     if postid is None or post is None:
         ret = utils.wrap_message(code=1)
     else:
-        if utils.get(UpPost, postId=postid) is None:  # 用户未赞过
-            Post.objects.filter(id=postid).update(upCount=F('upCount')+1)
-            UpPost.objects.create(postId=postid, userId=request.session[SESSION_KEY])
-            ret = utils.wrap_message(code=0, data={'upCount': post.upCount+1}, msg="赞成功")
-        else:  # 用户已经赞过
-            ret = utils.wrap_message(code=0, data={'upCount': post.upCount}, msg="已经赞过")
+        userid = request.session[SESSION_KEY]
+        if post.userId == userid:  # 自己赞（踩）
+            ret = utils.wrap_message(code=20, data={key: getattr(post, key)}, msg="自己赞（踩）无效")
+        else:  # 他人赞（踩）
+            upoppose = utils.get(model, postId=postid)
+            if upoppose is None:  # 用户未赞（踩）过
+                model.objects.create(postId=postid, userId=userid)
+                message = "赞（踩）成功"
+                addend = 1
+            else:  # 用户已经赞（踩）过则取消之前的赞（踩）
+                upoppose.delete()
+                message = "取消赞（踩）成功"
+                addend = -1
+            Post.objects.filter(id=postid).update(**{key: F(key)+addend})
+            _update_post_score(postid)
+            ret = utils.wrap_message(code=0, data={key: getattr(post, key)+addend}, msg=message)
     return HttpResponse(json.dumps(ret), mimetype='application/json')
+
+
+@login_required
+def up_post(request):
+    return _up_oppose_post(request, UpPost, 'upCount')
 
 
 @login_required
 def oppose_post(request):
-    postid = request.POST.get('postId')
-    post = utils.get(Post, id=postid)  # 验证postid有效性
-    if postid is None or post is None:
-        ret = utils.wrap_message(code=1)
-    else:
-        if utils.get(OpposePost, postId=postid) is None:  # 用户未踩过
-            Post.objects.filter(id=postid).update(opposedCount=F('opposedCount')+1)
-            OpposePost.objects.create(postId=postid, userId=request.session[SESSION_KEY])
-            ret = utils.wrap_message(code=0, data={'opposedCount': post.opposedCount+1}, msg="踩成功")
-        else:  # 用户已经踩过
-            ret = utils.wrap_message(code=0, data={'opposedCount': post.opposedCount}, msg="已经踩过")
-    return HttpResponse(json.dumps(ret), mimetype='application/json')
+    return _up_oppose_post(request, OpposePost, 'opposedCount')
 
 
 @login_required
@@ -274,14 +279,24 @@ def up_reply(request):
     if first_level_reply_id is None or first_level_reply is None:
         ret = utils.wrap_message(code=1)
     else:
-        if utils.get(UpReply, firstLevelReplyId=first_level_reply_id) is None:  # 用户未赞过
-            FirstLevelReply.objects.filter(id=first_level_reply_id).update(upCount=F('upCount')+1)
-            UpReply.objects.create(postId=first_level_reply.postId,
-                                   firstLevelReplyId=first_level_reply_id,
-                                   userId=request.session[SESSION_KEY])
-            ret = utils.wrap_message(code=0, data={'upCount': first_level_reply.upCount+1}, msg="赞成功")
-        else:  # 用户已经赞过
-            ret = utils.wrap_message(code=0, data={'upCount': first_level_reply.upCount}, msg="已经赞过")
+        userid = request.session[SESSION_KEY]
+        if first_level_reply.userId == userid:  # 自己赞
+            ret = utils.wrap_message(code=20, data={'upCount': first_level_reply.upCount}, msg="自己赞无效")
+        else:  # 他人赞
+            upreply = utils.get(UpReply, firstLevelReplyId=first_level_reply_id)
+            if upreply is None:  # 用户未赞过
+                UpReply.objects.create(postId=first_level_reply.postId,
+                                       firstLevelReplyId=first_level_reply_id,
+                                       userId=userid)
+                message = "赞成功"
+                addend = 1
+            else:  # 用户已经赞过则取消之前的赞
+                upreply.delete()
+                message = "取消赞成功"
+                addend = -1
+            FirstLevelReply.objects.filter(id=first_level_reply_id).update(upCount=F('upCount')+addend)
+            _update_reply_score(first_level_reply_id)
+            ret = utils.wrap_message(code=0, data={'upCount': first_level_reply.upCount+addend}, msg=message)
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
@@ -301,12 +316,13 @@ def reply_first_level(request):
                 postId=postid, userId=userid, upCount=0,
                 content=content, floor=Post.objects.get(id=postid).replyCount,  # 确保原子操作
                 replyCount=0, replyUserCount=0, replyTime=reply_time,
-                editStatus=0)
-            if utils.get(ReplyPost, postId=postid) is not None:  # 未回复过
+                score=0, editStatus=0)
+            if utils.get(ReplyPost, postId=postid) is None:  # 未回复过
                 ReplyPost.objects.create(postId=postid, userId=userid)
                 Post.objects.filter(id=postid).update(replyUserCount=F('replyUserCount')+1)  # 独立回复数+1
+                _update_post_score(postid)
             ret = utils.wrap_message(data={"firstLevelReplyId": first_level_reply.id},
-                                     code=0, msg="发表回复成功")
+                                     code=0, msg="发表一级回复成功")
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
@@ -328,11 +344,13 @@ def reply_second_level(request):
                 postId=postid, userId=userid,
                 content=content, replyTime=reply_time,
                 editStatus=0)
-            if utils.get(ReplyReply, firstLevelReplyId=first_level_reply_id) is not None:  # 未回复过
+            if utils.get(ReplyReply, firstLevelReplyId=first_level_reply_id) is None:  # 未回复过
                 ReplyReply.objects.create(postId=postid, firstLevelReplyId=first_level_reply_id, userId=userid)
-                FirstLevelReply.objects.filter(id=first_level_reply_id).update(replyUserCount=F('replyUserCount')+1)  # 独立回复数+1
+                FirstLevelReply.objects.filter(id=first_level_reply_id)\
+                    .update(replyUserCount=F('replyUserCount')+1)  # 独立回复数+1
+                _update_reply_score(first_level_reply_id)
             ret = utils.wrap_message(data={"secondLevelReplyId": second_level_reply.id},
-                                     code=0, msg="发表回复成功")
+                                     code=0, msg="发表二级回复成功")
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
@@ -390,6 +408,17 @@ def _fill_user_info(userid):
              "avatar": avatar,
              "name": nickname}
     return jsond
+
+
+# TODO: 需要原子操作
+def _update_post_score(_id):
+    post = utils.get(Post, id=_id)
+    post.score = 0
+    post.save()
+
+
+def _update_reply_score(_id):
+    FirstLevelReply.objects.filter(id=_id).update(score=F('upCount')+F('replyUserCount'))
 
 
 def redis(request):
