@@ -66,7 +66,7 @@ class UserInfo(models.Model):
         (DEFAULT, 'Null')
     )
     userId = models.IntegerField(db_column="user_id")
-    deviceId = models.CharField(max_length=255, db_column="device_id")
+    deviceId = models.CharField(max_length=255, db_column="device_id", null=True)
     token = models.CharField(max_length=255, db_column="user_token", null=True)
     nickname = models.CharField(max_length=255, db_column='nickname')
     telephone = models.CharField(max_length=50, db_column="telephone")

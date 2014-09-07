@@ -95,15 +95,20 @@ KuangNei
     }
     ```
 5. `[POST] https://kuangnei.me/kuangnei/api/register/`, 注册
-    * POST请求必要参数: 
+    * POST请求必要参数:
     ```
     {
          'username': '18910690027', # username必须为合法手机号
-         'password': '123456',
-         'deviceid': 'xxx'
+         'password': '123456'
     }
     ```
-    * POST请求可选参数: `{'token': 'xxx'}`
+    * POST请求可选参数:
+    ```
+    {
+        'token': 'xxx',
+        'deviceid': 'xxx'
+    }
+    ```
     * 返回json:
     ```
     {
@@ -117,13 +122,18 @@ KuangNei
     ```
     {
         'username': '18910690027', # username必须为合法手机号
-        'password': '123456',
+        'password': '123456'
+    }
+    ```
+    * POST请求可选参数: 用于更新个推clientID
+    ```
+    {
+        'token': 'xxx',
         'deviceid': 'xxx'
     }
     ```
-    * POST请求可选参数: `{'token': 'xxx'}` 用于更新个推clientID
     * 返回json:
-    ```    
+    ```
     {
         "returnMessage": "登陆成功",
         "returnCode": 0,
@@ -131,7 +141,7 @@ KuangNei
     ```
 7. `[GET] https://kuangnei.me/kuangnei/api/logout/`, 退出
     * 返回json:
-    ```    
+    ```
     {
         "returnMessage": "退出成功",
         "returnCode": 0,
@@ -154,7 +164,7 @@ KuangNei
         昵称nickname, (可修改，非null，注册时默认'user'+userId)
         电话telephone, (可修改，非null，注册时默认等于username)
         头像avatar, (可修改，可null)
-        性别sex, (可修改，int，默认3 {0:female, 1:male, 2:neutral, 3:未设置}) 
+        性别sex, (可修改，int，默认3 {0:female, 1:male, 2:neutral, 3:未设置})
         生日birthday, (可修改，可null)
         签名sign, (可修改，可null)
         学校schoolId, (可修改，可null，int)
@@ -282,7 +292,7 @@ KuangNei
                ],
      "size": 1
     }
-    ```   
+    ```
 19. `[GET] http://kuangnei.me/kuangnei/api/secondLevelReplyList/?firstLevelReplyId=1&page=1`, 二级回复列表，【需要登陆】
     * 返回json:
     ```
@@ -305,8 +315,8 @@ KuangNei
                ],
       "size": 1
     }
-    ``` 
-    
+    ```
+
 ## Log ##
 后端log采用python自带的logging模块，以天为节点输出在`log/debug_YYYY_mm_dd.log`文件。在自己的python文件使用该模块示例：
 ```

@@ -64,7 +64,7 @@ def post(request):
                     post_picture = PostPicture(pictureUrl=url, postId=post.id)
                     post_picture.save()
                 logger.info("save %d pictures", len(imageurls))
-            #_push_message_to_app(post)
+            _push_message_to_app(post)
             ret = utils.wrap_message({'postId': post.id})
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
@@ -98,8 +98,7 @@ def register(request):
     else:
         username = request.POST.get('username')
         password = request.POST.get('password')
-        deviceid = request.POST.get('deviceid')
-        if username is None or password is None or deviceid is None:
+        if username is None or password is None:
             ret = utils.wrap_message(code=1)
         else:
             if not utils.is_avaliable_phone(username):
@@ -114,6 +113,7 @@ def register(request):
                 else:
                     # TODO: catch exception and delete user
                     # 在user_info表中设置token, nickname, telephone
+                    deviceid = request.POST.get('deviceid')
                     token = request.POST.get('token')  # could be None
                     UserInfo.objects.create(userId=newuser.id, deviceId=deviceid,
                                             token=token, nickname='user'+str(newuser.id),
@@ -144,7 +144,7 @@ def check_if_user_exist(request):
 
 
 def _login(username, password, deviceid, token, request):
-    if username is None or password is None or deviceid is None:
+    if username is None or password is None:
         ret = utils.wrap_message(code=1)
     else:
         user = authenticate(username=username, password=password)
@@ -175,7 +175,7 @@ def rlogin_in(request):
     password = request.GET.get('password')
     deviceid = request.GET.get('deviceid')
     token = request.GET.get('token')
-    if username is None or password is None or deviceid is None:
+    if username is None or password is None:
         raise Http404
     else:
         _login(username, password, deviceid, token, request)
