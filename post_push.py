@@ -3,8 +3,8 @@ __author__ = 'wei'
 #更新时间为2013年11月07日
 #增加了IOS的离线消息推送,IOS不支持IGtNotyPopLoadTemplate模板
 #更新时间为2013年02月24日
-#1.增加了通知弹框下载模板 
-#2.统一了toapp的接口时间，单位为毫秒 
+#1.增加了通知弹框下载模板
+#2.统一了toapp的接口时间，单位为毫秒
 #3.允许ios用户离线状态下的apn转发message字段为空，
 #4.增加了查询用户状态接口，
 #5.任务停止功能，
@@ -45,7 +45,7 @@ def pushMessageToSingle():
     #template = LinkTemplateDemo()
     template = TransmissionTemplateDemo()
     #template = NotyPopLoadTemplateDemo()
-	
+
     message = IGtSingleMessage()
     message.isOffline = True
     message.offlineExpireTime = 1000 * 3600 * 12
@@ -62,10 +62,10 @@ def pushMessageToSingle():
 def pushMessageToList():
     push = IGeTui(HOST, APPKEY, MASTERSECRET)
 
-    #消息模版： 
-    #1.TransmissionTemplate:透传功能模板  
-    #2.LinkTemplate:通知打开链接功能模板  
-    #3.NotificationTemplate：通知透传功能模板  
+    #消息模版：
+    #1.TransmissionTemplate:透传功能模板
+    #2.LinkTemplate:通知打开链接功能模板
+    #3.NotificationTemplate：通知透传功能模板
     #4.NotyPopLoadTemplate：通知弹框下载功能模板
 
     #template = NotificationTemplateDemo()
@@ -95,15 +95,15 @@ def pushMessageToList():
 def pushMessageToApp(post):
     push = IGeTui(HOST, APPKEY, MASTERSECRET)
 
-    #消息模版： 
-    #1.TransmissionTemplate:透传功能模板  
-    #2.LinkTemplate:通知打开链接功能模板  
-    #3.NotificationTemplate：通知透传功能模板  
+    #消息模版：
+    #1.TransmissionTemplate:透传功能模板
+    #2.LinkTemplate:通知打开链接功能模板
+    #3.NotificationTemplate：通知透传功能模板
     #4.NotyPopLoadTemplate：通知弹框下载功能模板
 
-    template = NotificationTemplateDemo(post)
+    #template = NotificationTemplateDemo(post)
     #template = LinkTemplateDemo()
-    #template = TransmissionTemplateDemo()
+    template = TransmissionTemplateDemo(post)
     #template = NotyPopLoadTemplateDemo()
 
     message = IGtAppMessage()
@@ -157,12 +157,12 @@ def LinkTemplateDemo():
     return template
 
 #透传模板动作内容
-def TransmissionTemplateDemo():
+def TransmissionTemplateDemo(post):
     template = TransmissionTemplate()
     template.transmissionType = 1
     template.appId = APPID
     template.appKey = APPKEY
-    template.transmissionContent = '请填入透传内容'
+    template.transmissionContent = post.content
     #iOS 推送需要的PushInfo字段 前三项必填，后四项可以填空字符串
     #template.setPushInfo(actionLocKey, badge, message, sound, payload, locKey, locArgs, launchImage)
     #template.setPushInfo("",2,"","","","","","");
@@ -180,7 +180,7 @@ def NotyPopLoadTemplateDemo():
     template.isRing = True
     template.isVibrate = True
     template.isClearable = True
-	
+
     template.popTitle = u"弹框标题"
     template.popContent = u"弹框内容"
     template.popImage = ""
@@ -202,15 +202,15 @@ def getUserStatus():
 #任务停止功能
 def stopTask():
     push = IGeTui(HOST, APPKEY, MASTERSECRET)
-    print push.stop("OSA-0226_50RYYPFmos9eQEHZrkAf27");	   
-    
+    print push.stop("OSA-0226_50RYYPFmos9eQEHZrkAf27");
+
     #
     #服务端支持三个接口推送
     #1.PushMessageToSingle接口：支持对单个用户进行推送
     #2.PushMessageToList接口：支持对多个用户进行推送，建议为50个用户
     #3.pushMessageToApp接口：对单个应用下的所有用户进行推送，可根据省份，标签，机型过滤推送
     #
-pushMessageToSingle()
+#pushMessageToSingle()
 #pushMessageToList()
 #pushMessageToApp()
 
