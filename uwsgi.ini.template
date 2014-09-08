@@ -3,11 +3,11 @@
 
 # Django-related settings
 # the base directory (full path)
-chdir           = /home/zhumeng/KuangNei
+chdir           = %d
 # Django's wsgi file
 module          = kuangnei.wsgi
 # the virtualenv (full path)
-home            = /home/zhumeng/KuangNei
+home            = %d
 
 # process-related settings
 # master
@@ -15,11 +15,11 @@ master          = true
 # maximum number of worker processes
 processes       = 10
 # the socket (use the full path to be safe
-socket          = /home/zhumeng/KuangNei.sock
+socket          = %d/KuangNei.sock
 # ... with appropriate permissions - may be needed
 # chmod-socket    = 664
 # clear environment on exit
 vacuum          = true
 
 py-auto-reload  = 3
-daemonize = /home/zhumeng/uwsgi.log
+daemonize = %d/log/uwsgi.log
