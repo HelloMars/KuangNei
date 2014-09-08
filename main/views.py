@@ -5,7 +5,7 @@ import json
 import time
 
 from django.contrib.auth import authenticate, logout, login, SESSION_KEY
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import F
@@ -18,7 +18,9 @@ from kuangnei import consts
 from kuangnei.utils import logger
 from main.models import *
 import post_push
-
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
+from kuangnei.global_permission import GlobalPermission
 
 # Create your views here.
 
@@ -42,6 +44,7 @@ def get_dnurl(request):
 
 
 @login_required
+@permission_required('kuangnei.'+consts.FORBIDDEN_AUTH, raise_exception=True)
 def post(request):
     if request.method != 'POST':
         ret = utils.wrap_message(code=2)
@@ -52,10 +55,10 @@ def post(request):
         if channelid is None or content is None:
             ret = utils.wrap_message(code=1)
         else:
-            # TODO: score
             post = Post(userId=userid, schoolId=1, content=content, channelId=channelid,
                         opposedCount=0, postTime=time.strftime('%Y-%m-%d %H:%M:%S'),
-                        replyCount=0, replyUserCount=0, score=0, editStatus=0, upCount=0)
+                        replyCount=0, replyUserCount=0, score=utils.cal_post_score(0, 0, 0),
+                        editStatus=0, upCount=0)
             post.save()
             logger.info("post " + str(post.id))
             imageurl = request.POST.get("imageurl")
@@ -122,6 +125,8 @@ def register(request):
                                             telephone=username)
                     user = authenticate(username=username, password=password)
                     login(request, user)
+                    permission = Permission.objects.get(codename=consts.FORBIDDEN_AUTH)
+                    user.user_permissions.add(permission)
                     request.session.set_expiry(30000)  # session失效期5分钟
                     ret = utils.wrap_message({'user': newuser.username})
                     logger.info('注册新用户(%s)成功', repr(newuser))
@@ -410,11 +415,30 @@ def _fill_user_info(userid):
     return jsond
 
 
+# 解禁用户
+def unforbid_user(user):
+    if user is not None:
+        permission = Permission.objects.get(codename=consts.FORBIDDEN_AUTH)
+        user.user_permissions.add(permission)
+
+
+# 禁言用户
+def forbid_user(user):
+    if user is not None:
+        permission = Permission.objects.get(codename=consts.FORBIDDEN_AUTH)
+        user.user_permissions.remove(permission)
+
+
 # TODO: 需要原子操作
 def _update_post_score(_id):
     post = utils.get(Post, id=_id)
-    post.score = 0
+    r = post.replyUserCount
+    z = post.upCount
+    c = post.opposedCount
+    post.score = utils.cal_post_score(r, z, c)
     post.save()
+    if c-z >= consts.FORBIDDEN_THRESHOLD:
+        forbid_user(utils.get(User, id=post.userId))
 
 
 def _update_reply_score(_id):

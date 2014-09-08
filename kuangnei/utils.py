@@ -5,10 +5,9 @@
 import logging
 
 # Get an instance of a logger
-import re
-
 logger = logging.getLogger("kuangnei")
 
+import re
 from qiniu import conf
 from qiniu import rs
 
@@ -17,9 +16,11 @@ import consts
 conf.ACCESS_KEY = consts.QINIU_ACCESS_KEY
 conf.SECRET_KEY = consts.QINIU_SECRET_KEY
 
+import time
+import math
+import json
 from datetime import datetime
 from datetime import date
-import json
 
 datetimeHandler = lambda obj: obj.strftime('%Y-%m-%d %H:%M:%S')\
     if isinstance(obj, datetime) else json.JSONEncoder().default(obj)
@@ -73,3 +74,20 @@ def get(model, **kwargs):
         return model.objects.get(**kwargs)
     except model.DoesNotExist:
         return None
+
+
+def cal_post_score(r, z, c):
+    x = r + z - c
+    if x == 0:
+        m = 1
+        y = 0
+    else:
+        m = abs(x)
+        if x > 0:
+            y = 1
+        else:
+            y = -1
+    dt = time.time() - consts.BASE_TIME
+    score = (dt * y) / consts.SIX_HOUR_SECONDS + math.log(m, 2)
+    logger.info("Post Score: " + str(score))
+    return score

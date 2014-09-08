@@ -9,13 +9,14 @@ Replace this with more appropriate tests for your application.
 """
 
 import json
-import thread
 
 from django.test import TestCase
 from django.test.client import Client
 from django.test.client import RequestFactory
+from django.contrib.auth import authenticate
 
 from models import UserInfo
+from main import views
 
 
 TEST_USER0 = '15658076066'
@@ -51,6 +52,9 @@ class ApiTest(TestCase):
                          {'avatar': TEST_AVATAR,
                          'nickname': TEST_NICKNAME})
 
+    def _get_user(self, username, password):
+        return authenticate(username=username, password=password)
+
     def _test_suc_message(self, response):
         jsond = json.loads(response.content)
         self.assertEqual(response.status_code, 200)
@@ -78,6 +82,14 @@ class ApiTest(TestCase):
         # test post
         response = self.client.get('/kuangnei/api/post/')
         self._test_failed_message(response)
+        # forbid user
+        views.forbid_user(self._get_user(TEST_USER0, TEST_PASSWORD))
+        response = self.client.post('/kuangnei/api/post/',
+                                    {'channelid': 1,
+                                     'content': '禁言测试0'})
+        self.assertEqual(response.status_code, 403)
+        # unforbid user
+        views.unforbid_user(self._get_user(TEST_USER0, TEST_PASSWORD))
         response = self.client.post('/kuangnei/api/post/',
                                     {'channelid': 1,
                                      'content': 'unit test, 单元测试'})
