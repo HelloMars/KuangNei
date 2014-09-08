@@ -268,16 +268,19 @@ def _up_oppose_post(request, model, key):
 
 
 @login_required
+@permission_required('kuangnei.'+consts.FORBIDDEN_AUTH, raise_exception=True)
 def up_post(request):
     return _up_oppose_post(request, UpPost, 'upCount')
 
 
 @login_required
+@permission_required('kuangnei.'+consts.FORBIDDEN_AUTH, raise_exception=True)
 def oppose_post(request):
     return _up_oppose_post(request, OpposePost, 'opposedCount')
 
 
 @login_required
+@permission_required('kuangnei.'+consts.FORBIDDEN_AUTH, raise_exception=True)
 def up_reply(request):
     first_level_reply_id = request.POST.get('firstLevelReplyId')
     first_level_reply = utils.get(FirstLevelReply, id=first_level_reply_id)  # 验证first_level_reply_id有效性
@@ -306,6 +309,7 @@ def up_reply(request):
 
 
 @login_required
+@permission_required('kuangnei.'+consts.FORBIDDEN_AUTH, raise_exception=True)
 def reply_first_level(request):
     userid = request.session[SESSION_KEY]
     postid = request.POST.get('postId')
@@ -332,6 +336,7 @@ def reply_first_level(request):
 
 
 @login_required
+@permission_required('kuangnei.'+consts.FORBIDDEN_AUTH, raise_exception=True)
 def reply_second_level(request):
     userid = request.session[SESSION_KEY]
     postid = request.POST.get('postId')
