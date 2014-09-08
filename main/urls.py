@@ -5,7 +5,7 @@ from main import views
 urlpatterns = patterns(
     '',
     # post
-    url(r'^post/$', views.post, name='post'),
+    url(r'^post/$', views.dopost, name='post'),
     url(r'^channellist/$', views.channellist, name='channellist'),
     url(r'^postlist/$', views.postlist, name='postlist'),
 

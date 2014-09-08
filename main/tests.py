@@ -16,6 +16,7 @@ from django.test.client import RequestFactory
 from django.contrib.auth import authenticate
 
 from models import UserInfo
+from kuangnei import consts
 from main import views
 
 
@@ -82,20 +83,26 @@ class ApiTest(TestCase):
         # test post
         response = self.client.get('/kuangnei/api/post/')
         self._test_failed_message(response)
-        # forbid user
-        views.forbid_user(self._get_user(TEST_USER0, TEST_PASSWORD))
-        response = self.client.post('/kuangnei/api/post/',
-                                    {'channelid': 1,
-                                     'content': '禁言测试0'})
-        self.assertEqual(response.status_code, 403)
-        # unforbid user
-        views.unforbid_user(self._get_user(TEST_USER0, TEST_PASSWORD))
         response = self.client.post('/kuangnei/api/post/',
                                     {'channelid': 1,
                                      'content': 'unit test, 单元测试'})
         self._test_suc_message(response)
         jsond = json.loads(response.content)
         self.assertEqual(1, jsond['postId'])
+        # forbid user
+        views.forbid_user(self._get_user(TEST_USER0, TEST_PASSWORD))
+        response = self.client.post('/kuangnei/api/post/',
+                                    {'channelid': 1,
+                                     'content': '禁言测试'})
+        self.assertEqual(response.status_code, 403)
+        # unforbid user
+        views.unforbid_user(self._get_user(TEST_USER0, TEST_PASSWORD))
+        response = self.client.post('/kuangnei/api/post/',
+                                    {'channelid': 1,
+                                     'content': '排序测试'})
+        self._test_suc_message(response)
+        jsond = json.loads(response.content)
+        self.assertEqual(2, jsond['postId'])
 
         # test up_post and oppose_post
         # TODO: concurrent up
@@ -186,10 +193,40 @@ class ApiTest(TestCase):
         # test postlist
         response = self.client.get('/kuangnei/api/postlist/')
         self._test_failed_message(response)
-        response = self.client.get('/kuangnei/api/postlist/?channelid=1&page=1')
+        # test newest post
+        response = self.client.get('/kuangnei/api/postlist/?channelid=' +
+                                   str(consts.NEWEST_CHANNEL_ID) + '&page=1')
         self._test_suc_message(response)
         jsond = json.loads(response.content)
-        self.assertEqual(1, jsond['size'])  # use test database
+        self.assertEqual(2, jsond['size'])  # use test database
+        try:
+            post = jsond['list'][0]
+            self.assertEqual(post['postId'], 2)
+            self.assertEqual(post['channelId'], 1)
+            self.assertEqual(post['schoolId'], 1)
+
+            self.assertIsNotNone(post['postTime'])
+            self.assertIsNotNone(post['pictures'])
+            self.assertEqual(post['content'], u'排序测试')
+
+            self.assertEqual(post['replyCount'], 0)
+            self.assertEqual(post['replyUserCount'], 0)
+            self.assertEqual(post['upCount'], 0)
+            self.assertEqual(post['opposedCount'], 0)
+            self.assertEqual(post['score'], 0)
+
+            user = post['user']
+            self.assertLess(0, user['id'])
+            self.assertEqual(user['avatar'], TEST_AVATAR)
+            self.assertEqual(user['name'], TEST_NICKNAME)
+        except KeyError as e:
+            self.assertIsNone(e)
+        # test hottest post
+        response = self.client.get('/kuangnei/api/postlist/?channelid=' +
+                                   str(consts.HOTTEST_CHANNEL_ID) + '&page=1')
+        self._test_suc_message(response)
+        jsond = json.loads(response.content)
+        self.assertEqual(2, jsond['size'])  # use test database
         try:
             post = jsond['list'][0]
             self.assertEqual(post['postId'], 1)
@@ -204,7 +241,7 @@ class ApiTest(TestCase):
             self.assertEqual(post['replyUserCount'], 1)
             self.assertEqual(post['upCount'], 1)
             self.assertEqual(post['opposedCount'], 1)
-            self.assertEqual(post['score'], 0)
+            self.assertLess(0, post['score'])
 
             user = post['user']
             self.assertLess(0, user['id'])

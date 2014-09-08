@@ -3,6 +3,7 @@
 
 import json
 import time
+import calendar
 
 from django.contrib.auth import authenticate, logout, login, SESSION_KEY
 from django.contrib.auth.decorators import login_required, permission_required
@@ -19,8 +20,6 @@ from kuangnei.utils import logger
 from main.models import *
 import post_push
 from django.contrib.auth.models import Permission
-from django.contrib.contenttypes.models import ContentType
-from kuangnei.global_permission import GlobalPermission
 
 # Create your views here.
 
@@ -45,7 +44,7 @@ def get_dnurl(request):
 
 @login_required
 @permission_required('kuangnei.'+consts.FORBIDDEN_AUTH, raise_exception=True)
-def post(request):
+def dopost(request):
     if request.method != 'POST':
         ret = utils.wrap_message(code=2)
     else:
@@ -54,10 +53,13 @@ def post(request):
         content = request.POST.get("content")
         if channelid is None or content is None:
             ret = utils.wrap_message(code=1)
+        elif int(channelid) == consts.NEWEST_CHANNEL_ID or int(channelid) == consts.HOTTEST_CHANNEL_ID:
+            ret = utils.wrap_message(code=20, msg="最新/最热频道不允许发帖")
         else:
             post = Post(userId=userid, schoolId=1, content=content, channelId=channelid,
                         opposedCount=0, postTime=time.strftime('%Y-%m-%d %H:%M:%S'),
-                        replyCount=0, replyUserCount=0, score=utils.cal_post_score(0, 0, 0),
+                        replyCount=0, replyUserCount=0,
+                        score=utils.cal_post_score(0, 0, 0, time.time()),
                         editStatus=0, upCount=0)
             post.save()
             logger.info("post " + str(post.id))
@@ -76,7 +78,6 @@ def post(request):
 
 @login_required
 def postlist(request):
-    #userid = request.session[SESSION_KEY]
     channelid = request.GET.get("channelid")
     page = request.GET.get("page")
     if channelid is None or page is None:
@@ -85,14 +86,21 @@ def postlist(request):
         page = int(page)
         start = (page - 1) * consts.LOAD_SIZE
         end = start + consts.LOAD_SIZE
-        postlist = Post.objects.filter(channelId=channelid).order_by("-postTime")[start:end]
-        logger.info("postlist [%d, %d]", start, end)
+        if int(channelid) == consts.NEWEST_CHANNEL_ID:  # 获取区域最新帖子列表
+            posts = Post.objects.filter(schoolId=1).order_by("-postTime")[start:end]
+            logger.info("newest postlist %d:[%d, %d]", len(posts), start, end)
+        elif int(channelid) == consts.HOTTEST_CHANNEL_ID:  # 获取区域最热帖子列表
+            posts = Post.objects.filter(schoolId=1).order_by("-score")[start:end]
+            logger.info("hottest postlist %d:[%d, %d]", len(posts), start, end)
+        else:  # 获取频道帖子列表
+            posts = Post.objects.filter(channelId=channelid).order_by("-postTime")[start:end]
+            logger.info("channel postlist %d:[%d, %d]", len(posts), start, end)
         d = {}
-        for e in postlist:
+        for e in posts:
             pictures = PostPicture.objects.filter(postId=e.id).values_list("pictureUrl", flat=True)
             d[e.id] = list(pictures)
-        ret = utils.wrap_message({'size': len(postlist)})
-        ret['list'] = [e.tojson(d[e.id], _fill_user_info(e.userId)) for e in postlist]
+        ret = utils.wrap_message({'size': len(posts)})
+        ret['list'] = [e.tojson(d[e.id], _fill_user_info(e.userId)) for e in posts]
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler),
                         mimetype='application/json')
 
@@ -230,9 +238,9 @@ def channellist(request):
         'returnMessage': '',
         'size': 6,
         'list': [
-            {'id': 0, 'title': '最新'},
-            {'id': 1, 'title': '最热'},
-            {'id': 10, 'title': '有趣', 'subtitle': '你认为有趣的东西'},
+            {'id': consts.NEWEST_CHANNEL_ID, 'title': '最新'},
+            {'id': consts.HOTTEST_CHANNEL_ID, 'title': '最热'},
+            {'id': 1, 'title': '有趣', 'subtitle': '你认为有趣的东西'},
             {'id': 2, 'title': '匿名', 'subtitle': '请不要用文字伤害他人'},
             {'id': 11, 'title': '娱乐', 'subtitle': '电影、电视、音乐、旅游'},
             {'id': 12, 'title': '男女', 'subtitle': '关于男生女生之间的事'}
@@ -374,8 +382,12 @@ def first_level_reply_list(request):
         page = int(page)
         start = (page - 1) * consts.FIRST_LEVEL_REPLY_LOAD_SIZE
         end = start + consts.FIRST_LEVEL_REPLY_LOAD_SIZE
-        first_level_replies = FirstLevelReply.objects.filter(postId=postid).order_by("floor")[start:end]
-        logger.info("first_level_replies [%d, %d]", start, end)
+        if request.GET.get("hot") == "True":  # 按热度排序
+            first_level_replies = FirstLevelReply.objects.filter(postId=postid).order_by("-score")[start:end]
+            logger.info("hottest first_level_replies %d:[%d, %d]", len(first_level_replies), start, end)
+        else:  # 按时间排序
+            first_level_replies = FirstLevelReply.objects.filter(postId=postid).order_by("-replyTime")[start:end]
+            logger.info("first_level_replies %d:[%d, %d]", len(first_level_replies), start, end)
         ret = utils.wrap_message({'size': len(first_level_replies)})
         ret['list'] = [e.to_json(_fill_user_info(e.userId)) for e in first_level_replies]
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
@@ -393,7 +405,7 @@ def second_level_reply_list(request):
         end = start + consts.SECOND_LEVEL_REPLY_LOAD_SIZE
         second_level_replies = SecondLevelReply.objects.filter(
             firstLevelReplyId=first_level_reply_id).order_by("replyTime")[start:end]
-        logger.info("second_level_replies [%d, %d]", start, end)
+        logger.info("second_level_replies %d:[%d, %d]", len(second_level_replies), start, end)
         ret = utils.wrap_message({'size': len(second_level_replies)})
         ret['list'] = [e.to_json(_fill_user_info(e.userId)) for e in second_level_replies]
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
@@ -408,7 +420,6 @@ def _fill_user_info(userid):
     nickname = None
     avatar = None
     try:
-        #user = User.objects.get(id=userid)
         user_info = UserInfo.objects.get(userId=userid)
         nickname = user_info.nickname
         avatar = user_info.avatar
@@ -440,7 +451,8 @@ def _update_post_score(_id):
     r = post.replyUserCount
     z = post.upCount
     c = post.opposedCount
-    post.score = utils.cal_post_score(r, z, c)
+    ti = calendar.timegm(post.postTime.timetuple())
+    post.score = utils.cal_post_score(r, z, c, ti)
     post.save()
     if c-z >= consts.FORBIDDEN_THRESHOLD:
         forbid_user(utils.get(User, id=post.userId))

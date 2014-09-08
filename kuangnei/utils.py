@@ -76,7 +76,7 @@ def get(model, **kwargs):
         return None
 
 
-def cal_post_score(r, z, c):
+def cal_post_score(r, z, c, ti):
     x = r + z - c
     if x == 0:
         m = 1
@@ -87,7 +87,7 @@ def cal_post_score(r, z, c):
             y = 1
         else:
             y = -1
-    dt = time.time() - consts.BASE_TIME
+    dt = ti - consts.BASE_TIME
     score = (dt * y) / consts.SIX_HOUR_SECONDS + math.log(m, 2)
     logger.info("Post Score: " + str(score))
     return score

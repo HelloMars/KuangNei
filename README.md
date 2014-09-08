@@ -54,7 +54,7 @@ KuangNei
         returnCode: 0
     }
     ```
-3. `[POST] http://kuangnei.me/kuangnei/api/post/`, 发帖子，【需要登陆】
+3. `[POST] http://kuangnei.me/kuangnei/api/post/`, 发帖子，【需要登陆】【如果用户被禁言，返回403】
     * POST请求必要参数: `{'channelid': 1, 'content': 'test, 测试中文'}`, 可选参数: `{imageurl: 'url1@url2@url3'}`
     * 返回json:
     ```
@@ -209,13 +209,7 @@ KuangNei
         size: 2
     }
     ```
-11. `[GET] http://kuangnei.me/kuangnei/api/postdetail/?postId=1&page=1`, 帖子详细，【需要登陆】
-    * 返回json:
-    ```
-    {
-    }
-    ```
-12. `[POST] http://kuangnei.me/kuangnei/api/replyFirstLevel/`, 一级回复，【需要登陆】
+11. `[POST] http://kuangnei.me/kuangnei/api/replyFirstLevel/`, 一级回复，【需要登陆】【如果用户被禁言，返回403】
     * POST请求必要参数: `{'postId': 1, 'content': '一级回复'}`
     * 返回json:
     ```
@@ -225,7 +219,7 @@ KuangNei
     "firstLevelReplyId": 3
     }
     ```
-13. `[POST] http://kuangnei.me/kuangnei/api/replySecondLevel/`, 二级回复，【需要登陆】
+12. `[POST] http://kuangnei.me/kuangnei/api/replySecondLevel/`, 二级回复，【需要登陆】【如果用户被禁言，返回403】
     * POST请求必要参数: `{'postId': 1, 'firstLevelReplyId': 1, 'content': '二级回复'}`
     * 返回json:
     ```
@@ -235,13 +229,7 @@ KuangNei
     "secondLevelReplyId": 8
     }
     ```
-14. `[GET] http://kuangnei.me/kuangnei/api/replydetail/?firstLevelReplyId=1&page=1`, 一级回复详细，【需要登陆】
-    * 返回json:
-    ```
-    {
-    }
-    ```
-15. `[POST] http://kuangnei.me/kuangnei/api/uppost/`, 赞帖子，【需要登陆】
+13. `[POST] http://kuangnei.me/kuangnei/api/uppost/`, 赞帖子，【需要登陆】【如果用户被禁言，返回403】
     * POST请求必要参数: `{'postId': 1}`
     * 返回json:
     ```
@@ -252,7 +240,7 @@ KuangNei
     }
     ```
     * 错误代码：20, "自己赞（踩）无效"
-16. `[POST] http://kuangnei.me/kuangnei/api/upreply/`, 赞一级回复，【需要登陆】
+14. `[POST] http://kuangnei.me/kuangnei/api/upreply/`, 赞一级回复，【需要登陆】【如果用户被禁言，返回403】
     * POST请求必要参数: `{'firstLevelReplyId': 1}`
     * 返回json:
     ```
@@ -263,7 +251,7 @@ KuangNei
     }
     ```
     * 错误代码：20, "自己赞无效"
-17. `[POST] http://kuangnei.me/kuangnei/api/opposepost/`, 踩帖子，【需要登陆】
+15. `[POST] http://kuangnei.me/kuangnei/api/opposepost/`, 踩帖子，【需要登陆】【如果用户被禁言，返回403】
     * POST请求必要参数: `{'postId': 1}`
     * 返回json:
     ```
@@ -274,7 +262,7 @@ KuangNei
     }
     ```
     * 错误代码：20, "自己赞（踩）无效"
-18. `[GET] http://kuangnei.me/kuangnei/api/firstLevelReplyList/?postId=1&page=1`, 一级回复列表，【需要登陆】
+16. `[GET] http://kuangnei.me/kuangnei/api/firstLevelReplyList/?postId=1&page=1&hot=False`, 一级回复列表，【需要登陆】【hot表明结果是否按热度排序】
     * 返回json:
     ```
     {
@@ -300,7 +288,7 @@ KuangNei
      "size": 1
     }
     ```
-19. `[GET] http://kuangnei.me/kuangnei/api/secondLevelReplyList/?firstLevelReplyId=1&page=1`, 二级回复列表，【需要登陆】
+17. `[GET] http://kuangnei.me/kuangnei/api/secondLevelReplyList/?firstLevelReplyId=1&page=1`, 二级回复列表，【需要登陆】
     * 返回json:
     ```
     {
@@ -323,6 +311,7 @@ KuangNei
       "size": 1
     }
     ```
+
 
 ## Log ##
 后端log采用python自带的logging模块，以天为节点输出在`log/debug_YYYY_mm_dd.log`文件。在自己的python文件使用该模块示例：
