@@ -71,7 +71,7 @@ def dopost(request):
                     post_picture = PostPicture(pictureUrl=url, postId=post.id)
                     post_picture.save()
                 logger.info("save %d pictures", len(imageurls))
-            _push_message_to_app(post)
+            _push_message_to_app(post.content)
             ret = utils.wrap_message({'postId': post.id})
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
@@ -338,6 +338,11 @@ def reply_first_level(request):
                 ReplyPost.objects.create(postId=postid, userId=userid)
                 Post.objects.filter(id=postid).update(replyUserCount=F('replyUserCount')+1)  # 独立回复数+1
                 _update_post_score(postid)
+            wrap_user_message = utils.get_token(post)
+            if wrap_user_message is not None:
+                content = wrap_user_message['message']
+                token = wrap_user_message['token']
+                _push_message_to_single(content,token)
             ret = utils.wrap_message(data={"firstLevelReplyId": first_level_reply.id},
                                      code=0, msg="发表一级回复成功")
     return HttpResponse(json.dumps(ret), mimetype='application/json')
@@ -411,10 +416,13 @@ def second_level_reply_list(request):
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
 
 
-def _push_message_to_app(post):
+def _push_message_to_app(content):
     logger.info("pushMessageToApp")
-    post_push.pushMessageToApp(post)
+    post_push.pushMessageToApp(content)
 
+def _push_message_to_single(content,client_id):
+    logger.info("pushMessageToSingle")
+    post_push.pushMessageToSingle(content,client_id)
 
 def _fill_user_info(userid):
     nickname = None
