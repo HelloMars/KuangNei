@@ -21,7 +21,7 @@ from igetui.template.igt_notification_template import *
 from igetui.template.igt_notypopload_template import *
 from igetui.template.igt_transmission_template import *
 from igt_push import *
-
+import main.views
 #toList接口每个用户返回用户状态开关,true：打开 false：关闭
 os.environ['needDetails'] = 'false'
 
@@ -33,7 +33,7 @@ HOST = 'http://sdk.open.api.igexin.com/apiex.htm'
 
 
 
-def pushMessageToSingle():
+def pushMessageToSingle(content,client_id):
     push = IGeTui(HOST, APPKEY, MASTERSECRET)
     #消息模版：
     #1.TransmissionTemplate:透传功能模板
@@ -43,7 +43,7 @@ def pushMessageToSingle():
 
     #template = NotificationTemplateDemo()
     #template = LinkTemplateDemo()
-    template = TransmissionTemplateDemo()
+    template = TransmissionTemplateDemo(content)
     #template = NotyPopLoadTemplateDemo()
 
     message = IGtSingleMessage()
@@ -53,7 +53,7 @@ def pushMessageToSingle():
 
     target = Target()
     target.appId = APPID
-    target.clientId = CID
+    target.clientId = client_id
 
     ret = push.pushMessageToSingle(message, target)
     print ret
@@ -92,7 +92,7 @@ def pushMessageToList():
     print ret
 
 
-def pushMessageToApp(post):
+def pushMessageToApp(content):
     push = IGeTui(HOST, APPKEY, MASTERSECRET)
 
     #消息模版：
@@ -103,7 +103,7 @@ def pushMessageToApp(post):
 
     #template = NotificationTemplateDemo(post)
     #template = LinkTemplateDemo()
-    template = TransmissionTemplateDemo(post)
+    template = TransmissionTemplateDemo(content)
     #template = NotyPopLoadTemplateDemo()
 
     message = IGtAppMessage()
@@ -157,12 +157,12 @@ def LinkTemplateDemo():
     return template
 
 #透传模板动作内容
-def TransmissionTemplateDemo(post):
+def TransmissionTemplateDemo(content):
     template = TransmissionTemplate()
     template.transmissionType = 1
     template.appId = APPID
     template.appKey = APPKEY
-    template.transmissionContent = post.content
+    template.transmissionContent = content
     #iOS 推送需要的PushInfo字段 前三项必填，后四项可以填空字符串
     #template.setPushInfo(actionLocKey, badge, message, sound, payload, locKey, locArgs, launchImage)
     #template.setPushInfo("",2,"","","","","","");

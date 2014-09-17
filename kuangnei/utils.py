@@ -5,6 +5,9 @@
 import logging
 
 # Get an instance of a logger
+from django.contrib.auth.models import User
+from main.models import Post, UserInfo, FirstLevelReply
+
 logger = logging.getLogger("kuangnei")
 
 import re
@@ -91,3 +94,22 @@ def cal_post_score(r, z, c, ti):
     score = (dt * y) / consts.SIX_HOUR_SECONDS + math.log(m, 2)
     logger.info("Post Score: " + str(score))
     return score
+
+
+#通过帖子或者一级回复获取对应用户的token，并且封装回复的信息
+#TODO 这里这样封装可能有些不太合理，但是是为了只查User一次就能获取username和token
+def wrap_push(post_or_reply):
+    #TODO 是不是应该判断如果是二级回复，需要把发帖人的token也取出来,目前是回复谁给谁推送
+        user_info = {}
+        try:
+            user = User.objects.get(id=post_or_reply.userId)
+            user_info = UserInfo.objects.get(userId=user.id)
+            user_info['token']
+            if user_info.token is not None:
+                user_info['token'] = user_info.token
+                user_info['message'] = user.username + "回复了你"
+                return user_info.token
+            else:
+                return None
+        except User.DoesNotExist:
+            return None
