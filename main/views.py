@@ -338,7 +338,7 @@ def reply_first_level(request):
                 ReplyPost.objects.create(postId=postid, userId=userid)
                 Post.objects.filter(id=postid).update(replyUserCount=F('replyUserCount')+1)  # 独立回复数+1
                 _update_post_score(postid)
-            wrap_user_message = utils.get_token(post)
+            wrap_user_message = utils.wrap_push(post)
             if wrap_user_message is not None:
                 content = wrap_user_message['message']
                 token = wrap_user_message['token']
@@ -475,3 +475,4 @@ def redis(request):
     logger.info("redis: " + cache.get('foo') + ", " + str(cache.ttl('foo')))
     ret = utils.wrap_message(code=0)
     return HttpResponse(json.dumps(ret), mimetype='application/json')
+
