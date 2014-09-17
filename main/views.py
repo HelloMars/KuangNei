@@ -388,7 +388,7 @@ def first_level_reply_list(request):
         else:  # 按时间排序
             first_level_replies = FirstLevelReply.objects.filter(postId=postid).order_by("-replyTime")[start:end]
             logger.info("first_level_replies %d:[%d, %d]", len(first_level_replies), start, end)
-        ret = utils.wrap_message({'size': len(first_level_replies)})
+        ret = utils.wrap_message({'postId': int(postid), 'size': len(first_level_replies)})
         ret['list'] = [e.to_json(_fill_user_info(e.userId)) for e in first_level_replies]
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
 
@@ -406,7 +406,7 @@ def second_level_reply_list(request):
         second_level_replies = SecondLevelReply.objects.filter(
             firstLevelReplyId=first_level_reply_id).order_by("replyTime")[start:end]
         logger.info("second_level_replies %d:[%d, %d]", len(second_level_replies), start, end)
-        ret = utils.wrap_message({'size': len(second_level_replies)})
+        ret = utils.wrap_message({'firstLevelReplyId': int(first_level_reply_id), 'size': len(second_level_replies)})
         ret['list'] = [e.to_json(_fill_user_info(e.userId)) for e in second_level_replies]
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
 

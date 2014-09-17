@@ -268,6 +268,7 @@ KuangNei
     {
      "returnMessage": "",
      "returnCode": 0,
+     "postId" 1,
      "list": [
                {
                 "editStatus": 0,
@@ -294,7 +295,8 @@ KuangNei
     {
      "returnMessage": "",
      "returnCode": 0,
-      "list": [
+     "firstLevelReplyId": 1,
+     "list": [
                { "editStatus": 0,
                  "replyTime": "2014-08-27 11:12:21",
                  "postId": 1,
@@ -308,7 +310,7 @@ KuangNei
                  },
                 },
                ],
-      "size": 1
+     "size": 1
     }
     ```
 
