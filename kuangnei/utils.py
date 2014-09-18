@@ -100,14 +100,14 @@ def cal_post_score(r, z, c, ti):
 #TODO 这里这样封装可能有些不太合理，但是是为了只查User一次就能获取username和token
 def wrap_push(post_or_reply):
     #TODO 是不是应该判断如果是二级回复，需要把发帖人的token也取出来,目前是回复谁给谁推送
-        user_info = {}
+        wrapped_user_info = {}
         try:
             user = User.objects.get(id=post_or_reply.userId)
             user_info = UserInfo.objects.get(userId=user.id)
             if user_info.token is not None:
-                user_info['token'] = user_info.token
-                user_info['message'] = user.username + "回复了你"
-                return user_info.token
+                wrapped_user_info['token'] = user_info.token
+                wrapped_user_info['message'] = user.username + "回复了你"
+                return wrapped_user_info
             else:
                 return None
         except User.DoesNotExist:
