@@ -104,7 +104,6 @@ def wrap_push(post_or_reply):
         try:
             user = User.objects.get(id=post_or_reply.userId)
             user_info = UserInfo.objects.get(userId=user.id)
-            user_info['token']
             if user_info.token is not None:
                 user_info['token'] = user_info.token
                 user_info['message'] = user.username + "回复了你"
