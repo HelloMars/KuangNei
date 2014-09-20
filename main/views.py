@@ -338,7 +338,7 @@ def reply_first_level(request):
                 ReplyPost.objects.create(postId=postid, userId=userid)
                 Post.objects.filter(id=postid).update(replyUserCount=F('replyUserCount')+1)  # 独立回复数+1
                 _update_post_score(postid)
-            wrap_user_message = utils.wrap_push(post)
+            wrap_user_message = _wrap_push(post)
             if wrap_user_message is not None:
                 content = wrap_user_message['message']
                 token = wrap_user_message['token']
@@ -475,4 +475,22 @@ def redis(request):
     logger.info("redis: " + cache.get('foo') + ", " + str(cache.ttl('foo')))
     ret = utils.wrap_message(code=0)
     return HttpResponse(json.dumps(ret), mimetype='application/json')
+
+
+#通过帖子或者一级回复获取对应用户的token，并且封装回复的信息
+#TODO 这里这样封装可能有些不太合理，但是是为了只查User一次就能获取username和token
+def _wrap_push(post_or_reply):
+    #TODO 是不是应该判断如果是二级回复，需要把发帖人的token也取出来,目前是回复谁给谁推送
+        wrapped_user_info = {}
+        try:
+            user = User.objects.get(id=post_or_reply.userId)
+            user_info = UserInfo.objects.get(userId=user.id)
+            if user_info.token is not None:
+                wrapped_user_info['token'] = user_info.token
+                wrapped_user_info['message'] = user.username + "回复了你"
+                return wrapped_user_info
+            else:
+                return None
+        except User.DoesNotExist:
+            return None
 
