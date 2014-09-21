@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+from django.contrib.auth.models import User
 from django.db import models
+from django.forms import model_to_dict
 
 from kuangnei import utils
 
@@ -18,7 +20,8 @@ class Choice(models.Model):
 
 
 class Post(models.Model):
-    userId = models.IntegerField(db_column="user_id")
+    #userId = models.IntegerField(db_column="user_id")
+    user = models.ForeignKey(User)
     schoolId = models.IntegerField(db_column="school_id")
     content = models.CharField(max_length=800)
     channelId = models.IntegerField(db_column="channel_id")
@@ -39,7 +42,7 @@ class Post(models.Model):
             attr = field.name
             if attr == 'id':
                 ret['postId'] = getattr(self, attr)
-            elif attr == "userId":
+            elif attr == "user":
                 ret['user'] = user
             else:
                 ret[attr] = getattr(self, attr)
@@ -48,7 +51,8 @@ class Post(models.Model):
 
 
 class PostPicture(models.Model):
-    postId = models.BigIntegerField(db_column="post_id")
+    #postId = models.BigIntegerField(db_column="post_id")
+    post = models.ForeignKey(Post)
     pictureUrl = models.URLField(db_column="picture_url")
 
     class Meta:
@@ -66,7 +70,7 @@ class UserInfo(models.Model):
         (NEUTRAL, 'Neutral'),
         (DEFAULT, 'Null')
     )
-    userId = models.IntegerField(db_column="user_id", primary_key=True)
+    user = models.ForeignKey(User)
     deviceId = models.CharField(max_length=255, db_column="device_id", null=True)
     token = models.CharField(max_length=255, db_column="user_token", null=True)
     nickname = models.CharField(max_length=255, db_column='nickname')
@@ -102,8 +106,10 @@ class UserInfo(models.Model):
 
 
 class FirstLevelReply(models.Model):
-    postId = models.IntegerField(db_column="post_id", db_index=True)
-    userId = models.IntegerField(db_column="user_id")
+    #postId = models.IntegerField(db_column="post_id", db_index=True)
+    post = models.ForeignKey(Post)
+    #userId = models.IntegerField(db_column="user_id")
+    user = models.ForeignKey(User)
     content = models.CharField(db_column="content", max_length=800)
     upCount = models.IntegerField(db_column="up_count")
     replyCount = models.IntegerField(db_column="reply_count")
@@ -122,17 +128,37 @@ class FirstLevelReply(models.Model):
             attr = field.name
             if attr == 'id':
                 ret['firstLevelReplyId'] = getattr(self, attr)
-            elif attr == "userId":
+            if attr == 'post':
+                ret['postId'] = self.post.id
+            elif attr == "user":
                 ret['user'] = user
             else:
                 ret[attr] = getattr(self, attr)
         return ret
 
+    def tojson(self, user):
+        ret = {}
+        for field in self._meta.fields:
+            attr = field.name
+            if attr == 'id':
+                ret['firstLevelReplyId'] = getattr(self, attr)
+            elif attr == 'post':
+                ret['post'] = model_to_dict(self.post)
+            elif attr == "user":
+                ret['post_author'] = user
+            else:
+                ret[attr] = getattr(self, attr)
+            ret['postId'] = self.post.id
+        return ret
+
 
 class SecondLevelReply(models.Model):
-    postId = models.IntegerField(db_column="post_id", db_index=True)
-    firstLevelReplyId = models.IntegerField(db_column="first_level_reply_id", db_index=True)
-    userId = models.IntegerField(db_column="user_id")
+    #postId = models.IntegerField(db_column="post_id", db_index=True)
+    #firstLevelReplyId = models.IntegerField(db_column="first_level_reply_id", db_index=True)
+    #userId = models.IntegerField(db_column="user_id")
+    post = models.ForeignKey(Post)
+    first_level_reply = models.ForeignKey(FirstLevelReply)
+    user = models.ForeignKey(User)
     content = models.CharField(db_column="content", max_length=140)
     replyTime = models.DateTimeField(db_column="create_time")
     editStatus = models.IntegerField(db_column="edit_status")
@@ -146,7 +172,11 @@ class SecondLevelReply(models.Model):
             attr = field.name
             if attr == 'id':
                 ret['secondLevelReplyId'] = getattr(self, attr)
-            elif attr == "userId":
+            elif attr == 'post':
+                ret['postId'] = self.post.id
+            elif attr == 'first_level_reply':
+                ret['firstLevelReplyId'] = self.first_level_reply.id
+            elif attr == "user":
                 ret['user'] = user
             else:
                 ret[attr] = getattr(self, attr)
