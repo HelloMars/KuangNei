@@ -8,7 +8,7 @@ import calendar
 from django.contrib.auth import authenticate, logout, login, SESSION_KEY
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User
-from django.db import transaction
+from django.db import transaction, connection
 from django.db.models import F
 from django.http import HttpResponse
 from django.http import Http404
@@ -337,6 +337,8 @@ def reply_first_level(request):
                 content=content, floor=Post.objects.get(id=postid).replyCount,  # 确保原子操作
                 replyCount=0, replyUserCount=0, replyTime=reply_time,
                 score=0, editStatus=0)
+            ReplyInfo.objects.create(repliedUser=post.user, replyUser=user, postId=post.id, replyContent=content,
+                flag=consts.REPLY_POST, repliedBriefContent=_cut_str(post.content), replyTime=reply_time)
             if utils.get(ReplyPost, postId=postid) is None:  # 未回复过
                 ReplyPost.objects.create(postId=postid, userId=userid)
                 Post.objects.filter(id=postid).update(replyUserCount=F('replyUserCount')+1)  # 独立回复数+1
@@ -371,6 +373,9 @@ def reply_second_level(request):
                 post=post, user=user,
                 content=content, replyTime=reply_time,
                 editStatus=0)
+            ReplyInfo.objects.create(repliedUser=first_level_reply.user, replyUser=user, postId=post.id,
+                firstLevelReplyId=first_level_reply_id, flag=consts.REPLY_FIRST_LEVEL,
+                repliedBriefContent=_cut_str(first_level_reply.content), replyContent=content,replyTime=reply_time)
             if utils.get(ReplyReply, firstLevelReplyId=first_level_reply_id) is None:  # 未回复过
                 ReplyReply.objects.create(postId=postid, firstLevelReplyId=first_level_reply_id, userId=userid)
                 FirstLevelReply.objects.filter(id=first_level_reply_id)\
@@ -384,13 +389,14 @@ def reply_second_level(request):
 def first_level_reply_list(request):
     postid = request.GET.get("postId")
     page = request.GET.get("page")
-    post = utils.get(Post,id=postid)
+    post = utils.get(Post, id=postid)
     if postid is None or post is None or page is None:
         ret = utils.wrap_message(code=1)
     else:
         page = int(page)
         start = (page - 1) * consts.FIRST_LEVEL_REPLY_LOAD_SIZE
         end = start + consts.FIRST_LEVEL_REPLY_LOAD_SIZE
+        query_sql = connection.queries
         if request.GET.get("hot") == "True":  # 按热度排序
             first_level_replies = FirstLevelReply.objects.filter(post=post).order_by("-score")[start:end]
             logger.info("hottest first_level_replies %d:[%d, %d]", len(first_level_replies), start, end)
@@ -399,6 +405,8 @@ def first_level_reply_list(request):
             logger.info("first_level_replies %d:[%d, %d]", len(first_level_replies), start, end)
         ret = utils.wrap_message({'postId': int(postid), 'size': len(first_level_replies)})
         ret['list'] = [e.to_json(_fill_user_info(e.user)) for e in first_level_replies]
+        for each_sql in query_sql:
+            print each_sql
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
 
 
@@ -438,7 +446,7 @@ def my_post(request):
         for e in posts:
             pictures = PostPicture.objects.filter(post=e).values_list("pictureUrl", flat=True)
             d[e.id] = list(pictures)
-        ret = utils.wrap_message({'size': len(posts)})
+        ret = utils.wrap_message({'size': posts.count()})
         #TODO:此处是我的帖子列表，是否需要把我的信息带上返回
         ret['list'] = [e.tojson(d[e.id], _fill_user_info(e.user)) for e in posts]
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
@@ -449,15 +457,14 @@ def my_post(request):
 def my_reply(request):
     user_id = request.session[SESSION_KEY]
     page = request.GET.get("page")
-    user = utils.get(User, id=user_id)
-    if user_id is None or page is None or user is None:
+    if user_id is None or page is None:
         ret = utils.wrap_message(code=1)
     else:
         page = int(page)
         start = (page - 1) * consts.LOAD_SIZE
         end = start + consts.LOAD_SIZE
-        my_first_level_replies = FirstLevelReply.objects.filter(user=user).order_by("-replyTime")[start:end]
-        ret = utils.wrap_message({'size': len(my_first_level_replies)})
+        my_first_level_replies = FirstLevelReply.objects.filter(user=user_id).order_by("-replyTime")[start:end]
+        ret = utils.wrap_message({'size': my_first_level_replies.count()})
         ret['list'] = [e.tojson(_fill_user_info(e.post.user)) for e in my_first_level_replies]
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
 
@@ -467,20 +474,15 @@ def my_reply(request):
 def reply_my_post(request):
     user_id = request.session[SESSION_KEY]
     page = request.GET.get("page")
-    user = utils.get(User,user_id)
-    if user_id is None or page is None or user is None:
+    if user_id is None or page is None:
         ret = utils.wrap_message(code=1)
     else:
         start = (page - 1) * consts.LOAD_SIZE
         end = start + consts.LOAD_SIZE
-        posts = Post.objects.filter(uerId=user_id).order_by(-"postTime")[start:end]
-        d = {}
-        for e in posts:
-            pictures = PostPicture.objects.filter(postId=e.id).values_list("pictureUrl", flat=True)
-            d[e.id] = list(pictures)
-        ret = utils.wrap_message({'size': len(posts)})
-        #TODO:此处是我的帖子列表，是否需要把我的信息带上返回
-        ret['list'] = [e.tojson(d[e.id], _fill_user_info(e.userId)) for e in posts]
+        reples = ReplyInfo.objects.filter(User=user_id).order_by("-reply_time")[start:end]
+        ret = utils.wrap_message({'size': reples.count()})
+        reply_list = list(reples)
+        ret['list'] = reply_list
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
 
 
@@ -489,7 +491,7 @@ def _push_message_to_app(content):
     post_push.pushMessageToApp(content)
 
 
-def _push_message_to_single(content,client_id):
+def _push_message_to_single(content, client_id):
     logger.info("pushMessageToSingle")
     post_push.pushMessageToSingle(content,client_id)
 
@@ -571,3 +573,7 @@ def _get_post(first_level_reply):
         return post
     except post.DoesNotExist:
         return None
+
+
+def _cut_str(str, length=16):
+    return str[0:length]

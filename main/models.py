@@ -223,3 +223,19 @@ class ReplyReply(models.Model):
 
     class Meta:
         db_table = "reply_reply"
+
+
+class ReplyInfo(models.Model):
+    repliedUser = models.ForeignKey(User,related_name='replied_user')  #被回复人
+    replyUser = models.ForeignKey(User,related_name='reply_user')   #回复人
+    flag = models.IntegerField()  #1代表是对帖子的回复，2代表是对一级回复的回复，3代表对二级回复的回复
+    repliedBriefContent = models.CharField(db_column="replied_brief_content", max_length=50)
+    replyContent = models.CharField(db_column="reply_content", max_length=800)
+    postId = models.IntegerField(db_column="post_id")
+    firstLevelReplyId = models.IntegerField(db_column="first_level_reply_id", default=0)
+    secondLevelReplyId = models.IntegerField(db_column="second_level_reply_id", default=0)
+    replyTime = models.DateTimeField(db_column="reply_time")
+
+    class Meta:
+        db_table = "reply_info"
+
