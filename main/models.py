@@ -158,6 +158,7 @@ class SecondLevelReply(models.Model):
     #userId = models.IntegerField(db_column="user_id")
     post = models.ForeignKey(Post)
     first_level_reply = models.ForeignKey(FirstLevelReply)
+    secondLevelReplyId = models.IntegerField(db_column="second_level_reply_id", default=0)
     user = models.ForeignKey(User)
     content = models.CharField(db_column="content", max_length=140)
     replyTime = models.DateTimeField(db_column="create_time")
@@ -229,8 +230,8 @@ class ReplyInfo(models.Model):
     repliedUser = models.ForeignKey(User,related_name='replied_user')  #被回复人
     replyUser = models.ForeignKey(User,related_name='reply_user')   #回复人
     flag = models.IntegerField()  #1代表是对帖子的回复，2代表是对一级回复的回复，3代表对二级回复的回复
-    repliedBriefContent = models.CharField(db_column="replied_brief_content", max_length=50)
-    replyContent = models.CharField(db_column="reply_content", max_length=800)
+    repliedBriefContent = models.CharField(db_column="replied_brief_content", max_length=50)  #我的发表的内容，缩略
+    replyContent = models.CharField(db_column="reply_content", max_length=800)                 #对我的回复
     postId = models.IntegerField(db_column="post_id")
     firstLevelReplyId = models.IntegerField(db_column="first_level_reply_id", default=0)
     secondLevelReplyId = models.IntegerField(db_column="second_level_reply_id", default=0)
@@ -238,4 +239,17 @@ class ReplyInfo(models.Model):
 
     class Meta:
         db_table = "reply_info"
+
+    def to_json(self, user):
+        ret = {}
+        for field in self._meta.fields:
+            attr = field.name
+            if attr == "replyUser":
+                pass
+            elif attr == "repliedUser":
+                pass
+            else:
+                ret[attr] = getattr(self, attr)
+                ret['showUser'] = user                           #showUser字段用来显示消息列表中……的帖子或回复
+        return ret
 

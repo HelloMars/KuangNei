@@ -358,6 +358,9 @@ def reply_second_level(request):
     userid = request.session[SESSION_KEY]
     postid = request.POST.get('postId')
     first_level_reply_id = request.POST.get('firstLevelReplyId')
+    second_level_reply_id = request.POST.get('secondLevelReplyId')
+    if second_level_reply_id is not None:
+        second_level_replied = utils.get(SecondLevelReply, id=second_level_reply_id)
     content = request.POST.get('content')
     first_level_reply = utils.get(FirstLevelReply, id=first_level_reply_id)  # 验证first_level_reply_id有效性
     user = utils.get(User, id=userid)                                         #验证user_id的有效性
@@ -368,14 +371,20 @@ def reply_second_level(request):
         reply_time = time.strftime('%Y-%m-%d %H:%M:%S')
         with transaction.atomic():
             FirstLevelReply.objects.filter(id=first_level_reply_id).update(replyCount=F('replyCount')+1)  # 总回复数+1
-            second_level_reply = SecondLevelReply.objects.create(
-                first_level_reply=first_level_reply,
-                post=post, user=user,
-                content=content, replyTime=reply_time,
-                editStatus=0)
-            ReplyInfo.objects.create(repliedUser=first_level_reply.user, replyUser=user, postId=post.id,
+            if second_level_reply_id is None or second_level_replied is None:                    #代表回复的是一级回复
+                second_level_reply = SecondLevelReply.objects.create(first_level_reply=first_level_reply,
+                              post=post, user=user, content=content, replyTime=reply_time,editStatus=0)
+                ReplyInfo.objects.create(repliedUser=first_level_reply.user, replyUser=user, postId=post.id,
                 firstLevelReplyId=first_level_reply_id, flag=consts.REPLY_FIRST_LEVEL,
-                repliedBriefContent=_cut_str(first_level_reply.content), replyContent=content,replyTime=reply_time)
+                repliedBriefContent=_cut_str(first_level_reply.content), replyContent=content, replyTime=reply_time)
+            else:                                                                                 #代表回复的是二级回复
+                second_level_reply = SecondLevelReply.objects.create(first_level_reply=first_level_reply,
+                              post=post, secondLevelReplyId=second_level_reply_id, user=user,
+                              content=content, replyTime=reply_time, editStatus=0)
+                ReplyInfo.objects.create(repliedUser=second_level_replied.user, replyUser=user, postId=post.id,
+                firstLevelReplyId=first_level_reply_id, secondLevelReplyId=second_level_reply_id,
+                flag=consts.REPLY_SECOND_LEVEL,repliedBriefContent=_cut_str(second_level_replied.content),
+                replyContent=content, replyTime=reply_time)
             if utils.get(ReplyReply, firstLevelReplyId=first_level_reply_id) is None:  # 未回复过
                 ReplyReply.objects.create(postId=postid, firstLevelReplyId=first_level_reply_id, userId=userid)
                 FirstLevelReply.objects.filter(id=first_level_reply_id)\
@@ -421,7 +430,7 @@ def second_level_reply_list(request):
         page = int(page)
         start = (page - 1) * consts.SECOND_LEVEL_REPLY_LOAD_SIZE
         end = start + consts.SECOND_LEVEL_REPLY_LOAD_SIZE
-        second_level_replies = SecondLevelReply.objects.filter(
+        second_level_replies = SecondLevelReply.objects.filter(                #二级回复的相互回复部分，由客户端去处理
             first_level_reply=first_level_reply).order_by("replyTime")[start:end]
         logger.info("second_level_replies %d:[%d, %d]", len(second_level_replies), start, end)
         ret = utils.wrap_message({'firstLevelReplyId': int(first_level_reply_id), 'size': len(second_level_replies)})
@@ -463,9 +472,9 @@ def my_reply(request):
         page = int(page)
         start = (page - 1) * consts.LOAD_SIZE
         end = start + consts.LOAD_SIZE
-        my_first_level_replies = FirstLevelReply.objects.filter(user=user_id).order_by("-replyTime")[start:end]
-        ret = utils.wrap_message({'size': my_first_level_replies.count()})
-        ret['list'] = [e.tojson(_fill_user_info(e.post.user)) for e in my_first_level_replies]
+        my_replies = ReplyInfo.objects.filter(replyUser=user_id).order_by("-replyTime")[start:end]
+        ret = utils.wrap_message({'size': my_replies.count()})
+        ret['list'] = [e.to_json(_fill_user_info(e.repliedUser)) for e in my_replies]
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
 
 
@@ -477,12 +486,13 @@ def reply_my_post(request):
     if user_id is None or page is None:
         ret = utils.wrap_message(code=1)
     else:
+        page = int(page)
         start = (page - 1) * consts.LOAD_SIZE
         end = start + consts.LOAD_SIZE
-        reples = ReplyInfo.objects.filter(User=user_id).order_by("-reply_time")[start:end]
-        ret = utils.wrap_message({'size': reples.count()})
-        reply_list = list(reples)
-        ret['list'] = reply_list
+        replies = ReplyInfo.objects.filter(repliedUser=user_id).order_by("-replyTime")[start:end]
+        ret = utils.wrap_message({'size': replies.count()})
+        #TODO:此处需要不需要把channelid放进来，供跳转的时候使用
+        ret['list'] = [e.to_json(_fill_user_info(e.replyUser)) for e in replies]
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
 
 

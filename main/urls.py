@@ -30,6 +30,7 @@ urlpatterns = patterns(
     url(r'^secondLevelReplyList/$', views.second_level_reply_list, name='firstLevelReplyList'),
     url(r'^myPost/$', views.my_post, name='myPost'),
     url(r'^myReply/$', views.my_reply, name='myReply'),
+    url(r'^replyToMine/$', views.reply_my_post, name='myReply'),
 
     url(r'^redis/$', views.redis, name='redis'),
 )
