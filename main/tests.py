@@ -392,3 +392,16 @@ class ApiTest(TestCase):
         # test login_out
         response = self.client.get('/kuangnei/api/logout/')
         self._test_suc_message(response)
+
+        #test myPost
+        response = self.client.get('/kuangnei/api/myPost/')
+        self.assertEqual(response.status_code, 200)
+
+         #test myReply
+        response = self.client.get('/kuangnei/api/myReply/')
+        self.assertEqual(response.status_code, 200)
+
+         #test replyToMine
+        response = self.client.get('/kuangnei/api/replyToMine/')
+        self.assertEqual(response.status_code, 200)
+
