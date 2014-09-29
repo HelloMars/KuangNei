@@ -212,13 +212,14 @@ def logout_out(request):
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
+#修改用户信息
 @login_required
 def add_user_info(request):
     if request.method != 'POST':
         ret = utils.wrap_message(code=2)
     else:
         userid = request.session[SESSION_KEY]
-        user_info = UserInfo.objects.get(userId=userid)
+        user_info = UserInfo.objects.get(user=userid)
         modify = user_info.setattrs(request.POST)
 
         if modify:

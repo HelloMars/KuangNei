@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from datetime import time, datetime
 from django.contrib.auth.models import User
 from django.db import models
 from django.forms import model_to_dict
@@ -89,6 +90,10 @@ class UserInfo(models.Model):
         for field in self._meta.fields:
             attr = field.name
             value = data.get(attr.lower())
+            #生日由long转化为时间类型
+            if attr == "birthday":
+                print value
+                value = datetime.fromtimestamp(long(value))
             # 非空并不等才更新
             if value is not None and value != getattr(self, attr):
                 if attr == 'telephone' and not utils.is_avaliable_phone(value):
