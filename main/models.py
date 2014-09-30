@@ -91,9 +91,9 @@ class UserInfo(models.Model):
             attr = field.name
             value = data.get(attr.lower())
             #生日由long转化为时间类型
-            if attr == "birthday":
+            if attr == "birthday" and value is not None:
                 print value
-                value = datetime.fromtimestamp(long(value))
+                value = datetime.fromtimestamp((long(value))/1e3)
             # 非空并不等才更新
             if value is not None and value != getattr(self, attr):
                 if attr == 'telephone' and not utils.is_avaliable_phone(value):
@@ -106,7 +106,11 @@ class UserInfo(models.Model):
         ret = {}
         for field in self._meta.fields:
             attr = field.name
-            ret[attr] = getattr(self, attr)
+            if attr == "user":
+                user = getattr(self, "user")
+                ret["user"] = user.id
+            else:
+                ret[attr] = getattr(self, attr)
         return ret
 
 
