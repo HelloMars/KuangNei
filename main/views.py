@@ -2,18 +2,17 @@
 # -*- coding: UTF-8 -*-
 
 import json
-import time
 import calendar
 
 from django.contrib.auth import authenticate, logout, login, SESSION_KEY
 from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib.auth.models import User
 from django.db import transaction, connection
 from django.db.models import F
 from django.http import HttpResponse
 from django.http import Http404
 from django.shortcuts import redirect
 from django.core.cache import cache
+import time
 
 from kuangnei import consts
 from kuangnei.utils import logger
