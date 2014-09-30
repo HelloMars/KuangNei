@@ -194,45 +194,50 @@ class SecondLevelReply(models.Model):
 
 
 class UpPost(models.Model):
-    postId = models.IntegerField(db_column="post_id", primary_key=True)
+    postId = models.IntegerField(db_column="post_id")
     userId = models.IntegerField(db_column="user_id")
 
     class Meta:
         db_table = "up_post"
+        unique_together = ("postId", "userId")
 
 
 class ReplyPost(models.Model):
-    postId = models.IntegerField(db_column="post_id", primary_key=True)
+    postId = models.IntegerField(db_column="post_id")
     userId = models.IntegerField(db_column="user_id")
 
     class Meta:
         db_table = "reply_post"
+        unique_together = ("postId", "userId")
 
 
 class OpposePost(models.Model):
-    postId = models.IntegerField(db_column="post_id", primary_key=True)
+    postId = models.IntegerField(db_column="post_id")
     userId = models.IntegerField(db_column="user_id")
 
     class Meta:
         db_table = "oppose_post"
+        unique_together = ("postId", "userId")
 
 
 class UpReply(models.Model):
-    postId = models.IntegerField(db_column="post_id", primary_key=True)
+    postId = models.IntegerField(db_column="post_id")
     firstLevelReplyId = models.IntegerField(db_column="first_level_reply_id", db_index=True)
     userId = models.IntegerField(db_column="user_id")
 
     class Meta:
         db_table = "up_reply"
+        unique_together = ("firstLevelReplyId", "userId")
 
 
 class ReplyReply(models.Model):
-    postId = models.IntegerField(db_column="post_id", primary_key=True)
+    postId = models.IntegerField(db_column="post_id")
     firstLevelReplyId = models.IntegerField(db_column="first_level_reply_id", db_index=True)
     userId = models.IntegerField(db_column="user_id")
 
     class Meta:
         db_table = "reply_reply"
+        unique_together = ("firstLevelReplyId", "userId")
 
 
 class ReplyInfo(models.Model):

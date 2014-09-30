@@ -261,7 +261,7 @@ def _up_oppose_post(request, model, key):
         if post.user.id == userid:  # 自己赞（踩）
             ret = utils.wrap_message(code=20, data={key: getattr(post, key)}, msg="自己赞（踩）无效")
         else:  # 他人赞（踩）
-            upoppose = utils.get(model, postId=postid)
+            upoppose = utils.get(model, postId=postid, userId=userid)
             if upoppose is None:  # 用户未赞（踩）过
                 model.objects.create(postId=postid, userId=userid)
                 message = "赞（踩）成功"
@@ -339,7 +339,7 @@ def reply_first_level(request):
                 score=0, editStatus=0)
             ReplyInfo.objects.create(repliedUser=post.user, replyUser=user, postId=post.id, replyContent=content,
                 flag=consts.REPLY_POST, repliedBriefContent=_cut_str(post.content), replyTime=reply_time)
-            if utils.get(ReplyPost, postId=postid) is None:  # 未回复过
+            if utils.get(ReplyPost, postId=postid, userId=userid) is None:  # 未回复过
                 ReplyPost.objects.create(postId=postid, userId=userid)
                 Post.objects.filter(id=postid).update(replyUserCount=F('replyUserCount')+1)  # 独立回复数+1
                 _update_post_score(postid)
@@ -385,7 +385,7 @@ def reply_second_level(request):
                 firstLevelReplyId=first_level_reply_id, secondLevelReplyId=second_level_reply_id,
                 flag=consts.REPLY_SECOND_LEVEL,repliedBriefContent=_cut_str(second_level_replied.content),
                 replyContent=content, replyTime=reply_time)
-            if utils.get(ReplyReply, firstLevelReplyId=first_level_reply_id) is None:  # 未回复过
+            if utils.get(ReplyReply, firstLevelReplyId=first_level_reply_id, userId=userid) is None:  # 未回复过
                 ReplyReply.objects.create(postId=postid, firstLevelReplyId=first_level_reply_id, userId=userid)
                 FirstLevelReply.objects.filter(id=first_level_reply_id)\
                     .update(replyUserCount=F('replyUserCount')+1)  # 独立回复数+1
