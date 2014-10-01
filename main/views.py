@@ -2,18 +2,17 @@
 # -*- coding: UTF-8 -*-
 
 import json
-import time
 import calendar
 
 from django.contrib.auth import authenticate, logout, login, SESSION_KEY
 from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib.auth.models import User
-from django.db import transaction
+from django.db import transaction, connection
 from django.db.models import F
 from django.http import HttpResponse
 from django.http import Http404
 from django.shortcuts import redirect
 from django.core.cache import cache
+import time
 
 from kuangnei import consts
 from kuangnei.utils import logger
@@ -56,7 +55,8 @@ def dopost(request):
         elif int(channelid) == consts.NEWEST_CHANNEL_ID or int(channelid) == consts.HOTTEST_CHANNEL_ID:
             ret = utils.wrap_message(code=20, msg="最新/最热频道不允许发帖")
         else:
-            post = Post(userId=userid, schoolId=1, content=content, channelId=channelid,
+            user = User.objects.get(id = userid)
+            post = Post(user=user, schoolId=1, content=content, channelId=channelid,
                         opposedCount=0, postTime=time.strftime('%Y-%m-%d %H:%M:%S'),
                         replyCount=0, replyUserCount=0,
                         score=utils.cal_post_score(0, 0, 0, time.time()),
@@ -97,10 +97,10 @@ def postlist(request):
             logger.info("channel postlist %d:[%d, %d]", len(posts), start, end)
         d = {}
         for e in posts:
-            pictures = PostPicture.objects.filter(postId=e.id).values_list("pictureUrl", flat=True)
+            pictures = PostPicture.objects.filter(post=e).values_list("pictureUrl", flat=True)
             d[e.id] = list(pictures)
         ret = utils.wrap_message({'size': len(posts)})
-        ret['list'] = [e.tojson(d[e.id], _fill_user_info(e.userId)) for e in posts]
+        ret['list'] = [e.tojson(d[e.id], _fill_user_info(e.user)) for e in posts]
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler),
                         mimetype='application/json')
 
@@ -128,7 +128,7 @@ def register(request):
                     # 在user_info表中设置token, nickname, telephone
                     deviceid = request.POST.get('deviceid')
                     token = request.POST.get('token')  # could be None
-                    UserInfo.objects.create(userId=newuser.id, deviceId=deviceid,
+                    UserInfo.objects.create(user=newuser, deviceId=deviceid,
                                             token=token, nickname='user'+str(newuser.id),
                                             telephone=username)
                     user = authenticate(username=username, password=password)
@@ -171,7 +171,7 @@ def _login(data, request):
         else:
             if user.is_active:
                 login(request, user)
-                user_info = UserInfo.objects.get(userId=user.id)
+                user_info = UserInfo.objects.get(user=user)
                 modify = user_info.setattrs(data)
                 if modify:
                     user_info.save()
@@ -211,13 +211,14 @@ def logout_out(request):
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
+#修改用户信息
 @login_required
 def add_user_info(request):
     if request.method != 'POST':
         ret = utils.wrap_message(code=2)
     else:
         userid = request.session[SESSION_KEY]
-        user_info = UserInfo.objects.get(userId=userid)
+        user_info = UserInfo.objects.get(user=userid)
         modify = user_info.setattrs(request.POST)
 
         if modify:
@@ -257,10 +258,10 @@ def _up_oppose_post(request, model, key):
         ret = utils.wrap_message(code=1)
     else:
         userid = request.session[SESSION_KEY]
-        if post.userId == userid:  # 自己赞（踩）
+        if post.user.id == userid:  # 自己赞（踩）
             ret = utils.wrap_message(code=20, data={key: getattr(post, key)}, msg="自己赞（踩）无效")
         else:  # 他人赞（踩）
-            upoppose = utils.get(model, postId=postid)
+            upoppose = utils.get(model, postId=postid, userId=userid)
             if upoppose is None:  # 用户未赞（踩）过
                 model.objects.create(postId=postid, userId=userid)
                 message = "赞（踩）成功"
@@ -269,8 +270,9 @@ def _up_oppose_post(request, model, key):
                 upoppose.delete()
                 message = "取消赞（踩）成功"
                 addend = -1
-            Post.objects.filter(id=postid).update(**{key: F(key)+addend})
-            _update_post_score(postid)
+            with transaction.atomic():
+                Post.objects.filter(id=postid).update(**{key: F(key)+addend})
+                _update_post_score(postid)
             ret = utils.wrap_message(code=0, data={key: getattr(post, key)+addend}, msg=message)
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
@@ -296,12 +298,12 @@ def up_reply(request):
         ret = utils.wrap_message(code=1)
     else:
         userid = request.session[SESSION_KEY]
-        if first_level_reply.userId == userid:  # 自己赞
+        if first_level_reply.user.id == userid:  # 自己赞
             ret = utils.wrap_message(code=20, data={'upCount': first_level_reply.upCount}, msg="自己赞无效")
         else:  # 他人赞
             upreply = utils.get(UpReply, firstLevelReplyId=first_level_reply_id)
             if upreply is None:  # 用户未赞过
-                UpReply.objects.create(postId=first_level_reply.postId,
+                UpReply.objects.create(postId=first_level_reply.post.id,
                                        firstLevelReplyId=first_level_reply_id,
                                        userId=userid)
                 message = "赞成功"
@@ -323,6 +325,7 @@ def reply_first_level(request):
     postid = request.POST.get('postId')
     content = request.POST.get('content')
     post = utils.get(Post, id=postid)  # 验证postid有效性
+    user = utils.get(User, id=userid)  #验证user有效性
     if postid is None or content is None or userid is None or post is None:
         ret = utils.wrap_message(code=1)
     else:
@@ -330,21 +333,22 @@ def reply_first_level(request):
         with transaction.atomic():
             Post.objects.filter(id=postid).update(replyCount=F('replyCount')+1)  # 总回复数+1
             first_level_reply = FirstLevelReply.objects.create(
-                postId=postid, userId=userid, upCount=0,
+                post=post, user=user, upCount=0,
                 content=content, floor=Post.objects.get(id=postid).replyCount,  # 确保原子操作
                 replyCount=0, replyUserCount=0, replyTime=reply_time,
                 score=0, editStatus=0)
-            if utils.get(ReplyPost, postId=postid) is None:  # 未回复过
+            ReplyInfo.objects.create(repliedUser=post.user, replyUser=user, postId=post.id, replyContent=content,
+                flag=consts.REPLY_POST, repliedBriefContent=_cut_str(post.content), replyTime=reply_time)
+            if utils.get(ReplyPost, postId=postid, userId=userid) is None:  # 未回复过
                 ReplyPost.objects.create(postId=postid, userId=userid)
                 Post.objects.filter(id=postid).update(replyUserCount=F('replyUserCount')+1)  # 独立回复数+1
                 _update_post_score(postid)
-            wrap_user_message = _wrap_push(post)
-            if wrap_user_message is not None:
-                content = wrap_user_message['message']
-                token = wrap_user_message['token']
-                _push_message_to_single(content,token)
-            ret = utils.wrap_message(data={"firstLevelReplyId": first_level_reply.id},
-                                     code=0, msg="发表一级回复成功")
+        wrap_user_message = _wrap_push(post.user)
+        if wrap_user_message is not None:
+            content = wrap_user_message['message']
+            token = wrap_user_message['token']
+            _push_message_to_single(content, token)
+        ret = utils.wrap_message(data={"firstLevelReplyId": first_level_reply.id}, code=0, msg="发表一级回复成功")
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
@@ -354,26 +358,39 @@ def reply_second_level(request):
     userid = request.session[SESSION_KEY]
     postid = request.POST.get('postId')
     first_level_reply_id = request.POST.get('firstLevelReplyId')
+    second_level_reply_id = request.POST.get('secondLevelReplyId')
+    if second_level_reply_id is not None:
+        second_level_replied = utils.get(SecondLevelReply, id=second_level_reply_id)
     content = request.POST.get('content')
     first_level_reply = utils.get(FirstLevelReply, id=first_level_reply_id)  # 验证first_level_reply_id有效性
+    user = utils.get(User, id=userid)                                         #验证user_id的有效性
+    post = utils.get(Post, id=postid)                                        #验证post_id的有效性
     if postid is None or content is None or userid is None or first_level_reply_id is None or first_level_reply is None:
         ret = utils.wrap_message(code=1)
     else:
         reply_time = time.strftime('%Y-%m-%d %H:%M:%S')
         with transaction.atomic():
             FirstLevelReply.objects.filter(id=first_level_reply_id).update(replyCount=F('replyCount')+1)  # 总回复数+1
-            second_level_reply = SecondLevelReply.objects.create(
-                firstLevelReplyId=first_level_reply_id,
-                postId=postid, userId=userid,
-                content=content, replyTime=reply_time,
-                editStatus=0)
-            if utils.get(ReplyReply, firstLevelReplyId=first_level_reply_id) is None:  # 未回复过
+            if second_level_reply_id is None or second_level_replied is None:                    #代表回复的是一级回复
+                second_level_reply = SecondLevelReply.objects.create(first_level_reply=first_level_reply,
+                              post=post, user=user, content=content, replyTime=reply_time,editStatus=0)
+                ReplyInfo.objects.create(repliedUser=first_level_reply.user, replyUser=user, postId=post.id,
+                firstLevelReplyId=first_level_reply_id, flag=consts.REPLY_FIRST_LEVEL,
+                repliedBriefContent=_cut_str(first_level_reply.content), replyContent=content, replyTime=reply_time)
+            else:                                                                                 #代表回复的是二级回复
+                second_level_reply = SecondLevelReply.objects.create(first_level_reply=first_level_reply,
+                              post=post, secondLevelReplyId=second_level_reply_id, user=user,
+                              content=content, replyTime=reply_time, editStatus=0)
+                ReplyInfo.objects.create(repliedUser=second_level_replied.user, replyUser=user, postId=post.id,
+                firstLevelReplyId=first_level_reply_id, secondLevelReplyId=second_level_reply_id,
+                flag=consts.REPLY_SECOND_LEVEL,repliedBriefContent=_cut_str(second_level_replied.content),
+                replyContent=content, replyTime=reply_time)
+            if utils.get(ReplyReply, firstLevelReplyId=first_level_reply_id, userId=userid) is None:  # 未回复过
                 ReplyReply.objects.create(postId=postid, firstLevelReplyId=first_level_reply_id, userId=userid)
                 FirstLevelReply.objects.filter(id=first_level_reply_id)\
                     .update(replyUserCount=F('replyUserCount')+1)  # 独立回复数+1
                 _update_reply_score(first_level_reply_id)
-            ret = utils.wrap_message(data={"secondLevelReplyId": second_level_reply.id},
-                                     code=0, msg="发表二级回复成功")
+        ret = utils.wrap_message(data={"secondLevelReplyId": second_level_reply.id}, code=0, msg="发表二级回复成功")
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
@@ -381,38 +398,101 @@ def reply_second_level(request):
 def first_level_reply_list(request):
     postid = request.GET.get("postId")
     page = request.GET.get("page")
-    if postid is None or page is None:
+    post = utils.get(Post, id=postid)
+    if postid is None or post is None or page is None:
         ret = utils.wrap_message(code=1)
     else:
         page = int(page)
         start = (page - 1) * consts.FIRST_LEVEL_REPLY_LOAD_SIZE
         end = start + consts.FIRST_LEVEL_REPLY_LOAD_SIZE
+        query_sql = connection.queries
         if request.GET.get("hot") == "True":  # 按热度排序
-            first_level_replies = FirstLevelReply.objects.filter(postId=postid).order_by("-score")[start:end]
+            first_level_replies = FirstLevelReply.objects.filter(post=post).order_by("-score")[start:end]
             logger.info("hottest first_level_replies %d:[%d, %d]", len(first_level_replies), start, end)
         else:  # 按时间排序
-            first_level_replies = FirstLevelReply.objects.filter(postId=postid).order_by("-replyTime")[start:end]
+            first_level_replies = FirstLevelReply.objects.filter(post=post).order_by("-replyTime")[start:end]
             logger.info("first_level_replies %d:[%d, %d]", len(first_level_replies), start, end)
         ret = utils.wrap_message({'postId': int(postid), 'size': len(first_level_replies)})
-        ret['list'] = [e.to_json(_fill_user_info(e.userId)) for e in first_level_replies]
+        ret['list'] = [e.to_json(_fill_user_info(e.user)) for e in first_level_replies]
+        for each_sql in query_sql:
+            print each_sql
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
 
 
 @login_required
 def second_level_reply_list(request):
     first_level_reply_id = request.GET.get("firstLevelReplyId")
+    first_level_reply = utils.get(FirstLevelReply, id=first_level_reply_id)
     page = request.GET.get("page")
-    if first_level_reply_id is None or page is None:
+    if first_level_reply_id is None or first_level_reply is None or page is None:
         ret = utils.wrap_message(code=1)
     else:
         page = int(page)
         start = (page - 1) * consts.SECOND_LEVEL_REPLY_LOAD_SIZE
         end = start + consts.SECOND_LEVEL_REPLY_LOAD_SIZE
-        second_level_replies = SecondLevelReply.objects.filter(
-            firstLevelReplyId=first_level_reply_id).order_by("replyTime")[start:end]
+        second_level_replies = SecondLevelReply.objects.filter(                #二级回复的相互回复部分，由客户端去处理
+            first_level_reply=first_level_reply).order_by("replyTime")[start:end]
         logger.info("second_level_replies %d:[%d, %d]", len(second_level_replies), start, end)
         ret = utils.wrap_message({'firstLevelReplyId': int(first_level_reply_id), 'size': len(second_level_replies)})
-        ret['list'] = [e.to_json(_fill_user_info(e.userId)) for e in second_level_replies]
+        ret['list'] = [e.to_json(_fill_user_info(e.user)) for e in second_level_replies]
+    return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
+
+
+#消息之我的帖子
+@login_required
+def my_post(request):
+    user_id = request.session[SESSION_KEY]
+    page = request.GET.get("page")
+    user = utils.get(User, id=user_id)
+    if user_id is None or page is None or user is None:
+        ret = utils.wrap_message(code=1)
+    else:
+        page = int(page)
+        start = (page - 1) * consts.LOAD_SIZE
+        end = start + consts.LOAD_SIZE
+        posts = Post.objects.filter(user=user).order_by("-postTime")[start:end]
+        d = {}
+        for e in posts:
+            pictures = PostPicture.objects.filter(post=e).values_list("pictureUrl", flat=True)
+            d[e.id] = list(pictures)
+        ret = utils.wrap_message({'size': posts.count()})
+        #TODO:此处是我的帖子列表，是否需要把我的信息带上返回
+        ret['list'] = [e.tojson(d[e.id], _fill_user_info(e.user)) for e in posts]
+    return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
+
+
+#消息之我的回复
+@login_required
+def my_reply(request):
+    user_id = request.session[SESSION_KEY]
+    page = request.GET.get("page")
+    if user_id is None or page is None:
+        ret = utils.wrap_message(code=1)
+    else:
+        page = int(page)
+        start = (page - 1) * consts.LOAD_SIZE
+        end = start + consts.LOAD_SIZE
+        my_replies = ReplyInfo.objects.filter(replyUser=user_id).order_by("-replyTime")[start:end]
+        ret = utils.wrap_message({'size': my_replies.count()})
+        ret['list'] = [e.to_json(_fill_user_info(e.repliedUser)) for e in my_replies]
+    return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
+
+
+#消息之别人对我的回复
+@login_required
+def reply_my_post(request):
+    user_id = request.session[SESSION_KEY]
+    page = request.GET.get("page")
+    if user_id is None or page is None:
+        ret = utils.wrap_message(code=1)
+    else:
+        page = int(page)
+        start = (page - 1) * consts.LOAD_SIZE
+        end = start + consts.LOAD_SIZE
+        replies = ReplyInfo.objects.filter(repliedUser=user_id).order_by("-replyTime")[start:end]
+        ret = utils.wrap_message({'size': replies.count()})
+        #TODO:此处需要不需要把channelid放进来，供跳转的时候使用
+        ret['list'] = [e.to_json(_fill_user_info(e.replyUser)) for e in replies]
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
 
 
@@ -420,20 +500,22 @@ def _push_message_to_app(content):
     logger.info("pushMessageToApp")
     post_push.pushMessageToApp(content)
 
-def _push_message_to_single(content,client_id):
+
+def _push_message_to_single(content, client_id):
     logger.info("pushMessageToSingle")
     post_push.pushMessageToSingle(content,client_id)
 
-def _fill_user_info(userid):
+
+def _fill_user_info(user):
     nickname = None
     avatar = None
     try:
-        user_info = UserInfo.objects.get(userId=userid)
+        user_info = UserInfo.objects.get(user=user)
         nickname = user_info.nickname
         avatar = user_info.avatar
     except UserInfo.DoesNotExist:
         logger.warn("User or Userinfo not found")
-    jsond = {"id": userid,
+    jsond = {"id": user.id,
              "avatar": avatar,
              "name": nickname}
     return jsond
@@ -453,7 +535,7 @@ def forbid_user(user):
         user.user_permissions.remove(permission)
 
 
-# TODO: 需要原子操作
+# 调用该方法的事务操作已更新
 def _update_post_score(_id):
     post = utils.get(Post, id=_id)
     r = post.replyUserCount
@@ -479,18 +561,29 @@ def redis(request):
 
 #通过帖子或者一级回复获取对应用户的token，并且封装回复的信息
 #TODO 这里这样封装可能有些不太合理，但是是为了只查User一次就能获取username和token
-def _wrap_push(post_or_reply):
+def _wrap_push(user):
     #TODO 是不是应该判断如果是二级回复，需要把发帖人的token也取出来,目前是回复谁给谁推送
         wrapped_user_info = {}
         try:
-            user = User.objects.get(id=post_or_reply.userId)
-            user_info = UserInfo.objects.get(userId=user.id)
+            user_info = UserInfo.objects.get(user=user)
             if user_info.token is not None:
                 wrapped_user_info['token'] = user_info.token
-                wrapped_user_info['message'] = user.username + "回复了你"
+                wrapped_user_info['message'] = user.username
                 return wrapped_user_info
             else:
                 return None
         except User.DoesNotExist:
             return None
 
+
+def _get_post(first_level_reply):
+    post_id = first_level_reply.postId
+    try:
+        post = Post.objects.get(postId=post_id)
+        return post
+    except post.DoesNotExist:
+        return None
+
+
+def _cut_str(str, length=16):
+    return str[0:length]

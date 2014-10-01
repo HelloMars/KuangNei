@@ -313,10 +313,9 @@ KuangNei
      "size": 1
     }
     ```
-
 18.`[GET] http://kuangnei.me/kuangnei/api/replyToMine/?page=1`,别人对我的回复,【需要登录】
 * 返回json:
-* 注：注：1代表是对帖子的回复，2代表是对一级回复的回复，3代表对二级回复的回复
+* 注:1代表是对帖子的回复，2代表是对一级回复的回复，3代表对二级回复的回复
     ```
 {
     "returnMessage": "",
@@ -393,7 +392,7 @@ KuangNei
  20.`[GET] http://kuangnei.me/kuangnei/api/myReply/?page=1`,我的回复,【需要登录】
 * 返回json:
 *注：1代表是对帖子的回复，2代表是对一级回复的回复，3代表对二级回复的回复
-```   
+```
 {
     "returnMessage": "",
     "returnCode": 0,
@@ -423,7 +422,7 @@ KuangNei
             },
             "repliedBriefContent": " 我感觉很舒服",
             "replyTime": "2014-10-01 17:38:49",
-            "flag": 1,                                          
+            "flag": 1,
             "firstLevelReplyId": 0,
             "postId": 1,
             "id": 1
@@ -432,6 +431,7 @@ KuangNei
     "size": 2
 }
 ```
+
 ## Log ##
 后端log采用python自带的logging模块，以天为节点输出在`log/debug_YYYY_mm_dd.log`文件。在自己的python文件使用该模块示例：
 ```
