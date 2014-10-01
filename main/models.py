@@ -32,12 +32,13 @@ class Post(models.Model):
     replyCount = models.IntegerField(db_column="reply_count")
     replyUserCount = models.IntegerField(db_column="reply_user_count")
     score = models.FloatField(db_column="score")
+    imageUrls = models.CharField(db_column="image_urls", max_length=1000)
     editStatus = models.IntegerField(db_column="edit_status")
 
     class Meta:
         db_table = "post"
 
-    def tojson(self, image_url, user):
+    def tojson(self, user):
         ret = {}
         for field in self._meta.fields:
             attr = field.name
@@ -45,19 +46,24 @@ class Post(models.Model):
                 ret['postId'] = getattr(self, attr)
             elif attr == "user":
                 ret['user'] = user
+            elif attr == "imageUrls":
+                image_url = getattr(self, attr)
+                if image_url is not None:
+                    ret['pictures'] = image_url.split("@")
+                else:
+                    ret['pictures'] = []
             else:
                 ret[attr] = getattr(self, attr)
-        ret['pictures'] = image_url
         return ret
 
 
-class PostPicture(models.Model):
-    #postId = models.BigIntegerField(db_column="post_id")
-    post = models.ForeignKey(Post)
-    pictureUrl = models.URLField(db_column="picture_url")
-
-    class Meta:
-        db_table = "post_picture"
+# class PostPicture(models.Model):
+#     #postId = models.BigIntegerField(db_column="post_id")
+#     post = models.ForeignKey(Post)
+#     pictureUrl = models.URLField(db_column="picture_url")
+#
+#     class Meta:
+#         db_table = "post_picture"
 
 
 class UserInfo(models.Model):
@@ -143,21 +149,6 @@ class FirstLevelReply(models.Model):
                 ret['user'] = user
             else:
                 ret[attr] = getattr(self, attr)
-        return ret
-
-    def tojson(self, user):
-        ret = {}
-        for field in self._meta.fields:
-            attr = field.name
-            if attr == 'id':
-                ret['firstLevelReplyId'] = getattr(self, attr)
-            elif attr == 'post':
-                ret['post'] = model_to_dict(self.post)
-            elif attr == "user":
-                ret['post_author'] = user
-            else:
-                ret[attr] = getattr(self, attr)
-            ret['postId'] = self.post.id
         return ret
 
 

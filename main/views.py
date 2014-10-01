@@ -50,6 +50,7 @@ def dopost(request):
         userid = request.session[SESSION_KEY]
         channelid = request.POST.get("channelid")
         content = request.POST.get("content")
+        imageurl = request.POST.get("imageurl")
         if channelid is None or content is None:
             ret = utils.wrap_message(code=1)
         elif int(channelid) == consts.NEWEST_CHANNEL_ID or int(channelid) == consts.HOTTEST_CHANNEL_ID:
@@ -58,19 +59,11 @@ def dopost(request):
             user = User.objects.get(id = userid)
             post = Post(user=user, schoolId=1, content=content, channelId=channelid,
                         opposedCount=0, postTime=time.strftime('%Y-%m-%d %H:%M:%S'),
-                        replyCount=0, replyUserCount=0,
+                        replyCount=0, replyUserCount=0, imageUrls=imageurl,
                         score=utils.cal_post_score(0, 0, 0, time.time()),
                         editStatus=0, upCount=0)
             post.save()
             logger.info("post " + str(post.id))
-            imageurl = request.POST.get("imageurl")
-            if imageurl is not None:
-                # TODO: 为什么不直接把imageurl存到数据库，取得时候再反序列化
-                imageurls = imageurl.split("@")
-                for url in imageurls:
-                    post_picture = PostPicture(pictureUrl=url, postId=post.id)
-                    post_picture.save()
-                logger.info("save %d pictures", len(imageurls))
             _push_message_to_app(post.content)
             ret = utils.wrap_message({'postId': post.id})
     return HttpResponse(json.dumps(ret), mimetype='application/json')
@@ -96,11 +89,8 @@ def postlist(request):
             posts = Post.objects.filter(channelId=channelid).order_by("-postTime")[start:end]
             logger.info("channel postlist %d:[%d, %d]", len(posts), start, end)
         d = {}
-        for e in posts:
-            pictures = PostPicture.objects.filter(post=e).values_list("pictureUrl", flat=True)
-            d[e.id] = list(pictures)
         ret = utils.wrap_message({'size': len(posts)})
-        ret['list'] = [e.tojson(d[e.id], _fill_user_info(e.user)) for e in posts]
+        ret['list'] = [e.tojson(_fill_user_info(e.user)) for e in posts]
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler),
                         mimetype='application/json')
 
@@ -452,12 +442,9 @@ def my_post(request):
         end = start + consts.LOAD_SIZE
         posts = Post.objects.filter(user=user).order_by("-postTime")[start:end]
         d = {}
-        for e in posts:
-            pictures = PostPicture.objects.filter(post=e).values_list("pictureUrl", flat=True)
-            d[e.id] = list(pictures)
         ret = utils.wrap_message({'size': posts.count()})
         #TODO:此处是我的帖子列表，是否需要把我的信息带上返回
-        ret['list'] = [e.tojson(d[e.id], _fill_user_info(e.user)) for e in posts]
+        ret['list'] = [e.tojson(_fill_user_info(e.user)) for e in posts]
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
 
 
