@@ -33,7 +33,7 @@ HOST = 'http://sdk.open.api.igexin.com/apiex.htm'
 
 
 
-def pushMessageToSingle(content,client_id):
+def pushMessageToSingle(content, client_id):
     push = IGeTui(HOST, APPKEY, MASTERSECRET)
     #消息模版：
     #1.TransmissionTemplate:透传功能模板

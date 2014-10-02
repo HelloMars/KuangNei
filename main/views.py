@@ -327,16 +327,16 @@ def reply_first_level(request):
                 content=content, floor=Post.objects.get(id=postid).replyCount,  # 确保原子操作
                 replyCount=0, replyUserCount=0, replyTime=reply_time,
                 score=0, editStatus=0)
-            ReplyInfo.objects.create(repliedUser=post.user, replyUser=user, postId=post.id, replyContent=content,
+            reply_info = ReplyInfo.objects.create(repliedUser=post.user, replyUser=user, postId=post.id, replyContent=content,
                 flag=consts.REPLY_POST, repliedBriefContent=_cut_str(post.content), replyTime=reply_time)
             if utils.get(ReplyPost, postId=postid, userId=userid) is None:  # 未回复过
                 ReplyPost.objects.create(postId=postid, userId=userid)
                 Post.objects.filter(id=postid).update(replyUserCount=F('replyUserCount')+1)  # 独立回复数+1
                 _update_post_score(postid)
-        wrap_user_message = _wrap_push(post.user)
-        if wrap_user_message is not None:
-            content = wrap_user_message['message']
-            token = wrap_user_message['token']
+        content = reply_info.to_json(_fill_user_info(reply_info.replyUser))              #消息推送
+        user_info = UserInfo.objects.get(user=post.user)
+        token = user_info.token
+        if token is not None:
             _push_message_to_single(content, token)
         ret = utils.wrap_message(data={"firstLevelReplyId": first_level_reply.id}, code=0, msg="发表一级回复成功")
     return HttpResponse(json.dumps(ret), mimetype='application/json')
@@ -364,22 +364,30 @@ def reply_second_level(request):
             if second_level_reply_id is None or second_level_replied is None:                    #代表回复的是一级回复
                 second_level_reply = SecondLevelReply.objects.create(first_level_reply=first_level_reply,
                               post=post, user=user, content=content, replyTime=reply_time,editStatus=0)
-                ReplyInfo.objects.create(repliedUser=first_level_reply.user, replyUser=user, postId=post.id,
-                firstLevelReplyId=first_level_reply_id, flag=consts.REPLY_FIRST_LEVEL,
-                repliedBriefContent=_cut_str(first_level_reply.content), replyContent=content, replyTime=reply_time)
+                reply_info = ReplyInfo.objects.create(repliedUser=first_level_reply.user, replyUser=user,
+                  postId=post.id, firstLevelReplyId=first_level_reply_id, flag=consts.REPLY_FIRST_LEVEL,
+                  repliedBriefContent=_cut_str(first_level_reply.content), replyContent=content, replyTime=reply_time)
+                push_to_user = first_level_reply.user
             else:                                                                                 #代表回复的是二级回复
                 second_level_reply = SecondLevelReply.objects.create(first_level_reply=first_level_reply,
                               post=post, secondLevelReplyId=second_level_reply_id, user=user,
                               content=content, replyTime=reply_time, editStatus=0)
-                ReplyInfo.objects.create(repliedUser=second_level_replied.user, replyUser=user, postId=post.id,
-                firstLevelReplyId=first_level_reply_id, secondLevelReplyId=second_level_reply_id,
+                reply_info = ReplyInfo.objects.create(repliedUser=second_level_replied.user, replyUser=user,
+                  postId=post.id, firstLevelReplyId=first_level_reply_id, secondLevelReplyId=second_level_reply_id,
                 flag=consts.REPLY_SECOND_LEVEL,repliedBriefContent=_cut_str(second_level_replied.content),
                 replyContent=content, replyTime=reply_time)
+                push_to_user = second_level_replied.user
             if utils.get(ReplyReply, firstLevelReplyId=first_level_reply_id, userId=userid) is None:  # 未回复过
                 ReplyReply.objects.create(postId=postid, firstLevelReplyId=first_level_reply_id, userId=userid)
                 FirstLevelReply.objects.filter(id=first_level_reply_id)\
                     .update(replyUserCount=F('replyUserCount')+1)  # 独立回复数+1
                 _update_reply_score(first_level_reply_id)
+        content = reply_info.to_json(_fill_user_info(reply_info.replyUser))                                  #消息推送
+        user_info = UserInfo.objects.get(user=push_to_user)
+        token = user_info.token
+        if token is not None:
+            _push_message_to_single(content, token)
+            print "aaaa"
         ret = utils.wrap_message(data={"secondLevelReplyId": second_level_reply.id}, code=0, msg="发表二级回复成功")
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
@@ -544,23 +552,6 @@ def redis(request):
     logger.info("redis: " + cache.get('foo') + ", " + str(cache.ttl('foo')))
     ret = utils.wrap_message(code=0)
     return HttpResponse(json.dumps(ret), mimetype='application/json')
-
-
-#通过帖子或者一级回复获取对应用户的token，并且封装回复的信息
-#TODO 这里这样封装可能有些不太合理，但是是为了只查User一次就能获取username和token
-def _wrap_push(user):
-    #TODO 是不是应该判断如果是二级回复，需要把发帖人的token也取出来,目前是回复谁给谁推送
-        wrapped_user_info = {}
-        try:
-            user_info = UserInfo.objects.get(user=user)
-            if user_info.token is not None:
-                wrapped_user_info['token'] = user_info.token
-                wrapped_user_info['message'] = user.username
-                return wrapped_user_info
-            else:
-                return None
-        except User.DoesNotExist:
-            return None
 
 
 def _get_post(first_level_reply):
