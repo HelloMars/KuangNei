@@ -116,7 +116,7 @@ class UserInfo(models.Model):
             attr = field.name
             if attr == "user":
                 user = getattr(self, "user")
-                ret["user"] = user.id
+                ret["userId"] = user.id
             else:
                 ret[attr] = getattr(self, attr)
         return ret

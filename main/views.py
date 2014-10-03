@@ -167,7 +167,7 @@ def _login(data, request):
                     user_info.save()
                     logger.info('修改用户(%s)信息成功', repr(user.id))
                 request.session.set_expiry(30000)
-                ret = utils.wrap_message(code=0, msg='登陆成功')
+                ret = utils.wrap_message(data=user_info.tojson, code=0, msg='登陆成功')
             else:
                 ret = utils.wrap_message(code=10, msg='用户无权限')
                 logger.info('用户无权限')
