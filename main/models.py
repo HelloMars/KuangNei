@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import calendar
 from datetime import datetime
 from django.contrib.auth.models import User
 from django.db import models
@@ -84,7 +85,7 @@ class UserInfo(models.Model):
     telephone = models.CharField(max_length=50, db_column="telephone")
     avatar = models.CharField(max_length=255, db_column="avatar", null=True)
     sex = models.IntegerField(db_column="sex", choices=SEX_CHOICES, default=DEFAULT)
-    birthday = models.DateField(db_column="birthday", null=True)
+    birthday = models.BigIntegerField(db_column="birthday", null=True)
     sign = models.CharField(max_length=255, db_column="sign", null=True)
     schoolId = models.IntegerField(db_column="school_id", null=True)
 
@@ -96,10 +97,10 @@ class UserInfo(models.Model):
         for field in self._meta.fields:
             attr = field.name
             value = data.get(attr.lower())
-            #生日由long转化为时间类型
-            if attr == "birthday" and value is not None:
-                print value
-                value = datetime.fromtimestamp((long(value))/1e3)
+            # #生日由long转化为时间类型
+            # if attr == "birthday" and value is not None:
+            #     print value
+            #     value = datetime.fromtimestamp((long(value))/1e3)
             # 非空并不等才更新
             if value is not None and value != getattr(self, attr):
                 if attr == 'telephone' and not utils.is_avaliable_phone(value):
@@ -108,6 +109,7 @@ class UserInfo(models.Model):
                 modify = True
         return modify
 
+    @property
     def tojson(self):
         ret = {}
         for field in self._meta.fields:

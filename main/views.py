@@ -210,13 +210,15 @@ def add_user_info(request):
         userid = request.session[SESSION_KEY]
         user_info = UserInfo.objects.get(user=userid)
         modify = user_info.setattrs(request.POST)
-
-        if modify:
-            user_info.save()
-            ret = utils.wrap_message(data=user_info.tojson(), msg='修改个人信息成功')
-            logger.info('修改用户(%s)信息成功', repr(userid))
-        else:
-            ret = utils.wrap_message(data=user_info.tojson(), msg='获取个人信息成功')
+        try:
+            if modify:
+                user_info.save()
+                ret = utils.wrap_message(data=user_info.tojson, msg='修改个人信息成功')
+                logger.info('修改用户(%s)信息成功', repr(userid))
+            else:
+                ret = utils.wrap_message(data=user_info.tojson, msg='获取个人信息成功')
+        except Exception:
+            ret = utils.wrap_message(code=2)
     # TODO: int return string bug
     return HttpResponse(json.dumps(ret, default=utils.dateHandler),
                         mimetype='application/json')
