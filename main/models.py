@@ -22,8 +22,7 @@ class Choice(models.Model):
 
 
 class Post(models.Model):
-    #userId = models.IntegerField(db_column="user_id")
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, db_constraint=False)
     schoolId = models.IntegerField(db_column="school_id")
     content = models.CharField(max_length=800)
     channelId = models.IntegerField(db_column="channel_id")
@@ -33,7 +32,7 @@ class Post(models.Model):
     replyCount = models.IntegerField(db_column="reply_count")
     replyUserCount = models.IntegerField(db_column="reply_user_count")
     score = models.FloatField(db_column="score")
-    imageUrls = models.CharField(db_column="image_urls", max_length=1000)
+    imageUrls = models.CharField(db_column="image_urls", max_length=1000, null=True)
     editStatus = models.IntegerField(db_column="edit_status")
 
     class Meta:
@@ -78,7 +77,7 @@ class UserInfo(models.Model):
         (NEUTRAL, 'Neutral'),
         (DEFAULT, 'Null')
     )
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, db_constraint=False)
     deviceId = models.CharField(max_length=255, db_column="device_id", null=True)
     token = models.CharField(max_length=255, db_column="user_token", null=True)
     nickname = models.CharField(max_length=255, db_column='nickname')
@@ -123,10 +122,8 @@ class UserInfo(models.Model):
 
 
 class FirstLevelReply(models.Model):
-    #postId = models.IntegerField(db_column="post_id", db_index=True)
-    post = models.ForeignKey(Post)
-    #userId = models.IntegerField(db_column="user_id")
-    user = models.ForeignKey(User)
+    post = models.ForeignKey(Post, db_constraint=False)
+    user = models.ForeignKey(User, db_constraint=False)
     content = models.CharField(db_column="content", max_length=800)
     upCount = models.IntegerField(db_column="up_count")
     replyCount = models.IntegerField(db_column="reply_count")
@@ -155,13 +152,10 @@ class FirstLevelReply(models.Model):
 
 
 class SecondLevelReply(models.Model):
-    #postId = models.IntegerField(db_column="post_id", db_index=True)
-    #firstLevelReplyId = models.IntegerField(db_column="first_level_reply_id", db_index=True)
-    #userId = models.IntegerField(db_column="user_id")
-    post = models.ForeignKey(Post)
-    first_level_reply = models.ForeignKey(FirstLevelReply)
+    post = models.ForeignKey(Post, db_constraint=False)
+    first_level_reply = models.ForeignKey(FirstLevelReply, db_constraint=False)
     secondLevelReplyId = models.IntegerField(db_column="second_level_reply_id", default=0)
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, db_constraint=False)
     content = models.CharField(db_column="content", max_length=140)
     replyTime = models.DateTimeField(db_column="create_time")
     editStatus = models.IntegerField(db_column="edit_status")
@@ -234,8 +228,8 @@ class ReplyReply(models.Model):
 
 
 class ReplyInfo(models.Model):
-    repliedUser = models.ForeignKey(User,related_name='replied_user')  #被回复人
-    replyUser = models.ForeignKey(User,related_name='reply_user')   #回复人
+    repliedUser = models.ForeignKey(User, related_name='replied_user', db_constraint=False)  #被回复人
+    replyUser = models.ForeignKey(User, related_name='reply_user', db_constraint=False)   #回复人
     flag = models.IntegerField()  #1代表是对帖子的回复，2代表是对一级回复的回复，3代表对二级回复的回复
     repliedBriefContent = models.CharField(db_column="replied_brief_content", max_length=50)  #我的发表的内容，缩略
     replyContent = models.CharField(db_column="reply_content", max_length=800)                 #对我的回复
