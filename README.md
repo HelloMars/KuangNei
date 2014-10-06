@@ -314,34 +314,34 @@ KuangNei
     }
     ```
 18.`[GET] http://kuangnei.me/kuangnei/api/replyToMine/?page=1`,别人对我的回复,【需要登录】
-* 返回json:
-* 注:1代表是对帖子的回复，2代表是对一级回复的回复，3代表对二级回复的回复
+   * 返回json:
+   * 注:1代表是对帖子的回复，2代表是对一级回复的回复，3代表对二级回复的回复
     ```
-{
-    "returnMessage": "",
-    "returnCode": 0,
-    "list": [
-        {
-            "secondLevelReplyId": 0,
-            "replyContent": "感觉怎么样啊",
-            "showUser": {
-                "id": 2,
-                "name": "user2",
-                "avatar": null
-            },
-            "repliedBriefContent": " 我感觉很舒服",
-            "replyTime": "2014-10-01 17:38:49",
-            "flag": 1,
-            "firstLevelReplyId": 0,
-            "postId": 1,
-            "id": 1
-        }
-    ],
-    "size": 1
-}
+   {
+       "returnMessage": "",
+       "returnCode": 0,
+       "list": [
+           {
+               "secondLevelReplyId": 0,
+               "replyContent": "感觉怎么样啊",
+               "showUser": {
+                   "id": 2,
+                   "name": "user2",
+                   "avatar": null
+               },
+               "repliedBriefContent": " 我感觉很舒服",
+               "replyTime": "2014-10-01 17:38:49",
+               "flag": 1,
+               "firstLevelReplyId": 0,
+               "postId": 1,
+               "id": 1
+           }
+       ],
+       "size": 1
+   }
    ```
 19.`[GET] http://kuangnei.me/kuangnei/api/myPost/?page=1`,我的帖子,【需要登录】
-* 返回json:
+   * 返回json:
     ```
    {
     "returnMessage": "",
@@ -387,50 +387,50 @@ KuangNei
         }
     ],
     "size": 2
-}
- ```
+   }
+   ```
  20.`[GET] http://kuangnei.me/kuangnei/api/myReply/?page=1`,我的回复,【需要登录】
-* 返回json:
-*注：1代表是对帖子的回复，2代表是对一级回复的回复，3代表对二级回复的回复
-```
-{
-    "returnMessage": "",
-    "returnCode": 0,
-    "list": [
-        {
-            "secondLevelReplyId": 0,
-            "replyContent": "听得什么歌啊",
-            "showUser": {
-                "id": 1,
-                "name": "路人甲",
-                "avatar": "feidaowangzixing@163.com"
-            },
-            "repliedBriefContent": "是啊，听的什么歌",
-            "replyTime": "2014-10-01 17:51:43",
-            "flag": 2,
-            "firstLevelReplyId": 2,
-            "postId": 2,
-            "id": 3
-        },
-        {
-            "secondLevelReplyId": 0,
-            "replyContent": "感觉怎么样啊",
-            "showUser": {
-                "id": 1,
-                "name": "路人甲",
-                "avatar": "feidaowangzixing@163.com"
-            },
-            "repliedBriefContent": " 我感觉很舒服",
-            "replyTime": "2014-10-01 17:38:49",
-            "flag": 1,
-            "firstLevelReplyId": 0,
-            "postId": 1,
-            "id": 1
-        }
-    ],
-    "size": 2
-}
-```
+   * 返回json:
+   *注：1代表是对帖子的回复，2代表是对一级回复的回复，3代表对二级回复的回复
+   ```
+   {
+       "returnMessage": "",
+       "returnCode": 0,
+       "list": [
+           {
+               "secondLevelReplyId": 0,
+               "replyContent": "听得什么歌啊",
+               "showUser": {
+                   "id": 1,
+                   "name": "路人甲",
+                   "avatar": "feidaowangzixing@163.com"
+               },
+               "repliedBriefContent": "是啊，听的什么歌",
+               "replyTime": "2014-10-01 17:51:43",
+               "flag": 2,
+               "firstLevelReplyId": 2,
+               "postId": 2,
+               "id": 3
+           },
+           {
+               "secondLevelReplyId": 0,
+               "replyContent": "感觉怎么样啊",
+               "showUser": {
+                   "id": 1,
+                   "name": "路人甲",
+                   "avatar": "feidaowangzixing@163.com"
+               },
+               "repliedBriefContent": " 我感觉很舒服",
+               "replyTime": "2014-10-01 17:38:49",
+               "flag": 1,
+               "firstLevelReplyId": 0,
+               "postId": 1,
+               "id": 1
+           }
+       ],
+       "size": 2
+   }
+   ```
 
 ## Log ##
 后端log采用python自带的logging模块，以天为节点输出在`log/debug_YYYY_mm_dd.log`文件。在自己的python文件使用该模块示例：
