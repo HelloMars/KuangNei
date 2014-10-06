@@ -313,7 +313,7 @@ KuangNei
      "size": 1
     }
     ```
-18.`[GET] http://kuangnei.me/kuangnei/api/replyToMine/?page=1`,别人对我的回复,【需要登录】
+18. `[GET] http://kuangnei.me/kuangnei/api/replyToMine/?page=1`,别人对我的回复,【需要登录】
    * 返回json:
    * 注:1代表是对帖子的回复，2代表是对一级回复的回复，3代表对二级回复的回复
     ```
@@ -340,7 +340,7 @@ KuangNei
        "size": 1
    }
    ```
-19.`[GET] http://kuangnei.me/kuangnei/api/myPost/?page=1`,我的帖子,【需要登录】
+19. `[GET] http://kuangnei.me/kuangnei/api/myPost/?page=1`,我的帖子,【需要登录】
    * 返回json:
     ```
    {
@@ -389,7 +389,7 @@ KuangNei
     "size": 2
    }
    ```
- 20.`[GET] http://kuangnei.me/kuangnei/api/myReply/?page=1`,我的回复,【需要登录】
+20. `[GET] http://kuangnei.me/kuangnei/api/myReply/?page=1`,我的回复,【需要登录】
    * 返回json:
    *注：1代表是对帖子的回复，2代表是对一级回复的回复，3代表对二级回复的回复
    ```
