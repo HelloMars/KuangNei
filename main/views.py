@@ -88,7 +88,6 @@ def postlist(request):
         else:  # 获取频道帖子列表
             posts = Post.objects.filter(channelId=channelid).order_by("-postTime")[start:end]
             logger.info("channel postlist %d:[%d, %d]", len(posts), start, end)
-        d = {}
         ret = utils.wrap_message({'size': len(posts)})
         ret['list'] = [e.tojson(_fill_user_info(e.user)) for e in posts]
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler),
