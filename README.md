@@ -431,6 +431,22 @@ KuangNei
        "size": 2
    }
    ```
+21. `[GET] http://kuangnei.me/kuangnei/api/checkVersion/?version=1`,版本检查
+ ```
+  没有新版本:
+   {
+    "returnMessage": "没有新版本",
+    "returnCode": 0
+   }
+   有新版本:
+   {
+    "url": "www.7788mp3.com",
+    "returnMessage": "有新版本",
+    "versionNumber": 2,
+    "returnCode": 0,
+    "description": "这个版本太爽了"
+}
+   ```
 
 ## Log ##
 后端log采用python自带的logging模块，以天为节点输出在`log/debug_YYYY_mm_dd.log`文件。在自己的python文件使用该模块示例：
