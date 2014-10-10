@@ -31,6 +31,7 @@ urlpatterns = patterns(
     url(r'^myPost/$', views.my_post, name='myPost'),
     url(r'^myReply/$', views.my_reply, name='myReply'),
     url(r'^replyToMine/$', views.reply_my_post, name='myReply'),
+    url(r'^checkVersion/$', views.check_version, name='checkVersion'),
 
     url(r'^redis/$', views.redis, name='redis'),
 )

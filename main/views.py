@@ -217,7 +217,8 @@ def add_user_info(request):
                 logger.info('修改用户(%s)信息成功', repr(userid))
             else:
                 ret = utils.wrap_message(data=user_info.tojson, msg='获取个人信息成功')
-        except Exception:
+        except Exception as e:
+            logger.exception(e)
             ret = utils.wrap_message(code=2)
     # TODO: int return string bug
     return HttpResponse(json.dumps(ret, default=utils.dateHandler),
@@ -389,7 +390,6 @@ def reply_second_level(request):
         token = user_info.token
         if token is not None:
             _push_message_to_single(content, token)
-            print "aaaa"
         ret = utils.wrap_message(data={"secondLevelReplyId": second_level_reply.id}, code=0, msg="发表二级回复成功")
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
@@ -488,9 +488,27 @@ def reply_my_post(request):
         end = start + consts.LOAD_SIZE
         replies = ReplyInfo.objects.filter(repliedUser=user_id).order_by("-replyTime")[start:end]
         ret = utils.wrap_message({'size': replies.count()})
-        #TODO:此处需要不需要把channelid放进来，供跳转的时候使用
         ret['list'] = [e.to_json(_fill_user_info(e.replyUser)) for e in replies]
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
+
+
+def check_version(request):
+    version = request.GET.get("version")
+    if version is None:
+        ret = utils.wrap_message(code=1)
+    else:
+        try:
+            version_number = int(version)
+            max_version = Version.objects.order_by("-versionNumber")[0]
+            if max_version.versionNumber != version_number:                       #当前版本不是最新
+                data = max_version.to_json()
+                ret = utils.wrap_message(data=data, code=0, msg="有新版本")
+            else:
+                ret = utils.wrap_message(code=0, msg="没有新版本")
+        except Exception as e:
+            logger.exception(e)
+            ret = utils.wrap_message(code=20)
+    return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
 def _push_message_to_app(content):

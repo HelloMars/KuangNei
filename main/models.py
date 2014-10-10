@@ -254,3 +254,18 @@ class ReplyInfo(models.Model):
                 ret['showUser'] = user                           #showUser字段用来显示消息列表中……的帖子或回复
         return ret
 
+
+class Version(models.Model):
+    versionNumber = models.IntegerField(db_column="version_number", primary_key=True)
+    url = models.CharField(max_length=1000)
+    description = models.CharField(max_length=200)
+
+    class Meta:
+        db_table = "version"
+
+    def to_json(self):
+        ret = {}
+        for field in self._meta.fields:
+            attr = field.name
+            ret[attr] = getattr(self, attr)
+        return ret
