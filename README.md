@@ -432,8 +432,9 @@ KuangNei
    }
    ```
 21. `[GET] http://kuangnei.me/kuangnei/api/checkVersion/?version=1`,版本检查
- ```
-  没有新版本:
+   * 返回json:
+   ```
+   没有新版本:
    {
     "returnMessage": "没有新版本",
     "returnCode": 0
@@ -445,7 +446,7 @@ KuangNei
     "versionNumber": 2,
     "returnCode": 0,
     "description": "这个版本太爽了"
-}
+   }
    ```
 
 ## Log ##
