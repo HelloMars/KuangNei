@@ -491,6 +491,24 @@ def reply_my_post(request):
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
 
 
+#意见反馈
+@login_required
+def feed_back(request):
+    user_id = request.session[SESSION_KEY]
+    content = request.POST.get("content")
+    try:
+        user = utils.get(User, id=user_id)
+        if user_id is None or content is None or user is None:
+            ret = utils.wrap_message(code=1)
+        else:
+            FeedBack.objects.create(user=user,content=content)
+            ret = utils.wrap_message()
+    except Exception as e:
+            logger.exception(e)
+            ret = utils.wrap_message(code=20)
+    return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
+
+
 def check_version(request):
     version = request.GET.get("version")
     if version is None:

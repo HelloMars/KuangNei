@@ -269,3 +269,11 @@ class Version(models.Model):
             attr = field.name
             ret[attr] = getattr(self, attr)
         return ret
+
+
+class FeedBack(models.Model):
+    user = models.ForeignKey(User,db_constraint=False)
+    content = models.CharField(max_length=800)
+
+    class Meta:
+        db_table = "feed_back"
