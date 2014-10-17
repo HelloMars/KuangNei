@@ -33,6 +33,10 @@ urlpatterns = patterns(
     url(r'^replyToMine/$', views.reply_my_post, name='myReply'),
     url(r'^checkVersion/$', views.check_version, name='checkVersion'),
     url(r'^feedBack/$', views.feed_back, name='feedBack'),
+    url(r'^addSchool/$', views.add_school_info, name='addSchool'),
+
 
     url(r'^redis/$', views.redis, name='redis'),
+
+    url(r'^edit.html$', views.some_view),
 )

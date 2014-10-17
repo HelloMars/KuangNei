@@ -277,3 +277,12 @@ class FeedBack(models.Model):
 
     class Meta:
         db_table = "feed_back"
+
+
+class SchoolInfo(models.Model):
+    name = models.CharField(max_length=200)
+    area = models.CharField(max_length=200)
+    position = models.CharField(max_length=5000)
+
+    class Meta:
+        db_table = "school_info"

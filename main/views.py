@@ -10,7 +10,7 @@ from django.db import transaction, connection
 from django.db.models import F
 from django.http import HttpResponse
 from django.http import Http404
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render_to_response
 from django.core.cache import cache
 import time
 
@@ -404,7 +404,6 @@ def first_level_reply_list(request):
         page = int(page)
         start = (page - 1) * consts.FIRST_LEVEL_REPLY_LOAD_SIZE
         end = start + consts.FIRST_LEVEL_REPLY_LOAD_SIZE
-        query_sql = connection.queries
         if request.GET.get("hot") == "True":  # 按热度排序
             first_level_replies = FirstLevelReply.objects.filter(post=post).order_by("-score")[start:end]
             logger.info("hottest first_level_replies %d:[%d, %d]", len(first_level_replies), start, end)
@@ -413,8 +412,6 @@ def first_level_reply_list(request):
             logger.info("first_level_replies %d:[%d, %d]", len(first_level_replies), start, end)
         ret = utils.wrap_message({'postId': int(postid), 'size': len(first_level_replies)})
         ret['list'] = [e.to_json(_fill_user_info(e.user)) for e in first_level_replies]
-        for each_sql in query_sql:
-            print each_sql
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
 
 
@@ -528,6 +525,22 @@ def check_version(request):
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
+def add_school_info(request):
+    name = request.POST.get("name")
+    area = request.POST.get("area")
+    position = request.POST.get("position")
+    if name == "" or area == "" or position == "":
+        ret = utils.wrap_message(code=1)
+    else:
+        try:
+            SchoolInfo.objects.create(name=name, area=area, position=position)
+            ret = utils.wrap_message(code=0)
+        except Exception as e:
+            logger.exception(e)
+            ret = utils.wrap_message(code=20)
+    return HttpResponse(json.dumps(ret), mimetype='application/json')
+
+
 def _push_message_to_app(content):
     logger.info("pushMessageToApp")
     post_push.pushMessageToApp(content)
@@ -602,3 +615,7 @@ def _get_post(first_level_reply):
 
 def _cut_str(str, length=16):
     return str[0:length]
+
+
+def some_view(request):
+   return render_to_response('edit.html')

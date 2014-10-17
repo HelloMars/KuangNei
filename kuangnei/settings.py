@@ -96,6 +96,8 @@ USE_TZ = False
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "static/")
+TEMPLATE_DIRS = os.path.join(BASE_DIR, "template").replace("\\", "/")
+
 
 # Logging
 from datetime import datetime
