@@ -326,8 +326,9 @@ def reply_first_level(request):
                 content=content, floor=Post.objects.get(id=postid).replyCount,  # 确保原子操作
                 replyCount=0, replyUserCount=0, replyTime=reply_time,
                 score=0, editStatus=0)
-            reply_info = ReplyInfo.objects.create(repliedUser=post.user, replyUser=user, postId=post.id, replyContent=content,
-                flag=consts.REPLY_POST, repliedBriefContent=_cut_str(post.content), replyTime=reply_time)
+            reply_info = ReplyInfo.objects.create(repliedUser=post.user, replyUser=user, postId=post.id,
+                replyContent=content, flag=consts.REPLY_POST, repliedBriefContent=_cut_str(post.content),
+                replyTime=reply_time, hasRead=0)
             if utils.get(ReplyPost, postId=postid, userId=userid) is None:  # 未回复过
                 ReplyPost.objects.create(postId=postid, userId=userid)
                 Post.objects.filter(id=postid).update(replyUserCount=F('replyUserCount')+1)  # 独立回复数+1
@@ -363,7 +364,7 @@ def reply_second_level(request):
             if second_level_reply_id is None or second_level_replied is None:                    #代表回复的是一级回复
                 second_level_reply = SecondLevelReply.objects.create(first_level_reply=first_level_reply,
                               post=post, user=user, content=content, replyTime=reply_time,editStatus=0)
-                reply_info = ReplyInfo.objects.create(repliedUser=first_level_reply.user, replyUser=user,
+                reply_info = ReplyInfo.objects.create(repliedUser=first_level_reply.user, replyUser=user, hasRead=0,
                   postId=post.id, firstLevelReplyId=first_level_reply_id, flag=consts.REPLY_FIRST_LEVEL,
                   repliedBriefContent=_cut_str(first_level_reply.content), replyContent=content, replyTime=reply_time)
                 push_to_user = first_level_reply.user
@@ -480,9 +481,24 @@ def reply_my_post(request):
         start = (page - 1) * consts.LOAD_SIZE
         end = start + consts.LOAD_SIZE
         replies = ReplyInfo.objects.filter(repliedUser=user_id).order_by("-replyTime")[start:end]
+        ReplyInfo.objects.filter(repliedUser=user_id, hasRead=0).update(hasRead=1)
         ret = utils.wrap_message({'size': replies.count()})
         ret['list'] = [e.to_json(_fill_user_info(e.replyUser)) for e in replies]
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
+
+
+@login_required
+def if_has_unread_message(request):
+    user_id = request.session[SESSION_KEY]
+    if user_id is None:
+        ret = utils.wrap_message(code=1)
+    else:
+        reply_info = ReplyInfo.objects.filter(repliedUser=user_id,hasRead=0)
+        ret = utils.wrap_message({'unReadMessageCount': reply_info.count()})
+    return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
+
+
+
 
 
 #意见反馈

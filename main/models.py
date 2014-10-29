@@ -140,6 +140,8 @@ class UserInfo(models.Model):
             if attr == "user":
                 user = getattr(self, "user")
                 ret["userId"] = user.id
+            elif attr == "schoolId":
+                pass
             else:
                 ret[attr] = getattr(self, attr)
         return ret
@@ -261,6 +263,7 @@ class ReplyInfo(models.Model):
     firstLevelReplyId = models.IntegerField(db_column="first_level_reply_id", default=0)
     secondLevelReplyId = models.IntegerField(db_column="second_level_reply_id", default=0)
     replyTime = models.DateTimeField(db_column="reply_time")
+    hasRead = models.IntegerField(db_column='has_read')                   #0代表未读，1代表已读
 
     class Meta:
         db_table = "reply_info"
@@ -296,7 +299,7 @@ class Version(models.Model):
 
 
 class FeedBack(models.Model):
-    user = models.ForeignKey(User,db_constraint=False)
+    user = models.ForeignKey(User, db_constraint=False)
     content = models.CharField(max_length=800)
 
     class Meta:
