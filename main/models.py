@@ -21,6 +21,30 @@ class Choice(models.Model):
     votes = models.IntegerField(default=0)
 
 
+class SchoolInfo(models.Model):
+    name = models.CharField(max_length=200)
+    area = models.CharField(max_length=200)
+    position = models.CharField(max_length=5000)
+
+    class Meta:
+        db_table = "school_info"
+
+    def to_json(self):
+        ret = {}
+        for field in self._meta.fields:
+            attr = field.name
+            if attr != 'position':
+                ret[attr] = getattr(self, attr)
+        return ret
+
+
+class UserId(models.Model):
+    currentId = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = "user_id"
+
+
 class Post(models.Model):
     user = models.ForeignKey(User, db_constraint=False)
     schoolId = models.IntegerField(db_column="school_id")
@@ -78,6 +102,7 @@ class UserInfo(models.Model):
         (DEFAULT, 'Null')
     )
     user = models.ForeignKey(User, db_constraint=False)
+    schoolId = models.ForeignKey(SchoolInfo, db_column="school_id", db_constraint=False)
     deviceId = models.CharField(max_length=255, db_column="device_id", null=True)
     token = models.CharField(max_length=255, db_column="user_token", null=True)
     nickname = models.CharField(max_length=255, db_column='nickname')
@@ -86,7 +111,6 @@ class UserInfo(models.Model):
     sex = models.IntegerField(db_column="sex", choices=SEX_CHOICES, default=DEFAULT)
     birthday = models.BigIntegerField(db_column="birthday", null=True)
     sign = models.CharField(max_length=255, db_column="sign", null=True)
-    schoolId = models.IntegerField(db_column="school_id", null=True)
 
     class Meta:
         db_table = "user_info"
@@ -277,12 +301,3 @@ class FeedBack(models.Model):
 
     class Meta:
         db_table = "feed_back"
-
-
-class SchoolInfo(models.Model):
-    name = models.CharField(max_length=200)
-    area = models.CharField(max_length=200)
-    position = models.CharField(max_length=5000)
-
-    class Meta:
-        db_table = "school_info"

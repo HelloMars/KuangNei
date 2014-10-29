@@ -19,7 +19,7 @@ from kuangnei.utils import logger
 from main.models import *
 import post_push
 from django.contrib.auth.models import Permission
-
+from django.contrib.auth.hashers import make_password, check_password
 # Create your views here.
 
 
@@ -56,7 +56,7 @@ def dopost(request):
         elif int(channelid) == consts.NEWEST_CHANNEL_ID or int(channelid) == consts.HOTTEST_CHANNEL_ID:
             ret = utils.wrap_message(code=20, msg="最新/最热频道不允许发帖")
         else:
-            user = User.objects.get(id = userid)
+            user = User.objects.get(id=userid)
             post = Post(user=user, schoolId=1, content=content, channelId=channelid,
                         opposedCount=0, postTime=time.strftime('%Y-%m-%d %H:%M:%S'),
                         replyCount=0, replyUserCount=0, imageUrls=imageurl,
@@ -71,6 +71,7 @@ def dopost(request):
 
 @login_required
 def postlist(request):
+    userid = request.session[SESSION_KEY]
     channelid = request.GET.get("channelid")
     page = request.GET.get("page")
     if channelid is None or page is None:
@@ -88,7 +89,9 @@ def postlist(request):
         else:  # 获取频道帖子列表
             posts = Post.objects.filter(channelId=channelid).order_by("-postTime")[start:end]
             logger.info("channel postlist %d:[%d, %d]", len(posts), start, end)
+        school_info = SchoolInfo.objects.filter(userinfo__user=userid)[0]
         ret = utils.wrap_message({'size': len(posts)})
+        ret['school'] = school_info.to_json()
         ret['list'] = [e.tojson(_fill_user_info(e.user)) for e in posts]
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler),
                         mimetype='application/json')
@@ -98,38 +101,32 @@ def register(request):
     if request.method != 'POST':
         ret = utils.wrap_message(code=2)
     else:
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        if username is None or password is None:
-            ret = utils.wrap_message(code=1)
+        school_id = 3
+        school_info = SchoolInfo.objects.get(id=school_id)
+        with transaction.atomic():
+            UserId.objects.filter(id=1).update(currentId=F('currentId')+1)
+            user_id = UserId.objects.get(id=1)
+            username = user_id.currentId
+            password = make_password(username, None, 'pbkdf2_sha256')
+            user = User.objects.create_user(username=username, password=password)
+        if user is None:
+                ret = utils.wrap_message(code=10, msg='注册失败')
+                logger.warn('注册失败')
         else:
-            if not utils.is_avaliable_phone(username):
-                ret = utils.wrap_message(code=11, msg='电话有误')
-                return HttpResponse(json.dumps(ret, ensure_ascii=False))
-            olduser = User.objects.filter(username=username).first()
-            if olduser is None:
-                newuser = User.objects.create_user(username=username, password=password)
-                if newuser is None:
-                    ret = utils.wrap_message(code=10, msg='注册失败')
-                    logger.warn('注册失败')
-                else:
-                    # TODO: catch exception and delete user
-                    # 在user_info表中设置token, nickname, telephone
-                    deviceid = request.POST.get('deviceid')
-                    token = request.POST.get('token')  # could be None
-                    UserInfo.objects.create(user=newuser, deviceId=deviceid,
-                                            token=token, nickname='user'+str(newuser.id),
-                                            telephone=username)
-                    user = authenticate(username=username, password=password)
-                    login(request, user)
-                    permission = Permission.objects.get(codename=consts.FORBIDDEN_AUTH)
-                    user.user_permissions.add(permission)
-                    request.session.set_expiry(30000)  # session失效期5分钟
-                    ret = utils.wrap_message({'user': newuser.username})
-                    logger.info('注册新用户(%s)成功', repr(newuser))
-            else:
-                ret = utils.wrap_message(code=10, msg='用户名已存在')
-                logger.info('用户名(%s)已存在', repr(olduser))
+            # TODO: catch exception and delete user
+            # 在user_info表中设置token, nickname, telephone
+            deviceid = request.POST.get('deviceid')
+            token = request.POST.get('token')  # could be None
+            UserInfo.objects.create(user=user, deviceId=deviceid, schoolId=school_info,
+                                    token=token, nickname='user'+str(user.id),
+                                    telephone=username)
+            user = authenticate(username=username, password=password)
+            login(request, user)
+            permission = Permission.objects.get(codename=consts.FORBIDDEN_AUTH)
+            user.user_permissions.add(permission)
+            request.session.set_expiry(3000000000)  # session永不失效
+            ret = utils.wrap_message({'user': user.username, 'password': password})
+            logger.info('注册新用户(%s)成功', repr(user))
     return HttpResponse(json.dumps(ret, ensure_ascii=False))
 
 
@@ -165,7 +162,7 @@ def _login(data, request):
                 if modify:
                     user_info.save()
                     logger.info('修改用户(%s)信息成功', repr(user.id))
-                request.session.set_expiry(30000)
+                request.session.set_expiry(30000000)
                 ret = utils.wrap_message(data=user_info.tojson, code=0, msg='登陆成功')
             else:
                 ret = utils.wrap_message(code=10, msg='用户无权限')
