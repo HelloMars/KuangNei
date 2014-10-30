@@ -255,14 +255,17 @@ def _up_oppose_post(request, model, key):
                 model.objects.create(postId=postid, userId=userid)
                 message = "赞（踩）成功"
                 addend = 1
+                action = 'do'
             else:  # 用户已经赞（踩）过则取消之前的赞（踩）
                 upoppose.delete()
                 message = "取消赞（踩）成功"
                 addend = -1
+                action = 'cancel'
             with transaction.atomic():
                 Post.objects.filter(id=postid).update(**{key: F(key)+addend})
                 _update_post_score(postid)
             ret = utils.wrap_message(code=0, data={key: getattr(post, key)+addend}, msg=message)
+            ret['action'] = action
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
@@ -297,13 +300,16 @@ def up_reply(request):
                                        userId=userid)
                 message = "赞成功"
                 addend = 1
+                action = 'do'
             else:  # 用户已经赞过则取消之前的赞
                 upreply.delete()
                 message = "取消赞成功"
                 addend = -1
+                action = 'cancel'
             FirstLevelReply.objects.filter(id=first_level_reply_id).update(upCount=F('upCount')+addend)
             _update_reply_score(first_level_reply_id)
             ret = utils.wrap_message(code=0, data={'upCount': first_level_reply.upCount+addend}, msg=message)
+            ret['action'] = action
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
