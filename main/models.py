@@ -147,63 +147,92 @@ class UserInfo(models.Model):
         return ret
 
 
-class FirstLevelReply(models.Model):
+class Reply(models.Model):
     post = models.ForeignKey(Post, db_constraint=False)
-    user = models.ForeignKey(User, db_constraint=False)
+    fromUser = models.ForeignKey(User, related_name='fromUser', db_constraint=False)
+    toUser = models.ForeignKey(User, related_name='toUser', db_constraint=False)
     content = models.CharField(db_column="content", max_length=800)
     upCount = models.IntegerField(db_column="up_count")
-    replyCount = models.IntegerField(db_column="reply_count")
-    replyUserCount = models.IntegerField(db_column="reply_user_count")
-    floor = models.IntegerField(db_column="floor")
     replyTime = models.DateTimeField(db_column="create_time")
-    score = models.FloatField(db_column="score")
     editStatus = models.IntegerField(db_column="edit_status")
 
     class Meta:
-        db_table = "first_level_reply"
+        db_table = "reply"
 
-    def to_json(self, user):
+    def to_json(self, from_user, to_user):
         ret = {}
         for field in self._meta.fields:
             attr = field.name
             if attr == 'id':
-                ret['firstLevelReplyId'] = getattr(self, attr)
+                ret['ReplyId'] = getattr(self, attr)
             if attr == 'post':
                 ret['postId'] = self.post.id
-            elif attr == "user":
-                ret['user'] = user
+            elif attr == "fromUser":
+                ret['fromUser'] = from_user
+            elif attr == "toUser":
+                ret['toUser'] = to_user
             else:
                 ret[attr] = getattr(self, attr)
         return ret
 
 
-class SecondLevelReply(models.Model):
-    post = models.ForeignKey(Post, db_constraint=False)
-    first_level_reply = models.ForeignKey(FirstLevelReply, db_constraint=False)
-    secondLevelReplyId = models.IntegerField(db_column="second_level_reply_id", default=0)
-    user = models.ForeignKey(User, db_constraint=False)
-    content = models.CharField(db_column="content", max_length=140)
-    replyTime = models.DateTimeField(db_column="create_time")
-    editStatus = models.IntegerField(db_column="edit_status")
-
-    class Meta:
-        db_table = "second_level_reply"
-
-    def to_json(self, user):
-        ret = {}
-        for field in self._meta.fields:
-            attr = field.name
-            if attr == 'id':
-                ret['secondLevelReplyId'] = getattr(self, attr)
-            elif attr == 'post':
-                ret['postId'] = self.post.id
-            elif attr == 'first_level_reply':
-                ret['firstLevelReplyId'] = self.first_level_reply.id
-            elif attr == "user":
-                ret['user'] = user
-            else:
-                ret[attr] = getattr(self, attr)
-        return ret
+# class FirstLevelReply(models.Model):
+#     post = models.ForeignKey(Post, db_constraint=False)
+#     user = models.ForeignKey(User, db_constraint=False)
+#     content = models.CharField(db_column="content", max_length=800)
+#     upCount = models.IntegerField(db_column="up_count")
+#     replyCount = models.IntegerField(db_column="reply_count")
+#     replyUserCount = models.IntegerField(db_column="reply_user_count")
+#     floor = models.IntegerField(db_column="floor")
+#     replyTime = models.DateTimeField(db_column="create_time")
+#     score = models.FloatField(db_column="score")
+#     editStatus = models.IntegerField(db_column="edit_status")
+#
+#     class Meta:
+#         db_table = "first_level_reply"
+#
+#     def to_json(self, user):
+#         ret = {}
+#         for field in self._meta.fields:
+#             attr = field.name
+#             if attr == 'id':
+#                 ret['firstLevelReplyId'] = getattr(self, attr)
+#             if attr == 'post':
+#                 ret['postId'] = self.post.id
+#             elif attr == "user":
+#                 ret['user'] = user
+#             else:
+#                 ret[attr] = getattr(self, attr)
+#         return ret
+#
+#
+# class SecondLevelReply(models.Model):
+#     post = models.ForeignKey(Post, db_constraint=False)
+#     first_level_reply = models.ForeignKey(FirstLevelReply, db_constraint=False)
+#     secondLevelReplyId = models.IntegerField(db_column="second_level_reply_id", default=0)
+#     user = models.ForeignKey(User, db_constraint=False)
+#     content = models.CharField(db_column="content", max_length=140)
+#     replyTime = models.DateTimeField(db_column="create_time")
+#     editStatus = models.IntegerField(db_column="edit_status")
+#
+#     class Meta:
+#         db_table = "second_level_reply"
+#
+#     def to_json(self, user):
+#         ret = {}
+#         for field in self._meta.fields:
+#             attr = field.name
+#             if attr == 'id':
+#                 ret['secondLevelReplyId'] = getattr(self, attr)
+#             elif attr == 'post':
+#                 ret['postId'] = self.post.id
+#             elif attr == 'first_level_reply':
+#                 ret['firstLevelReplyId'] = self.first_level_reply.id
+#             elif attr == "user":
+#                 ret['user'] = user
+#             else:
+#                 ret[attr] = getattr(self, attr)
+#         return ret
 
 
 class UpPost(models.Model):
@@ -235,12 +264,12 @@ class OpposePost(models.Model):
 
 class UpReply(models.Model):
     postId = models.IntegerField(db_column="post_id")
-    firstLevelReplyId = models.IntegerField(db_column="first_level_reply_id", db_index=True)
+    ReplyId = models.IntegerField(db_column="reply_id", db_index=True)
     userId = models.IntegerField(db_column="user_id")
 
     class Meta:
         db_table = "up_reply"
-        unique_together = ("firstLevelReplyId", "userId")
+        unique_together = ("ReplyId", "userId")
 
 
 class ReplyReply(models.Model):
