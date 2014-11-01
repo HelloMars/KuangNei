@@ -37,6 +37,13 @@ class SchoolInfo(models.Model):
                 ret[attr] = getattr(self, attr)
         return ret
 
+    def to_json2(self):
+        ret = {}
+        for field in self._meta.fields:
+            attr = field.name
+            ret[attr] = getattr(self, attr)
+        return ret
+
 
 class UserId(models.Model):
     currentId = models.IntegerField(default=0)

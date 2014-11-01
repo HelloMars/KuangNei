@@ -36,6 +36,7 @@ urlpatterns = patterns(
     url(r'^checkVersion/$', views.check_version, name='checkVersion'),
     url(r'^feedBack/$', views.feed_back, name='feedBack'),
     url(r'^addSchool/$', views.add_school_info, name='addSchool'),
+    url(r'^getSchool/$', views.get_school_info, name='getSchool'),
     url(r'^hasUnreadMessage/$', views.if_has_unread_message, name='hasUnreadMessage'),
 
     url(r'^redis/$', views.redis, name='redis'),
