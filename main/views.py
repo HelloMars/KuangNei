@@ -348,6 +348,7 @@ def up_reply(request):
 @permission_required('kuangnei.'+consts.FORBIDDEN_AUTH, raise_exception=True)
 def reply_post(request):
     from_user_id = request.session[SESSION_KEY]
+    logger.info(from_user_id)
     to_user_id = request.POST.get('toUserId')
     post_id = request.POST.get('postId')
     content = request.POST.get('content')
