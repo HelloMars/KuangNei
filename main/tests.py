@@ -29,6 +29,7 @@ TEST_TOKEN1 = 'af6ce77d4b57c2debef360c1bcf35190'
 TEST_AVATAR = 'http://kuangnei.qiniudn.com/xxx'
 TEST_NICKNAME = 'zavatar'
 TEST_DEVICEID = 'A100003B7D1E8E5'
+TEST_BIRTHDAY = 94378302
 
 
 class ApiTest(TestCase):
@@ -51,7 +52,13 @@ class ApiTest(TestCase):
                          'password': TEST_PASSWORD})
         self.client.post('/kuangnei/api/addUserInfo/',
                          {'avatar': TEST_AVATAR,
-                         'nickname': TEST_NICKNAME})
+                         'nickname': TEST_NICKNAME,
+                         'birthday': TEST_BIRTHDAY})
+        # post
+        response = self.client.post('/kuangnei/api/post/',
+                                    {'channelid': 1,
+                                     'content': 'unit test, 单元测试'})
+
 
     def _get_user(self, username, password):
         return authenticate(username=username, password=password)

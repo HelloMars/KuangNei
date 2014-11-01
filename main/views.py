@@ -358,6 +358,9 @@ def reply_post(request):
     to_user = utils.get(User, id=to_user_id)
     if post_id is None or content is None or from_user_id is None or post is None or to_user_id is None\
             or from_user is None or to_user is None:
+        logger.info(post_id)
+        logger.info(content)
+        logger.info(post)
         ret = utils.wrap_message(code=1)
     else:
         reply_time = time.strftime('%Y-%m-%d %H:%M:%S')
