@@ -310,40 +310,6 @@ def up_reply(request):
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
-# @login_required
-# @permission_required('kuangnei.'+consts.FORBIDDEN_AUTH, raise_exception=True)
-# def reply_first_level(request):
-#     userid = request.session[SESSION_KEY]
-#     postid = request.POST.get('postId')
-#     content = request.POST.get('content')
-#     post = utils.get(Post, id=postid)  # 验证postid有效性
-#     user = utils.get(User, id=userid)  #验证user有效性
-#     if postid is None or content is None or userid is None or post is None:
-#         ret = utils.wrap_message(code=1)
-#     else:
-#         reply_time = time.strftime('%Y-%m-%d %H:%M:%S')
-#         with transaction.atomic():
-#             Post.objects.filter(id=postid).update(replyCount=F('replyCount')+1)  # 总回复数+1
-#             first_level_reply = FirstLevelReply.objects.create(
-#                 post=post, user=user, upCount=0,
-#                 content=content, floor=Post.objects.get(id=postid).replyCount,  # 确保原子操作
-#                 replyCount=0, replyUserCount=0, replyTime=reply_time,
-#                 score=0, editStatus=0)
-#             reply_info = ReplyInfo.objects.create(repliedUser=post.user, replyUser=user, postId=post.id,
-#                 replyContent=content, flag=consts.REPLY_POST, repliedBriefContent=_cut_str(post.content),
-#                 replyTime=reply_time, hasRead=0)
-#             if utils.get(ReplyPost, postId=postid, userId=userid) is None:  # 未回复过
-#                 ReplyPost.objects.create(postId=postid, userId=userid)
-#                 Post.objects.filter(id=postid).update(replyUserCount=F('replyUserCount')+1)  # 独立回复数+1
-#                 _update_post_score(postid)
-#         content = reply_info.to_json(_fill_user_info(reply_info.replyUser))              #消息推送
-#         user_info = UserInfo.objects.get(user=post.user)
-#         token = user_info.token
-#         if token is not None:
-#             _push_message_to_single(content, token)
-#         ret = utils.wrap_message(data={"firstLevelReplyId": first_level_reply.id}, code=0, msg="发表一级回复成功")
-#     return HttpResponse(json.dumps(ret), mimetype='application/json')
-
 @login_required
 @permission_required('kuangnei.'+consts.FORBIDDEN_AUTH, raise_exception=True)
 def reply_post(request):
@@ -372,77 +338,6 @@ def reply_post(request):
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
-# @login_required
-# @permission_required('kuangnei.'+consts.FORBIDDEN_AUTH, raise_exception=True)
-# def reply_second_level(request):
-#     userid = request.session[SESSION_KEY]
-#     postid = request.POST.get('postId')
-#     first_level_reply_id = request.POST.get('firstLevelReplyId')
-#     second_level_reply_id = request.POST.get('secondLevelReplyId')
-#     if second_level_reply_id is not None:
-#         second_level_replied = utils.get(SecondLevelReply, id=second_level_reply_id)
-#     content = request.POST.get('content')
-#     first_level_reply = utils.get(FirstLevelReply, id=first_level_reply_id)  # 验证first_level_reply_id有效性
-#     user = utils.get(User, id=userid)                                         #验证user_id的有效性
-#     post = utils.get(Post, id=postid)                                        #验证post_id的有效性
-#     if postid is None or content is None or userid is None or first_level_reply_id is None or first_level_reply is None:
-#         ret = utils.wrap_message(code=1)
-#     else:
-#         reply_time = time.strftime('%Y-%m-%d %H:%M:%S')
-#         with transaction.atomic():
-#             FirstLevelReply.objects.filter(id=first_level_reply_id).update(replyCount=F('replyCount')+1)  # 总回复数+1
-#             if second_level_reply_id is None or second_level_replied is None:                    #代表回复的是一级回复
-#                 second_level_reply = SecondLevelReply.objects.create(first_level_reply=first_level_reply,
-#                               post=post, user=user, content=content, replyTime=reply_time,editStatus=0)
-#                 reply_info = ReplyInfo.objects.create(repliedUser=first_level_reply.user, replyUser=user, hasRead=0,
-#                   postId=post.id, firstLevelReplyId=first_level_reply_id, flag=consts.REPLY_FIRST_LEVEL,
-#                   repliedBriefContent=_cut_str(first_level_reply.content), replyContent=content, replyTime=reply_time)
-#                 push_to_user = first_level_reply.user
-#             else:                                                                                 #代表回复的是二级回复
-#                 second_level_reply = SecondLevelReply.objects.create(first_level_reply=first_level_reply,
-#                               post=post, secondLevelReplyId=second_level_reply_id, user=user,
-#                               content=content, replyTime=reply_time, editStatus=0)
-#                 reply_info = ReplyInfo.objects.create(repliedUser=second_level_replied.user, replyUser=user,
-#                   postId=post.id, firstLevelReplyId=first_level_reply_id, secondLevelReplyId=second_level_reply_id,
-#                 flag=consts.REPLY_SECOND_LEVEL,repliedBriefContent=_cut_str(second_level_replied.content),
-#                 replyContent=content, replyTime=reply_time)
-#                 push_to_user = second_level_replied.user
-#             if utils.get(ReplyReply, firstLevelReplyId=first_level_reply_id, userId=userid) is None:  # 未回复过
-#                 ReplyReply.objects.create(postId=postid, firstLevelReplyId=first_level_reply_id, userId=userid)
-#                 FirstLevelReply.objects.filter(id=first_level_reply_id)\
-#                     .update(replyUserCount=F('replyUserCount')+1)  # 独立回复数+1
-#                 _update_reply_score(first_level_reply_id)
-#         content = reply_info.to_json(_fill_user_info(reply_info.replyUser))                                  #消息推送
-#         user_info = UserInfo.objects.get(user=push_to_user)
-#         token = user_info.token
-#         if token is not None:
-#             _push_message_to_single(content, token)
-#         ret = utils.wrap_message(data={"secondLevelReplyId": second_level_reply.id}, code=0, msg="发表二级回复成功")
-#     return HttpResponse(json.dumps(ret), mimetype='application/json')
-
-
-# @login_required
-# def first_level_reply_list(request):
-#     postid = request.GET.get("postId")
-#     page = request.GET.get("page")
-#     post = utils.get(Post, id=postid)
-#     if postid is None or post is None or page is None:
-#         ret = utils.wrap_message(code=1)
-#     else:
-#         page = int(page)
-#         start = (page - 1) * consts.FIRST_LEVEL_REPLY_LOAD_SIZE
-#         end = start + consts.FIRST_LEVEL_REPLY_LOAD_SIZE
-#         if request.GET.get("hot") == "True":  # 按热度排序
-#             first_level_replies = FirstLevelReply.objects.filter(post=post).order_by("-score")[start:end]
-#             logger.info("hottest first_level_replies %d:[%d, %d]", len(first_level_replies), start, end)
-#         else:  # 按时间排序
-#             first_level_replies = FirstLevelReply.objects.filter(post=post).order_by("-replyTime")[start:end]
-#             logger.info("first_level_replies %d:[%d, %d]", len(first_level_replies), start, end)
-#         ret = utils.wrap_message({'postId': int(postid), 'size': len(first_level_replies)})
-#         ret['list'] = [e.to_json(_fill_user_info(e.user)) for e in first_level_replies]
-#     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
-
-
 @login_required
 def reply_list(request):
     post_id = request.GET.get("postId")
@@ -459,24 +354,6 @@ def reply_list(request):
         ret = utils.wrap_message({'postId': int(post_id), 'size': replies.count()})
         ret['list'] = [e.to_json(_fill_user_info(e.fromUser), _fill_user_info(e.toUser)) for e in replies]
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
-
-# @login_required
-# def second_level_reply_list(request):
-#     first_level_reply_id = request.GET.get("firstLevelReplyId")
-#     first_level_reply = utils.get(FirstLevelReply, id=first_level_reply_id)
-#     page = request.GET.get("page")
-#     if first_level_reply_id is None or first_level_reply is None or page is None:
-#         ret = utils.wrap_message(code=1)
-#     else:
-#         page = int(page)
-#         start = (page - 1) * consts.SECOND_LEVEL_REPLY_LOAD_SIZE
-#         end = start + consts.SECOND_LEVEL_REPLY_LOAD_SIZE
-#         second_level_replies = SecondLevelReply.objects.filter(                #二级回复的相互回复部分，由客户端去处理
-#             first_level_reply=first_level_reply).order_by("replyTime")[start:end]
-#         logger.info("second_level_replies %d:[%d, %d]", len(second_level_replies), start, end)
-#         ret = utils.wrap_message({'firstLevelReplyId': int(first_level_reply_id), 'size': len(second_level_replies)})
-#         ret['list'] = [e.to_json(_fill_user_info(e.user)) for e in second_level_replies]
-#     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
 
 
 #消息之我的帖子
@@ -497,24 +374,6 @@ def my_post(request):
         #TODO:此处是我的帖子列表，是否需要把我的信息带上返回
         ret['list'] = [e.tojson(_fill_user_info(e.user)) for e in posts]
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
-
-
- # #消息之我的回复
- # @login_required
- # def my_reply(request):
- #     user_id = request.session[SESSION_KEY]
- #     page = request.GET.get("page")
- #     user = utils.get(User, user_id)
- #     if user_id is None or page is None or user is None:
- #         ret = utils.wrap_message(code=1)
- #     else:
- #         page = int(page)
- #         start = (page - 1) * consts.LOAD_SIZE
- #         end = start + consts.LOAD_SIZE
-#         my_replies = Reply.objects.filter(toUser=user_id).order_by("-replyTime")[start:end]
-#         ret = utils.wrap_message({'size': my_replies.count()})
-#         ret['list'] = [e.to_json(_fill_user_info(e.fromUser)) for e in my_replies]
-#     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
 
 
 #消息之回复
