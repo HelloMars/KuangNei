@@ -124,8 +124,7 @@ def register(request):
                 deviceid = request.POST.get('deviceid')
                 token = request.POST.get('token')  # could be None
                 UserInfo.objects.create(user=user, deviceId=deviceid, schoolId=school_info,
-                                        token=token, nickname='user'+str(user.id),
-                                        telephone=username)
+                                        token=token, telephone=username)
                 user = authenticate(username=username, password=password)
                 login(request, user)
                 permission = Permission.objects.get(codename=consts.FORBIDDEN_AUTH)
