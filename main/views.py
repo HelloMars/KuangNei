@@ -486,10 +486,12 @@ def _fill_user_info(user):
     try:
         user_info = UserInfo.objects.get(user=user)
         nickname = user_info.nickname
+        sex = user_info.sex
         avatar = user_info.avatar
     except UserInfo.DoesNotExist:
         logger.warn("User or Userinfo not found")
     jsond = {"id": user.id,
+             "sex":sex,
              #"avatar": avatar,
              "name": nickname}
     return jsond
