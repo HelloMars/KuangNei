@@ -107,7 +107,7 @@ class UserInfo(models.Model):
     SEX_CHOICES = (
         (FEMALE, 'Female'),
         (MALE, 'Male'),
-        (NEUTRAL, 'Neutral'),
+        #(NEUTRAL, 'Neutral'),
         (DEFAULT, 'Null')
     )
     user = models.ForeignKey(User, db_constraint=False)
@@ -129,10 +129,6 @@ class UserInfo(models.Model):
         for field in self._meta.fields:
             attr = field.name
             value = data.get(attr.lower())
-            # #生日由long转化为时间类型
-            # if attr == "birthday" and value is not None:
-            #     print value
-            #     value = datetime.fromtimestamp((long(value))/1e3)
             # 非空并不等才更新
             if value is not None and value != getattr(self, attr):
                 if attr == 'telephone' and not utils.is_avaliable_phone(value):
@@ -218,6 +214,15 @@ class OpposePost(models.Model):
     class Meta:
         db_table = "oppose_post"
         unique_together = ("postId", "userId")
+
+
+class UsedName(models.Model):
+    user = models.ForeignKey(User, db_column='user_id', db_constraint=False)
+    name = models.CharField(db_column="name", max_length=50)
+
+    class Meta:
+        db_table = "used_name"
+
 
 
 class UpReply(models.Model):

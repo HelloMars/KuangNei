@@ -212,19 +212,23 @@ def add_user_info(request):
         userid = request.session[SESSION_KEY]
         user_info = UserInfo.objects.get(user=userid)
         modify = user_info.setattrs(request.POST)
-        try:
-            if modify:
-                user_info.save()
-                ret = utils.wrap_message(data=user_info.tojson, msg='修改个人信息成功')
-                logger.info('修改用户(%s)信息成功', repr(userid))
-            else:
-                ret = utils.wrap_message(data=user_info.tojson, msg='获取个人信息成功')
-        except Exception as e:
-            logger.exception(e)
-            ret = utils.wrap_message(code=2)
+        user_name = _has_other_used(user_info.user, user_info.nickname)
+        if user_name is None:                #没有其他人用过
+            UsedName.objects.create(user=user_info.user, name=user_info.nickname)
+            try:
+                if modify:
+                    user_info.save()
+                    ret = utils.wrap_message(data=user_info.tojson, msg='修改个人信息成功')
+                    logger.info('修改用户(%s)信息成功', repr(userid))
+                else:
+                    ret = utils.wrap_message(data=user_info.tojson, msg='获取个人信息成功')
+            except Exception as e:
+                logger.exception(e)
+                ret = utils.wrap_message(code=2)
+        else:
+            ret = utils.wrap_message(code=1, msg='该用户名已被其他用户使用过')
     # TODO: int return string bug
-    return HttpResponse(json.dumps(ret, default=utils.dateHandler),
-                        mimetype='application/json')
+    return HttpResponse(json.dumps(ret, default=utils.dateHandler), mimetype='application/json')
 
 
 @login_required
@@ -550,3 +554,14 @@ def _cut_str(str, length=16):
 
 def some_view(request):
    return render_to_response('edit.html')
+
+
+def _has_other_used(user_id, name):
+    try:
+        used_name = UsedName.objects.get(Q(name=name) & ~Q(user=user_id))
+        return used_name
+    except UsedName.DoesNotExist:
+        return None
+    except Exception as e:
+        logger.exception(e)
+        return 'error'
