@@ -600,6 +600,11 @@ def add_school_info(request):
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
+def get_school_info(request):
+    ret = utils.wrap_message(code=0)
+    ret['list'] = [e.to_json2() for e in SchoolInfo.objects.raw('SELECT * FROM school_info')]
+    return HttpResponse(json.dumps(ret), mimetype='application/json')
+
 def _push_message_to_app(content):
     logger.info("pushMessageToApp")
     post_push.pushMessageToApp(content)
