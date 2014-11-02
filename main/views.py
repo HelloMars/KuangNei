@@ -57,7 +57,8 @@ def dopost(request):
             ret = utils.wrap_message(code=20, msg="最新/最热频道不允许发帖")
         else:
             user = User.objects.get(id=userid)
-            post = Post(user=user, schoolId=user.schoolId, content=content, channelId=channelid,
+            school_id = UserInfo.objects.get(user=user).schoolId
+            post = Post(user=user, schoolId=school_id, content=content, channelId=channelid,
                         opposedCount=0, postTime=time.strftime('%Y-%m-%d %H:%M:%S'),
                         replyCount=0, replyUserCount=0, imageUrls=imageurl,
                         score=utils.cal_post_score(0, 0, 0, time.time()),
@@ -101,11 +102,13 @@ def register(request):
     if request.method != 'POST':
         ret = utils.wrap_message(code=2)
     else:
-        school_id = request.POST.get("schoolid")
-        if school_id is None:
+        school_id = request.POST.get("schoolId")
+        print school_id
+        school_info = utils.get(SchoolInfo, id=school_id)
+        print school_info
+        if school_id is None or school_info is None:
             ret = utils.wrap_message(code=1)
         else:
-            school_info = SchoolInfo.objects.get(id=school_id)
             with transaction.atomic():
                 UserId.objects.filter(id=1).update(currentId=F('currentId')+1)
                 user_id = UserId.objects.get(id=1)
