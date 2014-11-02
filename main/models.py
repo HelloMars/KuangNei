@@ -54,7 +54,7 @@ class UserId(models.Model):
 
 class Post(models.Model):
     user = models.ForeignKey(User, db_constraint=False)
-    schoolId = models.IntegerField(db_column="school_id")
+    schoolId = models.ForeignKey(SchoolInfo, db_column="school_id", db_constraint=False)
     content = models.CharField(max_length=800)
     channelId = models.IntegerField(db_column="channel_id")
     opposedCount = models.IntegerField(db_column="opposed_count")
@@ -77,6 +77,8 @@ class Post(models.Model):
                 ret['postId'] = getattr(self, attr)
             elif attr == "user":
                 ret['user'] = user
+            elif attr == "schoolId":
+                ret['schoolId'] = getattr(self, "schoolId").id
             elif attr == "imageUrls":
                 image_url = getattr(self, attr)
                 if image_url is not None:

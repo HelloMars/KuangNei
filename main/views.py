@@ -57,7 +57,7 @@ def dopost(request):
             ret = utils.wrap_message(code=20, msg="最新/最热频道不允许发帖")
         else:
             user = User.objects.get(id=userid)
-            post = Post(user=user, schoolId=1, content=content, channelId=channelid,
+            post = Post(user=user, schoolId=user.schoolId, content=content, channelId=channelid,
                         opposedCount=0, postTime=time.strftime('%Y-%m-%d %H:%M:%S'),
                         replyCount=0, replyUserCount=0, imageUrls=imageurl,
                         score=utils.cal_post_score(0, 0, 0, time.time()),
@@ -80,16 +80,16 @@ def postlist(request):
         page = int(page)
         start = (page - 1) * consts.LOAD_SIZE
         end = start + consts.LOAD_SIZE
+        school_info = SchoolInfo.objects.filter(userinfo__user=userid)[0]
         if int(channelid) == consts.NEWEST_CHANNEL_ID:  # 获取区域最新帖子列表
-            posts = Post.objects.filter(schoolId=1).order_by("-postTime")[start:end]
+            posts = Post.objects.filter(schoolId=school_info.id).order_by("-postTime")[start:end]
             logger.info("newest postlist %d:[%d, %d]", len(posts), start, end)
         elif int(channelid) == consts.HOTTEST_CHANNEL_ID:  # 获取区域最热帖子列表
-            posts = Post.objects.filter(schoolId=1).order_by("-score")[start:end]
+            posts = Post.objects.filter(schoolId=school_info.id).order_by("-score")[start:end]
             logger.info("hottest postlist %d:[%d, %d]", len(posts), start, end)
         else:  # 获取频道帖子列表
-            posts = Post.objects.filter(channelId=channelid).order_by("-postTime")[start:end]
+            posts = Post.objects.filter(channelId=channelid, schoolId=school_info.id).order_by("-postTime")[start:end]
             logger.info("channel postlist %d:[%d, %d]", len(posts), start, end)
-        school_info = SchoolInfo.objects.filter(userinfo__user=userid)[0]
         ret = utils.wrap_message({'size': len(posts)})
         ret['school'] = school_info.to_json()
         ret['list'] = [e.tojson(_fill_user_info(e.user)) for e in posts]
@@ -101,32 +101,35 @@ def register(request):
     if request.method != 'POST':
         ret = utils.wrap_message(code=2)
     else:
-        school_id = 3
-        school_info = SchoolInfo.objects.get(id=school_id)
-        with transaction.atomic():
-            UserId.objects.filter(id=1).update(currentId=F('currentId')+1)
-            user_id = UserId.objects.get(id=1)
-            username = user_id.currentId
-            password = make_password(username, None, 'pbkdf2_sha256')
-            user = User.objects.create_user(username=username, password=password)
-        if user is None:
-                ret = utils.wrap_message(code=10, msg='注册失败')
-                logger.warn('注册失败')
+        school_id = request.POST.get("schoolid")
+        if school_id is None:
+            ret = utils.wrap_message(code=1)
         else:
-            # TODO: catch exception and delete user
-            # 在user_info表中设置token, nickname, telephone
-            deviceid = request.POST.get('deviceid')
-            token = request.POST.get('token')  # could be None
-            UserInfo.objects.create(user=user, deviceId=deviceid, schoolId=school_info,
-                                    token=token, nickname='user'+str(user.id),
-                                    telephone=username)
-            user = authenticate(username=username, password=password)
-            login(request, user)
-            permission = Permission.objects.get(codename=consts.FORBIDDEN_AUTH)
-            user.user_permissions.add(permission)
-            request.session.set_expiry(3000000000)  # session永不失效
-            ret = utils.wrap_message({'user': user.username, 'password': password})
-            logger.info('注册新用户(%s)成功', repr(user))
+            school_info = SchoolInfo.objects.get(id=school_id)
+            with transaction.atomic():
+                UserId.objects.filter(id=1).update(currentId=F('currentId')+1)
+                user_id = UserId.objects.get(id=1)
+                username = user_id.currentId
+                password = make_password(username, None, 'pbkdf2_sha256')
+                user = User.objects.create_user(username=username, password=password)
+            if user is None:
+                    ret = utils.wrap_message(code=10, msg='注册失败')
+                    logger.warn('注册失败')
+            else:
+                # TODO: catch exception and delete user
+                # 在user_info表中设置token, nickname, telephone
+                deviceid = request.POST.get('deviceid')
+                token = request.POST.get('token')  # could be None
+                UserInfo.objects.create(user=user, deviceId=deviceid, schoolId=school_info,
+                                        token=token, nickname='user'+str(user.id),
+                                        telephone=username)
+                user = authenticate(username=username, password=password)
+                login(request, user)
+                permission = Permission.objects.get(codename=consts.FORBIDDEN_AUTH)
+                user.user_permissions.add(permission)
+                request.session.set_expiry(3000000000)  # session永不失效
+                ret = utils.wrap_message({'user': user.username, 'password': password})
+                logger.info('注册新用户(%s)成功', repr(user))
     return HttpResponse(json.dumps(ret, ensure_ascii=False))
 
 
