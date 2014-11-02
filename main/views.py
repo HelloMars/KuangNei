@@ -64,7 +64,7 @@ def dopost(request):
                         editStatus=0, upCount=0)
             post.save()
             logger.info("post " + str(post.id))
-            _push_message_to_app(post.content)
+            #_push_message_to_app(post.content)
             ret = utils.wrap_message({'postId': post.id})
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
