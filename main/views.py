@@ -7,7 +7,7 @@ import calendar
 from django.contrib.auth import authenticate, logout, login, SESSION_KEY
 from django.contrib.auth.decorators import login_required, permission_required
 from django.db import transaction, connection
-from django.db.models import F
+from django.db.models import F, Q
 from django.http import HttpResponse
 from django.http import Http404
 from django.shortcuts import redirect, render_to_response
@@ -348,7 +348,6 @@ def up_reply(request):
 @permission_required('kuangnei.'+consts.FORBIDDEN_AUTH, raise_exception=True)
 def reply_post(request):
     from_user_id = request.session[SESSION_KEY]
-    logger.info(from_user_id)
     to_user_id = request.POST.get('toUserId')
     post_id = request.POST.get('postId')
     content = request.POST.get('content')
@@ -358,21 +357,14 @@ def reply_post(request):
     to_user = utils.get(User, id=to_user_id)
     if post_id is None or content is None or from_user_id is None or post is None or to_user_id is None\
             or from_user is None or to_user is None:
-        logger.info(post_id)
-        logger.info(content)
-        logger.info(post)
         ret = utils.wrap_message(code=1)
     else:
         reply_time = time.strftime('%Y-%m-%d %H:%M:%S')
         with transaction.atomic():                                                  # 确保原子操作
             Post.objects.filter(id=post_id).update(replyCount=F('replyCount')+1)  # 总回复数+1
             reply = Reply.objects.create(post=post, fromUser=from_user, toUser=to_user, upCount=0,
-            content=content,  replyTime=reply_time, editStatus=0)
-            reply_info = ReplyInfo.objects.create(repliedUser=to_user, replyUser=from_user, postId=post.id,
-                 replyContent=content, flag=consts.REPLY_POST, repliedBriefContent=_cut_str(post.content),
-                 replyTime=reply_time, hasRead=0)
-        push_content = reply_info.to_json(_fill_user_info(reply_info.replyUser))              #消息推送
-        user_info = UserInfo.objects.get(user=post.user)
+            content=content,  replyTime=reply_time, editStatus=0, hasRead=0)
+        user_info = UserInfo.objects.get(user=to_user)                         #消息推送
         token = user_info.token
         if token is not None:
             _push_message_to_single(content, token)
@@ -507,38 +499,41 @@ def my_post(request):
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
 
 
-#消息之我的回复
+ # #消息之我的回复
+ # @login_required
+ # def my_reply(request):
+ #     user_id = request.session[SESSION_KEY]
+ #     page = request.GET.get("page")
+ #     user = utils.get(User, user_id)
+ #     if user_id is None or page is None or user is None:
+ #         ret = utils.wrap_message(code=1)
+ #     else:
+ #         page = int(page)
+ #         start = (page - 1) * consts.LOAD_SIZE
+ #         end = start + consts.LOAD_SIZE
+#         my_replies = Reply.objects.filter(toUser=user_id).order_by("-replyTime")[start:end]
+#         ret = utils.wrap_message({'size': my_replies.count()})
+#         ret['list'] = [e.to_json(_fill_user_info(e.fromUser)) for e in my_replies]
+#     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
+
+
+#消息之回复
 @login_required
-def my_reply(request):
+def reply_info(request):
     user_id = request.session[SESSION_KEY]
     page = request.GET.get("page")
-    if user_id is None or page is None:
+    user = utils.get(User, id=user_id)
+    if user_id is None or page is None or user is None:
         ret = utils.wrap_message(code=1)
     else:
         page = int(page)
         start = (page - 1) * consts.LOAD_SIZE
         end = start + consts.LOAD_SIZE
-        my_replies = ReplyInfo.objects.filter(replyUser=user_id).order_by("-replyTime")[start:end]
-        ret = utils.wrap_message({'size': my_replies.count()})
-        ret['list'] = [e.to_json(_fill_user_info(e.repliedUser)) for e in my_replies]
-    return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
-
-
-#消息之别人对我的回复
-@login_required
-def reply_my_post(request):
-    user_id = request.session[SESSION_KEY]
-    page = request.GET.get("page")
-    if user_id is None or page is None:
-        ret = utils.wrap_message(code=1)
-    else:
-        page = int(page)
-        start = (page - 1) * consts.LOAD_SIZE
-        end = start + consts.LOAD_SIZE
-        replies = ReplyInfo.objects.filter(repliedUser=user_id).order_by("-replyTime")[start:end]
-        ReplyInfo.objects.filter(repliedUser=user_id, hasRead=0).update(hasRead=1)
+        replies = Reply.objects.filter(Q(toUser=user_id) | Q(fromUser=user_id)).order_by("-replyTime")[start:end]
+        Reply.objects.filter(toUser=user_id, hasRead=0).update(hasRead=1)
         ret = utils.wrap_message({'size': replies.count()})
-        ret['list'] = [e.to_json(_fill_user_info(e.replyUser)) for e in replies]
+        ret['list'] = [e.to_reply_json(_fill_user_info(e.fromUser), _fill_user_info(e.toUser),\
+                        e.post.tojson(_fill_user_info(e.post.user))) for e in replies]
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
 
 
@@ -548,7 +543,7 @@ def if_has_unread_message(request):
     if user_id is None:
         ret = utils.wrap_message(code=1)
     else:
-        reply_info = ReplyInfo.objects.filter(repliedUser=user_id, hasRead=0)
+        reply_info = Reply.objects.filter(toUser=user_id, hasRead=0)
         ret = utils.wrap_message({'unReadMessageCount': reply_info.count()})
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
 
