@@ -27,8 +27,15 @@ TEST_PASSWORD = '~!@#`123qwer'
 TEST_TOKEN0 = 'd8ee807a6da4c9a3019f3f4ce168376f'
 TEST_TOKEN1 = 'af6ce77d4b57c2debef360c1bcf35190'
 TEST_AVATAR = 'http://kuangnei.qiniudn.com/xxx'
-TEST_NICKNAME = 'zavatar'
 TEST_DEVICEID = 'A100003B7D1E8E5'
+TEST_BIRTHDAY = 123456789
+TEST_NICKNAME = 'ndsun'
+TEST_SEX = 1
+TEST_AVATAR = 'www.kuangnei.me.com'
+TEST_IMG_URL = 'www.baidu.com@www.163.com@www.sohu.com'
+TEST_SIGN = '我可没时间陪你玩游戏'
+TEST_SHCOOLID = 1
+TEST_CHINNALID = 1
 
 
 class ApiTest(TestCase):
@@ -43,15 +50,76 @@ class ApiTest(TestCase):
                          'token': TEST_TOKEN0})
         # register test user 2
         self.client.post('/kuangnei/api/register/',
+                         {'username': TEST_USER1,
+                         'password': TEST_PASSWORD})
+        # register test user 2
+        self.client.post('/kuangnei/api/register/',
                          {'username': TEST_USER2,
                          'password': TEST_PASSWORD})
+
         # signin test user 0
         self.client.post('/kuangnei/api/signin/',
                          {'username': TEST_USER0,
                          'password': TEST_PASSWORD})
+        #addUesrInfo
         self.client.post('/kuangnei/api/addUserInfo/',
                          {'avatar': TEST_AVATAR,
-                         'nickname': TEST_NICKNAME})
+                         'nickname': TEST_NICKNAME,
+                         'birthday': TEST_BIRTHDAY,
+                         'sex': TEST_SEX,
+                         'sign': TEST_SIGN,
+                         'schoolId': TEST_SHCOOLID})
+        #post
+        self.client.post('/kuangnei/api/post/',
+                         {'channelid': TEST_CHINNALID,
+                          'content': '这是第一条帖子',
+                          'imageurl': TEST_IMG_URL})
+
+        self.client.post('/kuangnei/api/post/',
+                         {'channelid': TEST_CHINNALID,
+                          'content': u'这是第二条帖子',
+                          'imageurl': TEST_IMG_URL})
+
+        # signin user2
+        self.client.post('/kuangnei/api/signin/',
+                         {'username': TEST_USER2,
+                         'password': TEST_PASSWORD})
+         #addUesrInfo
+        self.client.post('/kuangnei/api/addUserInfo/',
+                         {'avatar': TEST_AVATAR,
+                         'nickname': TEST_NICKNAME,
+                         'birthday': TEST_BIRTHDAY,
+                         'sex': TEST_SEX,
+                         'sign': TEST_SIGN,
+                         'schoolId': TEST_SHCOOLID})
+
+        #first_level_reply
+        self.client.post('/kuangnei/api/replyFirstLevel/',
+                         {'postId': 1,
+                         'content': '回复第一条帖子，这是个一级回复'})
+        self.client.post('/kuangnei/api/replyFirstLevel/',
+                         {'postId': 2,
+                         'content': '回复第二条帖子，这是个一级回复'})
+        # signin user1
+        self.client.post('/kuangnei/api/signin/',
+                         {'username': TEST_USER1,
+                         'password': TEST_PASSWORD})
+
+        self.client.post('/kuangnei/api/replySecondLevel/',
+                         {'postId': 1,
+                         'firstLevelReplyId': 1,
+                         'content': '回复第一条帖子的第一个一级回复，这是个二级回复'})
+        # signin user2
+        self.client.post('/kuangnei/api/signin/',
+                         {'username': TEST_USER2,
+                         'password': TEST_PASSWORD})
+
+        self.client.post('/kuangnei/api/replySecondLevel/',
+                         {'postId': 1,
+                         'firstLevelReplyId': 1,
+                         'secondLevelReplyId': 2,
+                         'content': '回复第一条帖子的第一个，这是个二级回复'})
+
 
     def _get_user(self, username, password):
         return authenticate(username=username, password=password)
@@ -77,6 +145,63 @@ class ApiTest(TestCase):
         self._test_failed_message(response)
         response = self.client.get('/kuangnei/api/getDnUrl/?key=image.jpg')
         self._test_suc_message(response)
+
+    def test_post_list(self):
+        response = self.client.get('/kuangnei/api/postlist/?channelid=1&page=1')
+        self._test_suc_message(response)
+        jsond = json.loads(response.content)
+        try:
+            post = jsond['list'][1]
+            self.assertEqual(post['postId'], 1)
+            self.assertEqual(post['channelId'], 1)
+            self.assertEqual(post['schoolId'], 1)
+
+            self.assertIsNotNone(post['postTime'])
+            self.assertIsNotNone(post['pictures'])
+            self.assertEqual(post['content'], u'这是第一条帖子')
+
+            self.assertEqual(post['replyCount'], 1)
+            self.assertEqual(post['replyUserCount'], 1)
+            self.assertEqual(post['upCount'], 0)
+            self.assertEqual(post['opposedCount'], 0)
+
+            user = post['user']
+            self.assertEqual(1, user['id'])
+            self.assertEqual(user['avatar'], TEST_AVATAR)
+            self.assertEqual(user['name'], TEST_NICKNAME)
+        except KeyError as e:
+            self.assertIsNone(e)
+
+    def reply_list(self):
+        response = self.client.get('/kuangnei/api/firstLevelReplyList/?postId=1&page=1')
+        self._test_suc_message(response)
+        jsond = json.loads(response.content)
+        try:
+            self.assertEqual(jsond['size'], 1)
+            self.assertEqual(jsond['content'], u'回复第一条帖子，这是个一级回复')
+            self.assertEqual(jsond['replyCount'], 2)
+
+            first_level_reply = jsond['list'][0]
+            self.assertEqual(first_level_reply['firstLevelReplyId'], 1)
+            self.assertEqual(first_level_reply['postId'], 1)
+            self.assertEqual(first_level_reply['postId'], 1)
+            user = first_level_reply['user']
+
+            self.assertIsNotNone(post['postTime'])
+            self.assertIsNotNone(post['pictures'])
+            self.assertEqual(post['content'], u'这是第一条帖子')
+
+            self.assertEqual(post['replyCount'], 1)
+            self.assertEqual(post['replyUserCount'], 1)
+            self.assertEqual(post['upCount'], 0)
+            self.assertEqual(post['opposedCount'], 0)
+
+            user = post['user']
+            self.assertEqual(1, user['id'])
+            self.assertEqual(user['avatar'], TEST_AVATAR)
+            self.assertEqual(user['name'], TEST_NICKNAME)
+        except KeyError as e:
+            self.assertIsNone(e)
 
     # need login
     def test_post_and_reply(self):

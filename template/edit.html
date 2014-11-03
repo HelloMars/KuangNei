@@ -1,0 +1,76 @@
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<style type="text/css">
+		body, html,#allmap {width: 100%;height: 100%;overflow: hidden;margin:0;font-family:"微软雅黑";}
+	    #allmap {float:left;height:700px; width: 70%;}
+        #info {float:left;margin-top:250px;margin-left:50px;}
+        #area{margin-top:50px;}
+        #submit{margin-top:20px;}
+	</style>
+	<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=16CI8HHKudZPggaUg69Ghvnh"></script>
+	<!--加载鼠标绘制工具-->
+	<script type="text/javascript" src="http://api.map.baidu.com/library/DrawingManager/1.4/src/DrawingManager_min.js"></script>
+	<link rel="stylesheet" href="http://api.map.baidu.com/library/DrawingManager/1.4/src/DrawingManager_min.css" />
+	<!--加载检索信息窗口-->
+	<script type="text/javascript" src="http://api.map.baidu.com/library/SearchInfoWindow/1.4/src/SearchInfoWindow_min.js"></script>
+	<script src="http://libs.baidu.com/jquery/1.9.0/jquery.js"></script>
+	<link rel="stylesheet" href="http://api.map.baidu.com/library/SearchInfoWindow/1.4/src/SearchInfoWindow_min.css" />
+	<title>我的测试页面</title>
+</head>
+<body>
+	<div id="allmap"></div>
+	<div id="control">
+		<button onclick = "display()">显示框</button>
+		<button onclick = "clearAll()">清空</button>
+	</div>
+    <div id="info">
+    <form id="form" method="post">
+        <div>学校名称&nbsp;<input type="text" name="name" id="name"></div>
+        <div>校&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;区&nbsp;<input type="text" name="area" id="area"></div>
+        <input type="hidden" name="position" id="position">
+        <div><button type="submit" id="submit">提交</button></div>
+     </form>
+    </div>
+</body>
+</html>
+<script type="text/javascript">
+	// 百度地图API功能
+	var map = new BMap.Map("allmap");            
+	map.centerAndZoom("北京",15);
+	map.enableScrollWheelZoom();
+	//单击获取点击的经纬度
+	var point_position_list = [];    //存储要传给后台的坐标list
+	var point_list = [];             //存储实际的点
+	var overlays = []; 
+	var get_point_location = function(e){
+		var marker = new BMap.Marker(e.point);
+		map.addOverlay(marker);
+		var point = [];
+		point[0] = e.point.lng;
+		point[1] = e.point.lat;
+		point_position_list.push(point.join("|"));
+		point_list.push(e.point);
+	   };
+	 //点击，将点添加到array中
+     map.addEventListener("click",get_point_location);
+	 var display = function(e){
+		 var polygon = new BMap.Polygon(point_list,{strokeColor:"blue", strokeWeight:2, strokeOpacity:0.5});  //创建多边形
+		 map.addOverlay(polygon);
+	 }
+	 var clearAll = function(e){
+		     map.clearOverlays();
+		     point_position_list = [];
+		     point_list = [];
+	 }
+	 var $form = $("#form");
+	 $form.submit(function(){
+		// position赋值
+		document.getElementById("position").value = point_position_list;
+		$.post("http://127.0.0.1:8000/kuangnei/api/addSchool/", $form.serialize(), function(response_data){
+			response_data.returnCode == 0 ? alert("添加成功") : alert("添加失败");
+		},"json");
+		return false;
+	 });
+</script>
