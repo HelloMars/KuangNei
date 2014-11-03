@@ -420,12 +420,13 @@ def if_has_unread_message(request):
 def feed_back(request):
     user_id = request.session[SESSION_KEY]
     content = request.POST.get("content")
+    type = request.POST.get("type")
     try:
         user = utils.get(User, id=user_id)
         if user_id is None or content is None or user is None:
             ret = utils.wrap_message(code=1)
         else:
-            FeedBack.objects.create(user=user,content=content)
+            FeedBack.objects.create(user=user, type=type, content=content)
             ret = utils.wrap_message()
     except Exception as e:
             logger.exception(e)
