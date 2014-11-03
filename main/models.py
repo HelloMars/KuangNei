@@ -253,7 +253,8 @@ class Version(models.Model):
 
 class FeedBack(models.Model):
     user = models.ForeignKey(User, db_constraint=False)
-    content = models.CharField(max_length=800)
+    type = models.IntegerField(db_column="type")               #1代表crash信息，2代表反馈内容
+    content = models.CharField(max_length=5000)
 
     class Meta:
         db_table = "feed_back"
