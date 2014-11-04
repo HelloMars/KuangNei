@@ -520,6 +520,18 @@ def floater(request):
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
+@login_required
+def today_topic(request):
+    topic_time = time.strftime('%Y-%m-%d')
+    try:
+        topic = Topic.objects.get(topicTime=topic_time)
+        ret = utils.wrap_message(data=topic.to_json(), code=0)
+    except Exception as e:
+        logger.exception(e)
+        ret = utils.wrap_message(code=1)
+    return HttpResponse(json.dumps(ret), mimetype='application/json')
+
+
 def _push_message_to_app(content):
     logger.info("pushMessageToApp")
     post_push.pushMessageToApp(content)

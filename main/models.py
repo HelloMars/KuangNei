@@ -224,7 +224,6 @@ class UsedName(models.Model):
         db_table = "used_name"
 
 
-
 class UpReply(models.Model):
     postId = models.IntegerField(db_column="post_id")
     ReplyId = models.IntegerField(db_column="reply_id", db_index=True)
@@ -258,6 +257,23 @@ class FeedBack(models.Model):
 
     class Meta:
         db_table = "feed_back"
+
+
+class Topic(models.Model):
+    topicInfo = models.CharField(db_column="topic_info", max_length=50)
+    topicName = models.CharField(db_column="topic_name", max_length=50)
+    topicTime = models.DateField(db_column="topic_time")
+
+    class Meta:
+        db_table = "topic"
+
+    def to_json(self):
+        ret = {}
+        for field in self._meta.fields:
+            attr = field.name
+            if attr != "topicTime":
+                ret[attr] = getattr(self, attr)
+        return ret
 
 
 class UserAction(models.Model):
