@@ -258,3 +258,12 @@ class FeedBack(models.Model):
 
     class Meta:
         db_table = "feed_back"
+
+
+class UserAction(models.Model):
+    userId = models.IntegerField(db_column="user_id")
+    type = models.IntegerField(db_column="type")             #1拉取帖子，2发帖子，3回帖子，4修改个人信息，5发漂流瓶
+    actionTime = models.DateTimeField(db_column="action_time")
+
+    class Meta:
+        db_table = "user_action"

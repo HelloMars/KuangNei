@@ -56,6 +56,8 @@ def dopost(request):
         elif int(channelid) == consts.NEWEST_CHANNEL_ID or int(channelid) == consts.HOTTEST_CHANNEL_ID:
             ret = utils.wrap_message(code=20, msg="最新/最热频道不允许发帖")
         else:
+            action_time = time.strftime('%Y-%m-%d %H:%M:%S')
+            UserAction.objects.create(userId=userid, type=2, actionTime=action_time)     #统计代码
             user = User.objects.get(id=userid)
             school_id = UserInfo.objects.get(user=user).schoolId
             post = Post(user=user, schoolId=school_id, content=content, channelId=channelid,
@@ -78,6 +80,8 @@ def postlist(request):
     if channelid is None or page is None:
         ret = utils.wrap_message(code=1)
     else:
+        action_time = time.strftime('%Y-%m-%d %H:%M:%S')
+        UserAction.objects.create(userId=userid, type=1, actionTime=action_time)
         page = int(page)
         start = (page - 1) * consts.LOAD_SIZE
         end = start + consts.LOAD_SIZE
@@ -209,6 +213,8 @@ def add_user_info(request):
         ret = utils.wrap_message(code=2)
     else:
         userid = request.session[SESSION_KEY]
+        action_time = time.strftime('%Y-%m-%d %H:%M:%S')
+        UserAction.objects.create(userId=userid, type=4, actionTime=action_time)     #统计代码
         user_info = UserInfo.objects.get(user=userid)
         modify = user_info.setattrs(request.POST)
         user_name = _has_other_used(user_info.user, user_info.nickname)
@@ -335,6 +341,7 @@ def reply_post(request):
         ret = utils.wrap_message(code=1)
     else:
         reply_time = time.strftime('%Y-%m-%d %H:%M:%S')
+        UserAction.objects.create(userId=from_user_id, type=3, actionTime=reply_time)     #统计代码
         with transaction.atomic():                                                  # 确保原子操作
             Post.objects.filter(id=post_id).update(replyCount=F('replyCount')+1)  # 总回复数+1
             reply = Reply.objects.create(post=post, fromUser=from_user, toUser=to_user, upCount=0,
@@ -484,6 +491,8 @@ def floater(request):
     if user_id is None or user is None or content is None:
         ret = utils.wrap_message(code=1)
     else:
+        action_time = time.strftime('%Y-%m-%d %H:%M:%S')
+        UserAction.objects.create(userId=user_id, type=2, actionTime=action_time)     #统计代码
         user_info = UserInfo.objects.get(user=user_id)
         sex = user_info.sex
         school_info = SchoolInfo.objects.filter(userinfo__user=user_id)[0]
