@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 
 import json
-import calendar
+import random
 
 from django.contrib.auth import authenticate, logout, login, SESSION_KEY
 from django.contrib.auth.decorators import login_required, permission_required
@@ -472,6 +472,47 @@ def get_school_info(request):
     ret = utils.wrap_message(code=0)
     ret['list'] = [e.to_json2() for e in SchoolInfo.objects.raw('SELECT * FROM school_info')]
     return HttpResponse(json.dumps(ret), mimetype='application/json')
+
+
+#漂流瓶
+@login_required
+def floater(request):
+    user_id = request.session[SESSION_KEY]
+    user = utils.get(User, id=user_id)
+    content = request.POST.get('content')
+    if user_id is None or user is None or content is None:
+        ret = utils.wrap_message(code=1)
+    else:
+        user_info = UserInfo.objects.get(user=user_id)
+        sex = user_info.sex
+        school_info = SchoolInfo.objects.filter(userinfo__user=user_id)[0]
+        opposite_sex = UserInfo.objects.filter(schoolId=school_info.id, sex=sex ^ 1)   #该校异性
+        opposite_sex_count = opposite_sex.count()
+        print opposite_sex_count
+        ran = random.randint(0, opposite_sex_count-1)
+        choiced_user_info = opposite_sex[ran]             #被选出来的人
+        choiced_user = User.objects.get(id=choiced_user_info.id)
+        with transaction.atomic():
+             #发表一条虚拟帖子
+            virtual_post = Post(user=choiced_user, schoolId=school_info, channelId=0, opposedCount=0, upCount=0,
+                        score=0, postTime=time.strftime('%Y-%m-%d %H:%M:%S'), replyCount=0, replyUserCount=0,
+                        editStatus=0)
+            virtual_post.save()
+            #当前人回复
+            reply = Reply(post=virtual_post, fromUser=user, toUser=choiced_user, upCount=0,
+            content=content,  replyTime=time.strftime('%Y-%m-%d %H:%M:%S'), editStatus=0, hasRead=0)
+            reply.save()
+        #推送给发虚拟帖子的人
+        token = choiced_user_info.token
+        if token is not None:
+            _push_message_to_single(content, token)
+        ret = utils.wrap_message(data={"ReplyId": reply.id}, code=0, msg="发送成功")
+    return HttpResponse(json.dumps(ret), mimetype='application/json')
+
+
+
+
+
 
 def _push_message_to_app(content):
     logger.info("pushMessageToApp")
