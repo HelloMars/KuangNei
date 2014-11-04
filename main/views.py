@@ -511,10 +511,6 @@ def floater(request):
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
-
-
-
-
 def _push_message_to_app(content):
     logger.info("pushMessageToApp")
     post_push.pushMessageToApp(content)
