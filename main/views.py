@@ -534,7 +534,7 @@ def floater(request):
 def today_topic(request):
     topic_time = time.strftime('%Y-%m-%d')
     try:
-        topic = Topic.objects.get(topicTime=topic_time)
+        topic = Topic.objects.filter().order_by("topicTime")[0]
         ret = utils.wrap_message(data=topic.to_json(), code=0)
     except Exception as e:
         logger.exception(e)
