@@ -283,3 +283,12 @@ class UserAction(models.Model):
 
     class Meta:
         db_table = "user_action"
+
+
+class UserFloaterCount(models.Model):
+    userId = models.IntegerField(db_column="user_id")
+    date = models.DateField(db_column="date")
+    count = models.IntegerField(db_column="count")
+
+    class Meta:
+        db_table = "user_floater_count"
