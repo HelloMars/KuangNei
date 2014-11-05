@@ -25,3 +25,7 @@ NEWEST_CHANNEL_ID = 100
 
 # 热门帖子channelId
 HOTTEST_CHANNEL_ID = 101
+
+#次数限制
+FLOATER_COUNT_LIMIT = 3  #漂流瓶的次数限制
+POST_COUNT_LIMIT = 3  #发帖次数限制

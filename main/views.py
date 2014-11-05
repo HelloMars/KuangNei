@@ -58,7 +58,7 @@ def dopost(request):
         else:
             user_floater_count = UserAction.objects.filter(userId=userid, type=2,
                                                            actionTime__startswith=time.strftime('%Y-%m-%d'))
-            if user_floater_count.count() >= 3:                         #每天上限三次漂流瓶
+            if user_floater_count.count() >= consts.POST_COUNT_LIMIT:                         #每天上限三次发帖
                 ret = utils.wrap_message(code=2, msg="今天发帖次数已达上限")
             else:
                 action_time = time.strftime('%Y-%m-%d %H:%M:%S')
@@ -498,7 +498,7 @@ def floater(request):
     else:
         user_floater_count = UserAction.objects.filter(userId=user_id, type=5,
                                                        actionTime__startswith=time.strftime('%Y-%m-%d'))
-        if user_floater_count.count() >= 3:                         #每天上限三次漂流瓶
+        if user_floater_count.count() >= consts.FLOATER_COUNT_LIMIT:                         #每天上限三次漂流瓶
             ret = utils.wrap_message(code=2, msg="今天发送漂流瓶的次数已达上限")
         else:
             action_time = time.strftime('%Y-%m-%d %H:%M:%S')
