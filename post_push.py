@@ -31,8 +31,6 @@ MASTERSECRET = "ZSDPibJu9E6piEtu7ki7C7"
 CID = "82f54c197767a86c491e668c2e588027"
 HOST = 'http://sdk.open.api.igexin.com/apiex.htm'
 
-
-
 def pushMessageToSingle(content, client_id):
     push = IGeTui(HOST, APPKEY, MASTERSECRET)
     #消息模版：
