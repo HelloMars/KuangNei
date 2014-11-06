@@ -268,7 +268,7 @@ def _up_oppose_post(request, model, key):
     else:
         userid = request.session[SESSION_KEY]
         if post.user.id == userid:  # 自己赞（踩）
-            ret = utils.wrap_message(code=20, data={key: getattr(post, key)}, msg="嘿嘿")
+            ret = utils.wrap_message(code=5, data={key: getattr(post, key)}, msg="嘿嘿")
         else:  # 他人赞（踩）
             upoppose = utils.get(model, postId=postid, userId=userid)
             if upoppose is None:  # 用户未赞（踩）过
@@ -527,7 +527,7 @@ def floater(request):
             #推送给发虚拟帖子的人
             token = choiced_user_info.token
             if token is not None:
-                push_content = user_info.nickname + u'给你发送了漂流瓶'
+                push_content = u'你收到了一个漂流瓶'
                 _push_message_to_single(push_content, token)
             ret = utils.wrap_message(data={"ReplyId": reply.id}, code=0, msg="发送成功")
     return HttpResponse(json.dumps(ret), mimetype='application/json')
