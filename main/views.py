@@ -389,8 +389,8 @@ def my_post(request):
         ret = utils.wrap_message(code=1)
     else:
         page = int(page)
-        start = (page - 1) * consts.LOAD_SIZE
-        end = start + consts.LOAD_SIZE
+        start = (page - 1) * consts.POST_LOAD_SIZE
+        end = start + consts.POST_LOAD_SIZE
         posts = Post.objects.filter(user=user).order_by("-postTime")[start:end]
         d = {}
         ret = utils.wrap_message({'size': posts.count()})
