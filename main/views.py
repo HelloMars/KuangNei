@@ -88,8 +88,8 @@ def postlist(request):
         action_time = time.strftime('%Y-%m-%d %H:%M:%S')
         UserAction.objects.create(userId=userid, type=1, actionTime=action_time)
         page = int(page)
-        start = (page - 1) * consts.LOAD_SIZE
-        end = start + consts.LOAD_SIZE
+        start = (page - 1) * consts.POST_LOAD_SIZE
+        end = start + consts.POST_LOAD_SIZE
         school_info = SchoolInfo.objects.filter(userinfo__user=userid)[0]
         if int(channelid) == consts.NEWEST_CHANNEL_ID:  # 获取区域最新帖子列表
             posts = Post.objects.filter(schoolId=school_info.id).order_by("-postTime")[start:end]
@@ -268,7 +268,7 @@ def _up_oppose_post(request, model, key):
     else:
         userid = request.session[SESSION_KEY]
         if post.user.id == userid:  # 自己赞（踩）
-            ret = utils.wrap_message(code=20, data={key: getattr(post, key)}, msg="自己赞（踩）无效")
+            ret = utils.wrap_message(code=20, data={key: getattr(post, key)}, msg="嘿嘿")
         else:  # 他人赞（踩）
             upoppose = utils.get(model, postId=postid, userId=userid)
             if upoppose is None:  # 用户未赞（踩）过
@@ -352,9 +352,11 @@ def reply_post(request):
             reply = Reply.objects.create(post=post, fromUser=from_user, toUser=to_user, upCount=0,
             content=content,  replyTime=reply_time, editStatus=0, hasRead=0)
         user_info = UserInfo.objects.get(user=to_user)                         #消息推送
+        from_user_info = UserInfo.objects.get(user=from_user)
         token = user_info.token
         if token is not None:
-            _push_message_to_single(content, token)
+            push_content = from_user_info.nickname + u'回复了你'
+            _push_message_to_single(push_content, token)
         ret = utils.wrap_message(data={"ReplyId": reply.id}, code=0, msg="回复成功")
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
@@ -368,8 +370,8 @@ def reply_list(request):
         ret = utils.wrap_message(code=1)
     else:
         page = int(page)
-        start = (page - 1) * consts.FIRST_LEVEL_REPLY_LOAD_SIZE
-        end = start + consts.FIRST_LEVEL_REPLY_LOAD_SIZE
+        start = (page - 1) * consts.REPLY_LOAD_SIZE
+        end = start + consts.REPLY_LOAD_SIZE
         replies = Reply.objects.filter(post=post).order_by("-replyTime")[start:end]
         logger.info("first_level_replies %d:[%d, %d]", replies.count(), start, end)
         ret = utils.wrap_message({'postId': int(post_id), 'size': replies.count()})
@@ -407,8 +409,8 @@ def reply_info(request):
         ret = utils.wrap_message(code=1)
     else:
         page = int(page)
-        start = (page - 1) * consts.LOAD_SIZE
-        end = start + consts.LOAD_SIZE
+        start = (page - 1) * consts.REPLY_INFO_LOAD_SIZE
+        end = start + consts.REPLY_INFO_LOAD_SIZE
         replies = Reply.objects.filter(Q(toUser=user_id) | Q(fromUser=user_id)).order_by("-replyTime")[start:end]
         Reply.objects.filter(toUser=user_id, hasRead=0).update(hasRead=1)
         ret = utils.wrap_message({'size': replies.count()})
@@ -525,7 +527,8 @@ def floater(request):
             #推送给发虚拟帖子的人
             token = choiced_user_info.token
             if token is not None:
-                _push_message_to_single(content, token)
+                push_content = user_info.nickname + u'给你发送了漂流瓶'
+                _push_message_to_single(push_content, token)
             ret = utils.wrap_message(data={"ReplyId": reply.id}, code=0, msg="发送成功")
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
