@@ -59,7 +59,7 @@ def dopost(request):
             user_floater_count = UserAction.objects.filter(userId=userid, type=2,
                                                            actionTime__startswith=time.strftime('%Y-%m-%d'))
             if user_floater_count.count() >= consts.POST_COUNT_LIMIT:                         #每天上限三次发帖
-                ret = utils.wrap_message(code=2, msg="今天发帖次数已达上限")
+                ret = utils.wrap_message(code=3, msg="今天发帖次数已达上限")
             else:
                 action_time = time.strftime('%Y-%m-%d %H:%M:%S')
                 UserAction.objects.create(userId=userid, type=2, actionTime=action_time)     #统计代码
@@ -268,7 +268,7 @@ def _up_oppose_post(request, model, key):
     else:
         userid = request.session[SESSION_KEY]
         if post.user.id == userid:  # 自己赞（踩）
-            ret = utils.wrap_message(code=20, data={key: getattr(post, key)}, msg="嘿嘿")
+            ret = utils.wrap_message(code=5, data={key: getattr(post, key)}, msg="嘿嘿")
         else:  # 他人赞（踩）
             upoppose = utils.get(model, postId=postid, userId=userid)
             if upoppose is None:  # 用户未赞（踩）过
@@ -355,7 +355,7 @@ def reply_post(request):
         from_user_info = UserInfo.objects.get(user=from_user)
         token = user_info.token
         if token is not None:
-            push_content = from_user_info.nickname + u"回复了你"
+            push_content = from_user_info.nickname + u'回复了你'
             _push_message_to_single(push_content, token)
         ret = utils.wrap_message(data={"ReplyId": reply.id}, code=0, msg="回复成功")
     return HttpResponse(json.dumps(ret), mimetype='application/json')
@@ -409,8 +409,8 @@ def reply_info(request):
         ret = utils.wrap_message(code=1)
     else:
         page = int(page)
-        start = (page - 1) * consts.REPLY_INFO_SIZE
-        end = start + consts.REPLY_INFO_SIZE
+        start = (page - 1) * consts.REPLY_INFO_LOAD_SIZE
+        end = start + consts.REPLY_INFO_LOAD_SIZE
         replies = Reply.objects.filter(Q(toUser=user_id) | Q(fromUser=user_id)).order_by("-replyTime")[start:end]
         Reply.objects.filter(toUser=user_id, hasRead=0).update(hasRead=1)
         ret = utils.wrap_message({'size': replies.count()})
@@ -501,7 +501,7 @@ def floater(request):
         user_floater_count = UserAction.objects.filter(userId=user_id, type=5,
                                                        actionTime__startswith=time.strftime('%Y-%m-%d'))
         if user_floater_count.count() >= consts.FLOATER_COUNT_LIMIT:                         #每天上限三次漂流瓶
-            ret = utils.wrap_message(code=2, msg="今天发送漂流瓶的次数已达上限")
+            ret = utils.wrap_message(code=3, msg="今天发送漂流瓶的次数已达上限")
         else:
             action_time = time.strftime('%Y-%m-%d %H:%M:%S')
             UserAction.objects.create(userId=user_id, type=5, actionTime=action_time)     #统计代码
@@ -510,6 +510,7 @@ def floater(request):
             school_info = SchoolInfo.objects.filter(userinfo__user=user_id)[0]
             opposite_sex = UserInfo.objects.filter(schoolId=school_info.id, sex=sex ^ 1)   #该校异性
             opposite_sex_count = opposite_sex.count()
+            print opposite_sex_count
             ran = random.randint(0, opposite_sex_count-1)
             choiced_user_info = opposite_sex[ran]             #被选出来的人
             choiced_user = User.objects.get(id=choiced_user_info.id)
@@ -526,7 +527,7 @@ def floater(request):
             #推送给发虚拟帖子的人
             token = choiced_user_info.token
             if token is not None:
-                push_content = user_info.nickname + u"给你发送了漂流瓶"
+                push_content = u'你收到了一个漂流瓶'
                 _push_message_to_single(push_content, token)
             ret = utils.wrap_message(data={"ReplyId": reply.id}, code=0, msg="发送成功")
     return HttpResponse(json.dumps(ret), mimetype='application/json')
@@ -536,7 +537,7 @@ def floater(request):
 def today_topic(request):
     topic_time = time.strftime('%Y-%m-%d')
     try:
-        topic = Topic.objects.get(topicTime=topic_time)
+        topic = Topic.objects.filter().order_by("topicTime")[0]
         ret = utils.wrap_message(data=topic.to_json(), code=0)
     except Exception as e:
         logger.exception(e)
@@ -551,7 +552,7 @@ def _push_message_to_app(content):
 
 def _push_message_to_single(content, client_id):
     logger.info("pushMessageToSingle")
-    post_push.pushMessageToSingle(content, client_id)
+    post_push.pushMessageToSingle(content,client_id)
 
 
 def _fill_user_info(user):
