@@ -56,9 +56,9 @@ def dopost(request):
         elif int(channelid) == consts.NEWEST_CHANNEL_ID or int(channelid) == consts.HOTTEST_CHANNEL_ID:
             ret = utils.wrap_message(code=20, msg="最新/最热频道不允许发帖")
         else:
-            user_floater_count = UserAction.objects.filter(userId=userid, type=2,
+            user_post_count = UserAction.objects.filter(userId=userid, type=2,
                                                            actionTime__startswith=time.strftime('%Y-%m-%d'))
-            if user_floater_count.count() >= consts.POST_COUNT_LIMIT:                         #每天上限三次发帖
+            if user_post_count.count() >= consts.POST_COUNT_LIMIT:                         #每天上限三次发帖
                 ret = utils.wrap_message(code=3, msg="今天发帖次数已达上限")
             else:
                 action_time = time.strftime('%Y-%m-%d %H:%M:%S')
