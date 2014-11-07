@@ -237,7 +237,6 @@ def add_user_info(request):
                 ret = utils.wrap_message(code=2)
         else:
             ret = utils.wrap_message(code=1, msg='该用户名已被其他用户使用过')
-    # TODO: int return string bug
     return HttpResponse(json.dumps(ret, default=utils.dateHandler), mimetype='application/json')
 
 
@@ -504,32 +503,37 @@ def floater(request):
             ret = utils.wrap_message(code=3, msg="今天发送漂流瓶的次数已达上限")
         else:
             action_time = time.strftime('%Y-%m-%d %H:%M:%S')
-            UserAction.objects.create(userId=user_id, type=5, actionTime=action_time)     #统计代码
             user_info = UserInfo.objects.get(user=user_id)
             sex = user_info.sex
-            school_info = SchoolInfo.objects.filter(userinfo__user=user_id)[0]
-            opposite_sex = UserInfo.objects.filter(schoolId=school_info.id, sex=sex ^ 1)   #该校异性
-            opposite_sex_count = opposite_sex.count()
-            print opposite_sex_count
-            ran = random.randint(0, opposite_sex_count-1)
-            choiced_user_info = opposite_sex[ran]             #被选出来的人
-            choiced_user = User.objects.get(id=choiced_user_info.id)
-            with transaction.atomic():
-                 #发表一条虚拟帖子
-                virtual_post = Post(user=choiced_user, schoolId=school_info, channelId=0, opposedCount=0, upCount=0,
-                            score=0, postTime=time.strftime('%Y-%m-%d %H:%M:%S'), replyCount=0, replyUserCount=0,
-                            editStatus=0)
-                virtual_post.save()
-                #当前人回复
-                reply = Reply(post=virtual_post, fromUser=user, toUser=choiced_user, upCount=0,
-                content=content,  replyTime=time.strftime('%Y-%m-%d %H:%M:%S'), editStatus=0, hasRead=0)
-                reply.save()
-            #推送给发虚拟帖子的人
-            token = choiced_user_info.token
-            if token is not None:
-                push_content = u'你收到了一个漂流瓶'
-                _push_message_to_single(push_content, token)
-            ret = utils.wrap_message(data={"ReplyId": reply.id}, code=0, msg="发送成功")
+            if sex != 0 and sex != 1:
+                ret = utils.wrap_message(code=4, msg="您的性别还未知，请完善个人信息")
+            else:
+                school_info = SchoolInfo.objects.filter(userinfo__user=user_id)[0]
+                opposite_sex = UserInfo.objects.filter(schoolId=school_info.id, sex=sex ^ 1)   #该校异性
+                opposite_sex_count = opposite_sex.count()
+                if opposite_sex_count == 0:
+                    ret = utils.wrap_message(code=5, msg="该校还没有异性，邀吗")
+                else:
+                    ran = random.randint(0, opposite_sex_count-1)
+                    choiced_user_info = opposite_sex[ran]             #被选出来的人
+                    choiced_user = User.objects.get(id=choiced_user_info.id)
+                    with transaction.atomic():
+                         #发表一条虚拟帖子
+                        virtual_post = Post(user=choiced_user, schoolId=school_info, channelId=0, opposedCount=0, upCount=0,
+                                    score=0, postTime=time.strftime('%Y-%m-%d %H:%M:%S'), replyCount=0, replyUserCount=0,
+                                    editStatus=0)
+                        virtual_post.save()
+                        #当前人回复
+                        reply = Reply(post=virtual_post, fromUser=user, toUser=choiced_user, upCount=0,
+                        content=content,  replyTime=time.strftime('%Y-%m-%d %H:%M:%S'), editStatus=0, hasRead=0)
+                        reply.save()
+                    #推送给发虚拟帖子的人
+                    token = choiced_user_info.token
+                    if token is not None:
+                        push_content = u'你收到了一个漂流瓶'
+                        _push_message_to_single(push_content, token)
+                    ret = utils.wrap_message(data={"ReplyId": reply.id}, code=0, msg="发送成功")
+                    UserAction.objects.create(userId=user_id, type=5, actionTime=action_time)     #统计代码
     return HttpResponse(json.dumps(ret), mimetype='application/json')
 
 
