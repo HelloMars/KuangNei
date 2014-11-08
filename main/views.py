@@ -115,7 +115,6 @@ def register(request):
         old_user_info = utils.get(UserInfo, token=token)
         if old_user_info is not None:              #证明该用户之前已经注册过
             old_user = User.objects.get(id=old_user_info.user.id)
-            print
             old_password = make_password(old_user.username, 'kuangnei', 'pbkdf2_sha256')
             ret = utils.wrap_message({'user': old_user.username, 'password': old_password})
         else:

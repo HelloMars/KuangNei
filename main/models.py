@@ -46,7 +46,7 @@ class SchoolInfo(models.Model):
 
 
 class UserId(models.Model):
-    currentId = models.IntegerField(default=0)
+    currentId = models.IntegerField(default=0, db_column='current_id')
 
     class Meta:
         db_table = "user_id"
