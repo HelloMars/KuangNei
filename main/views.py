@@ -114,9 +114,10 @@ def register(request):
         token = request.POST.get('token')
         logger.info('aaaaaa')
         logger.info(token)
-        old_user_info = utils.get(UserInfo, token=token)
-        if old_user_info is not None:              #证明该用户之前已经注册过
+        old_user_info_list = UserInfo.objects.filter(toke=token)
+        if old_user_info_list.count() != 0:              #证明该用户之前已经注册过
             logger.info('查询了查询了')
+            old_user_info = old_user_info_list[0]
             old_user = User.objects.get(id=old_user_info.user.id)
             old_password = make_password(old_user.username, 'kuangnei', 'pbkdf2_sha256')
             user = authenticate(username=old_user.username, password=old_password)
