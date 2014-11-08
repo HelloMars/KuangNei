@@ -115,7 +115,9 @@ def register(request):
         old_user_info = utils.get(UserInfo, token=token)
         if old_user_info is not None:              #证明该用户之前已经注册过
             old_user = User.objects.get(id=old_user_info.user.id)
-            ret = utils.wrap_message({'user': old_user.username, 'password': old_user.password})
+            print
+            old_password = make_password(old_user.username, 'kuangnei', 'pbkdf2_sha256')
+            ret = utils.wrap_message({'user': old_user.username, 'password': old_password})
         else:
             school_id = request.POST.get("schoolId")
             school_info = utils.get(SchoolInfo, id=school_id)
@@ -126,7 +128,7 @@ def register(request):
                     UserId.objects.filter(id=1).update(currentId=F('currentId')+1)
                     user_id = UserId.objects.get(id=1)
                     username = user_id.currentId
-                    password = make_password(username, None, 'pbkdf2_sha256')
+                    password = make_password(username, 'kuangnei', 'pbkdf2_sha256')
                     user = User.objects.create_user(username=username, password=password)
                 if user is None:
                         ret = utils.wrap_message(code=10, msg='注册失败')
@@ -134,9 +136,8 @@ def register(request):
                 else:
                     try:
                         # 在user_info表中设置token, nickname, telephone
-                        token = request.POST.get('token')  # could be None
                         user_info = UserInfo.objects.create(user=user, schoolId=school_info,
-                                                token=token, telephone=username)
+                                                token=token)
                         user = authenticate(username=username, password=password)
                         login(request, user)
                         permission = Permission.objects.get(codename=consts.FORBIDDEN_AUTH)

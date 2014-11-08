@@ -115,7 +115,7 @@ class UserInfo(models.Model):
     deviceId = models.CharField(max_length=255, db_column="device_id", null=True)
     token = models.CharField(max_length=255, db_column="user_token", null=True, db_index=True)
     nickname = models.CharField(max_length=255, db_column='nickname')
-    telephone = models.CharField(max_length=50, db_column="telephone")
+    telephone = models.CharField(max_length=50, db_column="telephone", null=True)
     avatar = models.CharField(max_length=255, db_column="avatar", null=True)
     sex = models.IntegerField(db_column="sex", choices=SEX_CHOICES, default=DEFAULT)
     birthday = models.BigIntegerField(db_column="birthday", null=True)
