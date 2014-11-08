@@ -114,7 +114,7 @@ def register(request):
         token = request.POST.get('token')
         logger.info('aaaaaa')
         logger.info(token)
-        old_user_info_list = UserInfo.objects.filter(toke=token)
+        old_user_info_list = UserInfo.objects.filter(token=token)
         if old_user_info_list.count() != 0:              #证明该用户之前已经注册过
             logger.info('查询了查询了')
             old_user_info = old_user_info_list[0]
