@@ -112,10 +112,19 @@ def register(request):
         ret = utils.wrap_message(code=2)
     else:
         token = request.POST.get('token')
+        logger.info('aaaaaa')
+        logger.info(token)
         old_user_info = utils.get(UserInfo, token=token)
         if old_user_info is not None:              #证明该用户之前已经注册过
+            logger.info('查询了查询了')
             old_user = User.objects.get(id=old_user_info.user.id)
             old_password = make_password(old_user.username, 'kuangnei', 'pbkdf2_sha256')
+            user = authenticate(username=old_user.username, password=old_password)
+            login(request, user)
+            permission = Permission.objects.get(codename=consts.FORBIDDEN_AUTH)
+            user.user_permissions.add(permission)
+            request.session.set_expiry(3000000000)  # session永不失效
+            logger.info('老用户重新注册成功')
             ret = utils.wrap_message({'user': old_user.username, 'password': old_password})
         else:
             school_id = request.POST.get("schoolId")
