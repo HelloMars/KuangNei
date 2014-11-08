@@ -43,7 +43,7 @@ def get_dnurl(request):
 
 @login_required
 @permission_required('kuangnei.'+consts.FORBIDDEN_AUTH, raise_exception=True)
-def dopost(request):
+def do_post(request):
     if request.method != 'POST':
         ret = utils.wrap_message(code=2)
     else:
@@ -111,36 +111,43 @@ def register(request):
     if request.method != 'POST':
         ret = utils.wrap_message(code=2)
     else:
-        school_id = request.POST.get("schoolId")
-        print school_id
-        school_info = utils.get(SchoolInfo, id=school_id)
-        print school_info
-        if school_id is None or school_info is None:
-            ret = utils.wrap_message(code=1)
+        token = request.POST.get('token')
+        old_user_info = utils.get(UserInfo, token=token)
+        if old_user_info is not None:              #证明该用户之前已经注册过
+            old_user = User.objects.get(id=old_user_info.user.id)
+            ret = utils.wrap_message({'user': old_user.username, 'password': old_user.password})
         else:
-            with transaction.atomic():
-                UserId.objects.filter(id=1).update(currentId=F('currentId')+1)
-                user_id = UserId.objects.get(id=1)
-                username = user_id.currentId
-                password = make_password(username, None, 'pbkdf2_sha256')
-                user = User.objects.create_user(username=username, password=password)
-            if user is None:
-                    ret = utils.wrap_message(code=10, msg='注册失败')
-                    logger.warn('注册失败')
+            school_id = request.POST.get("schoolId")
+            school_info = utils.get(SchoolInfo, id=school_id)
+            if school_id is None or school_info is None:
+                ret = utils.wrap_message(code=1)
             else:
-                # TODO: catch exception and delete user
-                # 在user_info表中设置token, nickname, telephone
-                deviceid = request.POST.get('deviceid')
-                token = request.POST.get('token')  # could be None
-                UserInfo.objects.create(user=user, deviceId=deviceid, schoolId=school_info,
-                                        token=token, telephone=username)
-                user = authenticate(username=username, password=password)
-                login(request, user)
-                permission = Permission.objects.get(codename=consts.FORBIDDEN_AUTH)
-                user.user_permissions.add(permission)
-                request.session.set_expiry(3000000000)  # session永不失效
-                ret = utils.wrap_message({'user': user.username, 'password': password})
-                logger.info('注册新用户(%s)成功', repr(user))
+                with transaction.atomic():
+                    UserId.objects.filter(id=1).update(currentId=F('currentId')+1)
+                    user_id = UserId.objects.get(id=1)
+                    username = user_id.currentId
+                    password = make_password(username, None, 'pbkdf2_sha256')
+                    user = User.objects.create_user(username=username, password=password)
+                if user is None:
+                        ret = utils.wrap_message(code=10, msg='注册失败')
+                        logger.warn('注册失败')
+                else:
+                    try:
+                        # 在user_info表中设置token, nickname, telephone
+                        token = request.POST.get('token')  # could be None
+                        user_info = UserInfo.objects.create(user=user, schoolId=school_info,
+                                                token=token, telephone=username)
+                        user = authenticate(username=username, password=password)
+                        login(request, user)
+                        permission = Permission.objects.get(codename=consts.FORBIDDEN_AUTH)
+                        user.user_permissions.add(permission)
+                        request.session.set_expiry(3000000000)  # session永不失效
+                        ret = utils.wrap_message({'user': user.username, 'password': password})
+                        logger.info('注册新用户(%s)成功', repr(user))
+                    except Exception as e:
+                        logger.exception(e)
+                        user.delete()
+                        user_info.delete()
     return HttpResponse(json.dumps(ret, ensure_ascii=False))
 
 

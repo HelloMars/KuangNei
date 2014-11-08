@@ -113,7 +113,7 @@ class UserInfo(models.Model):
     user = models.ForeignKey(User, db_constraint=False)
     schoolId = models.ForeignKey(SchoolInfo, db_column="school_id", db_constraint=False)
     deviceId = models.CharField(max_length=255, db_column="device_id", null=True)
-    token = models.CharField(max_length=255, db_column="user_token", null=True)
+    token = models.CharField(max_length=255, db_column="user_token", null=True, db_index=True)
     nickname = models.CharField(max_length=255, db_column='nickname')
     telephone = models.CharField(max_length=50, db_column="telephone")
     avatar = models.CharField(max_length=255, db_column="avatar", null=True)
