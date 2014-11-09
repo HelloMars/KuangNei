@@ -113,6 +113,7 @@ def register(request):
     else:
         token = request.POST.get('token')
         school_id = request.POST.get("schoolId")
+        school_info = utils.get(SchoolInfo, id=school_id)
         old_user_info_list = UserInfo.objects.filter(token=token)
         if old_user_info_list.count() != 0:              #证明该用户之前已经注册过
             old_user_info = old_user_info_list[0]
@@ -124,13 +125,11 @@ def register(request):
             user.user_permissions.add(permission)
             request.session.set_expiry(3000000000)  # session永不失效
             logger.info('老用户重新注册成功')
-            school_info = utils.get(SchoolInfo, id=school_id)
             if school_id is not None and school_info is not None:
                 old_user_info_list.update(schoolId=school_info)
                 logger.info('修改框成功')
             ret = utils.wrap_message({'user': old_user.username, 'password': old_password})
         else:
-
             school_info = utils.get(SchoolInfo, id=school_id)
             if school_id is None or school_info is None:
                 ret = utils.wrap_message(code=1)
