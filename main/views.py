@@ -549,7 +549,7 @@ def floater(request):
                     #推送给发虚拟帖子的人
                     token = choiced_user_info.token
                     if token is not None:
-                        push_content = u'你收到了一个漂流瓶'
+                        push_content = u'你收到了一个内部漂流瓶'
                         _push_message_to_single(push_content, token)
                     ret = utils.wrap_message(data={"ReplyId": reply.id}, code=0, msg="发送成功")
                     UserAction.objects.create(userId=user_id, type=5, actionTime=action_time)     #统计代码
