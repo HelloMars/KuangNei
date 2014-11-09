@@ -126,7 +126,8 @@ def register(request):
             request.session.set_expiry(3000000000)  # session永不失效
             logger.info('老用户重新注册成功')
             if school_id is not None and school_info is not None:
-                old_user_info_list.update(schoolId=school_info)
+                old_user_info.schoolId = school_info
+                old_user_info.save()
                 logger.info('修改框成功')
             ret = utils.wrap_message({'user': old_user.username, 'password': old_password})
         else:
