@@ -254,6 +254,7 @@ class FeedBack(models.Model):
     user = models.ForeignKey(User, db_constraint=False)
     type = models.IntegerField(db_column="type")               #1代表crash信息，2代表反馈内容
     content = models.CharField(max_length=5000)
+    time = models.DateField(db_column='time')
 
     class Meta:
         db_table = "feed_back"

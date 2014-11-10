@@ -439,7 +439,8 @@ def feed_back(request):
         if user_id is None or content is None or user is None:
             ret = utils.wrap_message(code=1)
         else:
-            FeedBack.objects.create(user=user, type=type, content=content)
+            feed_time = time.strftime('%Y-%m-%d %H:%M:%S')
+            FeedBack.objects.create(user=user, type=type, content=content, time=feed_time)
             ret = utils.wrap_message()
     except Exception as e:
             logger.exception(e)
