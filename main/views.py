@@ -43,7 +43,7 @@ def get_dnurl(request):
 
 @login_required
 @permission_required('kuangnei.'+consts.FORBIDDEN_AUTH, raise_exception=True)
-def dopost(request):
+def do_post(request):
     if request.method != 'POST':
         ret = utils.wrap_message(code=2)
     else:
@@ -111,36 +111,55 @@ def register(request):
     if request.method != 'POST':
         ret = utils.wrap_message(code=2)
     else:
+        token = request.POST.get('token')
         school_id = request.POST.get("schoolId")
-        print school_id
         school_info = utils.get(SchoolInfo, id=school_id)
-        print school_info
-        if school_id is None or school_info is None:
-            ret = utils.wrap_message(code=1)
+        old_user_info_list = UserInfo.objects.filter(token=token)
+        if old_user_info_list.count() != 0:              #证明该用户之前已经注册过
+            old_user_info = old_user_info_list[0]
+            old_user = User.objects.get(id=old_user_info.user.id)
+            old_password = make_password(old_user.username, 'kuangnei', 'pbkdf2_sha256')
+            user = authenticate(username=old_user.username, password=old_password)
+            login(request, user)
+            permission = Permission.objects.get(codename=consts.FORBIDDEN_AUTH)
+            user.user_permissions.add(permission)
+            request.session.set_expiry(3000000000)  # session永不失效
+            logger.info('老用户重新注册成功')
+            if school_id is not None and school_info is not None:
+                old_user_info.schoolId = school_info
+                old_user_info.save()
+                logger.info('修改框成功')
+            ret = utils.wrap_message({'user': old_user.username, 'password': old_password})
         else:
-            with transaction.atomic():
-                UserId.objects.filter(id=1).update(currentId=F('currentId')+1)
-                user_id = UserId.objects.get(id=1)
-                username = user_id.currentId
-                password = make_password(username, None, 'pbkdf2_sha256')
-                user = User.objects.create_user(username=username, password=password)
-            if user is None:
-                    ret = utils.wrap_message(code=10, msg='注册失败')
-                    logger.warn('注册失败')
+            school_info = utils.get(SchoolInfo, id=school_id)
+            if school_id is None or school_info is None:
+                ret = utils.wrap_message(code=1)
             else:
-                # TODO: catch exception and delete user
-                # 在user_info表中设置token, nickname, telephone
-                deviceid = request.POST.get('deviceid')
-                token = request.POST.get('token')  # could be None
-                UserInfo.objects.create(user=user, deviceId=deviceid, schoolId=school_info,
-                                        token=token, telephone=username)
-                user = authenticate(username=username, password=password)
-                login(request, user)
-                permission = Permission.objects.get(codename=consts.FORBIDDEN_AUTH)
-                user.user_permissions.add(permission)
-                request.session.set_expiry(3000000000)  # session永不失效
-                ret = utils.wrap_message({'user': user.username, 'password': password})
-                logger.info('注册新用户(%s)成功', repr(user))
+                with transaction.atomic():
+                    UserId.objects.filter(id=1).update(currentId=F('currentId')+1)
+                    user_id = UserId.objects.get(id=1)
+                    username = user_id.currentId
+                    password = make_password(username, 'kuangnei', 'pbkdf2_sha256')
+                    user = User.objects.create_user(username=username, password=password)
+                if user is None:
+                        ret = utils.wrap_message(code=10, msg='注册失败')
+                        logger.warn('注册失败')
+                else:
+                    try:
+                        # 在user_info表中设置token, nickname, telephone
+                        user_info = UserInfo.objects.create(user=user, schoolId=school_info,
+                                                token=token)
+                        user = authenticate(username=username, password=password)
+                        login(request, user)
+                        permission = Permission.objects.get(codename=consts.FORBIDDEN_AUTH)
+                        user.user_permissions.add(permission)
+                        request.session.set_expiry(3000000000)  # session永不失效
+                        ret = utils.wrap_message({'user': user.username, 'password': password})
+                        logger.info('注册新用户(%s)成功', repr(user))
+                    except Exception as e:
+                        logger.exception(e)
+                        user.delete()
+                        user_info.delete()
     return HttpResponse(json.dumps(ret, ensure_ascii=False))
 
 
@@ -531,7 +550,7 @@ def floater(request):
                     #推送给发虚拟帖子的人
                     token = choiced_user_info.token
                     if token is not None:
-                        push_content = u'你收到了一个漂流瓶'
+                        push_content = u'你收到了一个内部漂流瓶'
                         _push_message_to_single(push_content, token)
                     ret = utils.wrap_message(data={"ReplyId": reply.id}, code=0, msg="发送成功")
                     UserAction.objects.create(userId=user_id, type=5, actionTime=action_time)     #统计代码
