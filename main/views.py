@@ -554,6 +554,9 @@ def floater(request):
                         reply = Reply(post=virtual_post, fromUser=user, toUser=choiced_user, upCount=0,
                         content=content,  replyTime=time.strftime('%Y-%m-%d %H:%M:%S'), editStatus=0, hasRead=0)
                         reply.save()
+                        reply_info = ReplyInfo(post=virtual_post, fromUser=user, toUser=choiced_user, upCount=0,
+                        content=content,  replyTime=time.strftime('%Y-%m-%d %H:%M:%S'), editStatus=0, hasRead=0)
+                        reply_info.save()
                     #推送给发虚拟帖子的人
                     token = choiced_user_info.token
                     if token is not None:
