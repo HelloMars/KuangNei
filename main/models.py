@@ -198,6 +198,36 @@ class Reply(models.Model):
         return ret
 
 
+class ReplyInfo(models.Model):
+    post = models.ForeignKey(Post, db_constraint=False)
+    fromUser = models.ForeignKey(User, related_name='fUser', db_constraint=False)
+    toUser = models.ForeignKey(User, related_name='tUser', db_constraint=False)
+    content = models.CharField(db_column="content", max_length=800)
+    upCount = models.IntegerField(db_column="up_count")
+    replyTime = models.DateTimeField(db_column="create_time")
+    hasRead = models.IntegerField(db_column='has_read')
+    editStatus = models.IntegerField(db_column="edit_status")
+
+    class Meta:
+        db_table = "reply_info"
+
+    def to_reply_json(self, from_user, to_user, post):
+        ret = {}
+        for field in self._meta.fields:
+            attr = field.name
+            if attr == 'id':
+                ret['ReplyId'] = getattr(self, attr)
+            if attr == 'post':
+                ret['post'] = post
+            elif attr == "fromUser":
+                ret['fromUser'] = from_user
+            elif attr == "toUser":
+                ret['toUser'] = to_user
+            else:
+                ret[attr] = getattr(self, attr)
+        return ret
+
+
 class UpPost(models.Model):
     postId = models.IntegerField(db_column="post_id")
     userId = models.IntegerField(db_column="user_id")

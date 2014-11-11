@@ -369,6 +369,13 @@ def reply_post(request):
             Post.objects.filter(id=post_id).update(replyCount=F('replyCount')+1)  # 总回复数+1
             reply = Reply.objects.create(post=post, fromUser=from_user, toUser=to_user, upCount=0,
             content=content,  replyTime=reply_time, editStatus=0, hasRead=0)
+            if post.channelId == 0:
+                ReplyInfo.objects.filter(post=post).delete()
+                ReplyInfo.objects.create(post=post, fromUser=from_user, toUser=to_user, upCount=0,
+                content=content,  replyTime=reply_time, editStatus=0, hasRead=0)
+            else:
+                ReplyInfo.objects.create(post=post, fromUser=from_user, toUser=to_user, upCount=0,
+                content=content,  replyTime=reply_time, editStatus=0, hasRead=0)
         user_info = UserInfo.objects.get(user=to_user)                         #消息推送
         from_user_info = UserInfo.objects.get(user=from_user)
         token = user_info.token
@@ -410,7 +417,6 @@ def my_post(request):
         start = (page - 1) * consts.POST_LOAD_SIZE
         end = start + consts.POST_LOAD_SIZE
         posts = Post.objects.filter(user=user).order_by("-postTime")[start:end]
-        d = {}
         ret = utils.wrap_message({'size': posts.count()})
         #TODO:此处是我的帖子列表，是否需要把我的信息带上返回
         ret['list'] = [e.tojson(_fill_user_info(e.user)) for e in posts]
@@ -429,8 +435,8 @@ def reply_info(request):
         page = int(page)
         start = (page - 1) * consts.REPLY_INFO_LOAD_SIZE
         end = start + consts.REPLY_INFO_LOAD_SIZE
-        replies = Reply.objects.filter(Q(toUser=user_id) | Q(fromUser=user_id)).order_by("-replyTime")[start:end]
-        Reply.objects.filter(toUser=user_id, hasRead=0).update(hasRead=1)
+        replies = ReplyInfo.objects.filter(Q(toUser=user_id) | Q(fromUser=user_id)).order_by("-replyTime")[start:end]
+        ReplyInfo.objects.filter(toUser=user_id, hasRead=0).update(hasRead=1)
         ret = utils.wrap_message({'size': replies.count()})
         ret['list'] = [e.to_reply_json(_fill_user_info(e.fromUser), _fill_user_info(e.toUser),\
                         e.post.tojson(_fill_user_info(e.post.user))) for e in replies]
@@ -544,6 +550,7 @@ def floater(request):
                                     editStatus=0)
                         virtual_post.save()
                         #当前人回复
+                        Reply
                         reply = Reply(post=virtual_post, fromUser=user, toUser=choiced_user, upCount=0,
                         content=content,  replyTime=time.strftime('%Y-%m-%d %H:%M:%S'), editStatus=0, hasRead=0)
                         reply.save()
