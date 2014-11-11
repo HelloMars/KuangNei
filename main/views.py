@@ -449,7 +449,7 @@ def if_has_unread_message(request):
     if user_id is None:
         ret = utils.wrap_message(code=1)
     else:
-        reply_info = Reply.objects.filter(toUser=user_id, hasRead=0)
+        reply_info = ReplyInfo.objects.filter(toUser=user_id, hasRead=0)
         ret = utils.wrap_message({'unReadMessageCount': reply_info.count()})
     return HttpResponse(json.dumps(ret, default=utils.datetimeHandler), mimetype='application/json')
 
